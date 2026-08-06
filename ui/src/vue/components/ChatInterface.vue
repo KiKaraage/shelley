@@ -12,6 +12,7 @@
           text
           severity="secondary"
           :aria-label="t('openConversations')"
+          v-tooltip.top="t('openConversations')"
           @click="props.onOpenDrawer()"
         >
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,6 +50,22 @@
       </div>
 
       <div class="header-actions">
+        <button
+          class="btn-new"
+          :aria-label="t('newConversation')"
+          v-tooltip.top="t('newConversation')"
+          @click="onNewConversationClick"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="chat-icon-1rem">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              :stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </button>
+
         <!-- Diffs -->
         <Button
           v-if="hasCwd"
@@ -116,29 +133,14 @@
           <i class="pi pi-desktop chat-icon-1rem" aria-hidden="true" />
         </Button>
 
-        <button class="btn-new" :aria-label="t('newConversation')" @click="onNewConversationClick">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="chat-icon-1rem">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              :stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-        </button>
-
         <!-- Overflow menu (PrimeVue Popover + SelectButton/Select) -->
         <ChatOverflowMenu
-          :has-cwd="hasCwd"
           :links="links"
           :can-archive="
             !!(conversationId && onArchiveConversation && !currentConversation?.archived)
           "
           :can-export="!!(conversationId && messages.length > 0)"
           :has-update="hasUpdate"
-          @open-diffs="showDiffViewer = true"
-          @open-git-graph="showGitGraph = true"
-          @open-terminal="openInAppTerminal"
           @open-external-link="openExternalLink"
           @archive="archiveFromMenu"
           @export="openExport"
