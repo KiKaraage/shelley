@@ -49,6 +49,73 @@
       </div>
 
       <div class="header-actions">
+        <!-- Diffs -->
+        <Button
+          v-if="hasCwd"
+          class="btn-icon"
+          text
+          severity="secondary"
+          :aria-label="t('diffs')"
+          v-tooltip.top="t('diffs')"
+          @click="showDiffViewer = true"
+        >
+          <svg
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            viewBox="0 0 24 24"
+            class="chat-icon-1rem"
+            aria-hidden="true"
+          >
+            <path d="M4 7h4M6 5v4" />
+            <path d="M14 7h6" />
+            <path d="M4 17h6" />
+            <path d="M14 17h6M17 15v4" />
+          </svg>
+        </Button>
+
+        <!-- Git Graph -->
+        <Button
+          v-if="hasCwd"
+          class="btn-icon"
+          text
+          severity="secondary"
+          :aria-label="t('gitGraph')"
+          v-tooltip.top="t('gitGraph')"
+          @click="showGitGraph = true"
+        >
+          <svg
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            viewBox="0 0 24 24"
+            class="chat-icon-1rem"
+            aria-hidden="true"
+          >
+            <path d="M6 16.6V7.4" />
+            <path d="M6 16.6C8 11 12 6 14.6 5" />
+            <circle cx="6" cy="5" r="2.4" />
+            <circle cx="17" cy="5" r="2.4" />
+            <circle cx="6" cy="19" r="2.4" />
+          </svg>
+        </Button>
+
+        <!-- Terminal -->
+        <Button
+          class="btn-icon"
+          text
+          severity="secondary"
+          :aria-label="t('terminal')"
+          v-tooltip.top="t('terminal')"
+          @click="openInAppTerminal"
+        >
+          <i class="pi pi-desktop chat-icon-1rem" aria-hidden="true" />
+        </Button>
+
         <button class="btn-new" :aria-label="t('newConversation')" @click="onNewConversationClick">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="chat-icon-1rem">
             <path
