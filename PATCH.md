@@ -32,12 +32,7 @@ setsid bash -c 'sleep 5; systemctl --user restart shelley' >/dev/null 2>&1 < /de
 
 ## Rules
 
-- Never plain `make build` — only the `build-custom` ldflags stamp.
-- Never copy over the running binary — side-by-side + rename only.
-- Never restart shelley mid-turn — always delayed via `setsid`.
-- Never anchor to our own commit SHAs (rewritten on rebase) — use upstream `Base` SHAs.
-- Always update PATCH.md in the same commit as the code change.
-- Don't edit existing DB migrations/schema — new tables only via new migrations.
+Keep the changes minimum. Never plain `make build` — only the `build-custom` ldflags stamp; never copy over the running binary — side-by-side + rename only; never restart shelley mid-turn — always delayed via `setsid`; never anchor to our own commit SHAs (rewritten on rebase) — use upstream `Base` SHAs; always update PATCH.md in the same commit as the code change; don't edit existing DB migrations/schema — new tables only via new migrations.
 
 ## PATCH-001
 Status: active
