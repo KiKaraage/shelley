@@ -391,12 +391,20 @@ func setupToolSetConfig(llmProvider claudetool.LLMServiceProvider, llmManager se
 		return out
 	}
 
+	modelDisplayName := func(modelID string) string {
+		if info := llmManager.GetModelInfo(modelID); info != nil && info.DisplayName != "" {
+			return info.DisplayName
+		}
+		return modelID
+	}
+
 	return claudetool.ToolSetConfig{
 		WorkingDir:           wd,
 		LLMProvider:          llmProvider,
 		EnableJITInstall:     claudetool.EnableBashToolJITInstall,
 		EnableBrowser:        true,
 		BuildAvailableModels: buildAvailableModels,
+		ModelDisplayName:     modelDisplayName,
 	}
 }
 

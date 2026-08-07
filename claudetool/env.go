@@ -23,8 +23,11 @@ type ShelleyEnv struct {
 	ConversationID string
 	// ConversationSlug is exposed as SHELLEY_CONVERSATION_SLUG.
 	ConversationSlug string
-	// Model is exposed as SHELLEY_MODEL.
+	// Model is the raw model ID exposed as SHELLEY_MODEL.
 	Model string
+	// ModelDisplayName is the human-readable model name (e.g. "Kimi K3").
+	// Used by git attribution trailers instead of the raw Model ID.
+	ModelDisplayName string
 	// UserEmail is the exe.dev auth email, exposed as SHELLEY_USER_EMAIL.
 	UserEmail string
 	// Port is the TCP port the shelley server listens on locally. When >0,

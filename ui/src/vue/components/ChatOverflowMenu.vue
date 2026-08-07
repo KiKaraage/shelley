@@ -334,6 +334,21 @@
           </template>
         </Select>
       </div>
+
+      <!-- Git Attribution -->
+      <div class="overflow-menu-divider" />
+      <div class="overflow-menu-control">
+        <Select
+          v-model="gitAttribution"
+          :options="gitAttributionOptions"
+          option-label="label"
+          option-value="value"
+          aria-label="Git Attribution"
+          class="overflow-language-select"
+          append-to="self"
+          @update:model-value="onGitAttributionChange"
+        />
+      </div>
     </Popover>
   </div>
 </template>
@@ -355,6 +370,7 @@ import {
   getBrowserNotificationState,
   requestBrowserNotificationPermission,
 } from "../../services/notifications";
+import { api } from "../../services/api";
 
 defineProps<{
   hasCwd: boolean;
@@ -472,5 +488,31 @@ function languageFor(l: Locale): LanguageOption {
 function onLangChange(l: Locale) {
   lang.value = l;
   setLocale(l);
+}
+
+// ---- Git Attribution picker ----
+interface GitAttributionOption {
+  value: string;
+  label: string;
+}
+const gitAttributionOptions: GitAttributionOption[] = [
+  { value: "co-author", label: t("coAuthoredByShelley") },
+  { value: "assisted-by", label: t("assistedByModelInShelley") },
+  { value: "off", label: t("noAgentAttribution") },
+];
+const gitAttribution = ref<string>("co-author");
+
+// Load current setting on mount
+api.getSettings().then((settings) => {
+  if (settings["shelley.attribution"]) {
+    gitAttribution.value = settings["shelley.attribution"];
+  }
+}).catch(() => {
+  // Leave at default (co-author)
+});
+
+function onGitAttributionChange(value: string) {
+  gitAttribution.value = value;
+  api.setSetting("shelley.attribution", value).catch(() => {});
 }
 </script>

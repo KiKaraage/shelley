@@ -544,38 +544,71 @@ func TestFormatForegroundBashOutput(t *testing.T) {
 	})
 }
 
-func TestIsNoTrailerSet(t *testing.T) {
-	// Test when config is not set (default)
-	t.Run("Default No Config", func(t *testing.T) {
-		if isNoTrailerSet() {
-			t.Error("Expected isNoTrailerSet() to be false when not configured")
+func TestResolvedAttribution(t *testing.T) {
+	t.Run("Default to co-author when no config set", func(t *testing.T) {
+		g := gitAttributor{}
+		if got := g.resolved(); got != AttributionCoAuthor {
+			t.Errorf("resolved = %q, want %q", got, AttributionCoAuthor)
 		}
 	})
 
-	// Test when config is set to true
-	t.Run("Config Set True", func(t *testing.T) {
-		// Set the global config
+	t.Run("Legacy no-trailer=true maps to off", func(t *testing.T) {
 		cmd := exec.Command("git", "config", "--global", "shelley.no-trailer", "true")
 		if err := cmd.Run(); err != nil {
 			t.Skipf("Could not set git config: %v", err)
 		}
 		defer exec.Command("git", "config", "--global", "--unset", "shelley.no-trailer").Run()
 
-		if !isNoTrailerSet() {
-			t.Error("Expected isNoTrailerSet() to be true when shelley.no-trailer=true")
+		g := gitAttributor{}
+		if got := g.resolved(); got != AttributionOff {
+			t.Errorf("resolved = %q, want %q", got, AttributionOff)
 		}
 	})
 
-	// Test when config is set to false
-	t.Run("Config Set False", func(t *testing.T) {
-		cmd := exec.Command("git", "config", "--global", "shelley.no-trailer", "false")
+	t.Run("Explicit mode takes precedence over git config", func(t *testing.T) {
+		cmd := exec.Command("git", "config", "--global", "shelley.no-trailer", "true")
 		if err := cmd.Run(); err != nil {
 			t.Skipf("Could not set git config: %v", err)
 		}
 		defer exec.Command("git", "config", "--global", "--unset", "shelley.no-trailer").Run()
 
-		if isNoTrailerSet() {
-			t.Error("Expected isNoTrailerSet() to be false when shelley.no-trailer=false")
+		g := gitAttributor{mode: AttributionCoAuthor}
+		if got := g.resolved(); got != AttributionCoAuthor {
+			t.Errorf("resolved = %q, want %q", got, AttributionCoAuthor)
+		}
+	})
+
+	t.Run("Assisted-by with display name", func(t *testing.T) {
+		g := gitAttributor{
+			mode: AttributionAssistedBy,
+			env:  ShelleyEnv{Model: "kimi-k3-eco-crof-ai", ModelDisplayName: "Kimi K3"},
+		}
+		if got := g.trailer(); got != "Assisted-by: Kimi K3 in Shelley" {
+			t.Errorf("trailer = %q", got)
+		}
+	})
+
+	t.Run("Assisted-by falls back to raw model ID when no display name", func(t *testing.T) {
+		g := gitAttributor{
+			mode: AttributionAssistedBy,
+			env:  ShelleyEnv{Model: "claude-sonnet-4.6"},
+		}
+		if got := g.trailer(); got != "Assisted-by: claude-sonnet-4.6 in Shelley" {
+			t.Errorf("trailer = %q", got)
+		}
+	})
+
+	t.Run("Assisted-by falls back to Shelley when no model", func(t *testing.T) {
+		g := gitAttributor{mode: AttributionAssistedBy}
+		if got := g.trailer(); got != "Assisted-by: Shelley in Shelley" {
+			t.Errorf("trailer = %q", got)
+		}
+	})
+
+	t.Run("Off returns empty", func(t *testing.T) {
+		g := gitAttributor{mode: AttributionOff}
+		if got := g.trailer(); got != "" {
+			t.Errorf("trailer = %q, want empty", got)
 		}
 	})
 }

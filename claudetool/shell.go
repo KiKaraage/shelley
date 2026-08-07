@@ -39,6 +39,8 @@ type ShellTool struct {
 	// Env holds the conversation context exposed to invoked commands as
 	// SHELLEY_* environment variables.
 	Env ShelleyEnv
+	// GitAttribution controls git commit trailer injection (co-author, assisted-by, or off).
+	GitAttribution GitAttributionMode
 	// BackgroundCtx is the long-lived context that owns spawned processes.
 	// When nil, defaults to context.Background(): yielded jobs survive the
 	// per-call ctx ending. Set this to a server- or conversation-lifetime
@@ -171,6 +173,10 @@ func (s *ShellTool) yieldDuration(req shellInput) time.Duration {
 	return d
 }
 
+func (s *ShellTool) attr() gitAttributor {
+	return gitAttributor{mode: s.GitAttribution, env: s.Env}
+}
+
 // Tool returns an llm.Tool based on s.
 func (s *ShellTool) Tool() *llm.Tool {
 	return &llm.Tool{
@@ -208,8 +214,8 @@ func (s *ShellTool) run(ctx context.Context, req shellInput) llm.ToolOut {
 		}
 	}
 
-	if !isNoTrailerSet() {
-		req.Command = bashkit.AddCoauthorTrailer(req.Command, "Co-authored-by: Shelley <shelley@exe.dev>")
+	if trailer := s.attr().trailer(); trailer != "" {
+		req.Command = bashkit.AddCoauthorTrailer(req.Command, trailer)
 	}
 
 	yield := s.yieldDuration(req)

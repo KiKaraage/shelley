@@ -91,6 +91,12 @@ type ToolSetConfig struct {
 	ToolOverrides map[string]string
 	// DisableAllTools disables every tool by default; ToolOverrides with "on" re-enable.
 	DisableAllTools bool
+	// GitAttribution controls git commit trailer injection (co-author, assisted-by, or off).
+	GitAttribution GitAttributionMode
+	// ModelDisplayName returns the human-readable name for a model ID.
+	// Used by assisted-by attribution. When nil or returns "", attribution
+	// falls back to the raw model ID.
+	ModelDisplayName func(modelID string) string
 }
 
 // ToolSet holds a set of tools for a single conversation.
@@ -165,6 +171,16 @@ func isStrongModel(modelID string) bool {
 	return strings.Contains(lower, "sonnet") || strings.Contains(lower, "opus")
 }
 
+// ResolveModelDisplayName resolves the human-readable name for a model.
+func (cfg ToolSetConfig) ResolveModelDisplayName(modelID string) string {
+	if cfg.ModelDisplayName != nil {
+		if name := cfg.ModelDisplayName(modelID); name != "" {
+			return name
+		}
+	}
+	return modelID
+}
+
 func NewToolSet(ctx context.Context, cfg ToolSetConfig) *ToolSet {
 	workingDir := cfg.WorkingDir
 	if workingDir == "" {
@@ -185,6 +201,7 @@ func NewToolSet(ctx context.Context, cfg ToolSetConfig) *ToolSet {
 		ModelID:          cfg.ModelID,
 		EnableJITInstall: cfg.EnableJITInstall,
 		Env:              env,
+		GitAttribution:   cfg.GitAttribution,
 	}
 
 	// Use simplified patch schema for weaker models, full schema for sonnet/opus
@@ -210,6 +227,7 @@ func NewToolSet(ctx context.Context, cfg ToolSetConfig) *ToolSet {
 		ModelID:          cfg.ModelID,
 		EnableJITInstall: cfg.EnableJITInstall,
 		Env:              env,
+		GitAttribution:   cfg.GitAttribution,
 		BackgroundCtx:    ctx,
 	}
 
