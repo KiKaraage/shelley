@@ -1778,6 +1778,7 @@ func (cm *ConversationManager) ensureLoop(service llm.Service, modelID string) e
 	toolSetConfig.Env = claudetool.ShelleyEnv{
 		ConversationSlug: cm.slug,
 		Model:            modelID,
+		ModelDisplayName: toolSetConfig.ResolveModelDisplayName(modelID),
 		UserEmail:        cm.userEmail,
 		Port:             cm.serverPort,
 	}
@@ -1840,6 +1841,12 @@ func (cm *ConversationManager) ensureLoop(service llm.Service, modelID string) e
 	toolSetConfig.ToolOverrides = conversationOpts.ToolOverrides
 	toolSetConfig.DisableAllTools = conversationOpts.DisableAllTools
 	toolSetConfig.ReasoningLevel = conversationOpts.ThinkingLevel
+
+	// Read git attribution setting from DB on each turn so it takes effect live
+	if attr, err := database.GetSetting(processCtx, "shelley.attribution"); err == nil && attr != "" {
+		toolSetConfig.GitAttribution = claudetool.GitAttributionMode(attr)
+	}
+
 	toolSet := claudetool.NewToolSet(processCtx, toolSetConfig)
 
 	// streamFlusher batches LLM stream deltas and flushes them periodically
