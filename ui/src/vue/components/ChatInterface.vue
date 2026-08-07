@@ -2412,7 +2412,7 @@ function openInAppTerminal() {
     "/";
   const terminal: EphemeralTerminal = {
     id: `term-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-    command: 'exec "${SHELL:-bash}" -i',
+    command: 'exec "${SHELL:-zsh}" -i',
     cwd,
     createdAt: new Date(),
   };
