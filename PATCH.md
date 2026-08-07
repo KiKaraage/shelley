@@ -64,3 +64,15 @@ Status: active
 Base: 1d4cbe7
 Files: skills/skills.go, skills/skills_test.go
 Changes: Added ~/.agents/skills/ to DefaultDirs discovery paths so Shelley recognizes skills installed by other agent tools (Claude Code, etc.). The directory is checked alongside ~/.config/shelley/, ~/.config/agents/skills/, and ~/.shelley/.
+
+## PATCH-006
+Status: active
+Base: 1d4cbe7
+Files: claudetool/bash.go, claudetool/shell.go, claudetool/toolset.go, claudetool/env.go, server/convo.go, server/handlers.go, cmd/shelley/main.go, ui/src/vue/components/ChatOverflowMenu.vue, ui/src/i18n/en.ts (and other locale files), ui/src/i18n/types.ts, claudetool/bash_test.go
+Changes: Git commit attribution is now a user-configurable dropdown ("Git Attribution") in the overflow menu with three options:
+  - "Co-authored-by: Shelley" (same as before)
+  - "Assisted-by: <model> in Shelley" (derives model display name from active model via ModelInfo.DisplayName; no email)
+  - "No agent attribution" (no trailer)
+The setting is stored via the existing settings API (key: `shelley.attribution`, values: `co-author`, `assisted-by`, `off`). The legacy `git config shelley.no-trailer` path still works as a fallback when no explicit mode is set.
+Watchouts: NewToolSet reads the setting fresh on each turn, so changes take effect on the next message. The `GitAttributionMode` type is shared between bash and shell tools. The `BashTool.resolvedAttribution()` method handles the legacy git config fallback; when an explicit mode is set via the DB setting, it takes precedence. `ShelleyEnv.ModelDisplayName` is populated from `ToolSetConfig.ResolveModelDisplayName()` which calls `LLMProvider.GetModelInfo()`; nil-safe and falls back to the raw model ID.
+

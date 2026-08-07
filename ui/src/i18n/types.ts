@@ -276,4 +276,8 @@ export interface TranslationKeys {
   simplifiedChinese: string;
   traditionalChinese: string;
   vietnamese: string;
+  // Git Attribution
+  coAuthoredByShelley: string;
+  assistedByModelInShelley: string;
+  noAgentAttribution: string;
 }

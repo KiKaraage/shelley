@@ -284,4 +284,9 @@ export const en: TranslationKeys = {
   simplifiedChinese: "简体中文",
   traditionalChinese: "繁體中文",
   vietnamese: "Tiếng Việt",
+
+  // Git Attribution
+  coAuthoredByShelley: "Co-authored-by: Shelley",
+  assistedByModelInShelley: "Assisted-by: Model in Shelley",
+  noAgentAttribution: "No agent attribution",
 };

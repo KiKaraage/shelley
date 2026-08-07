@@ -30,6 +30,20 @@ type PermissionCallback func(command string) error
 // Every entry must be a model ID registered in models.All().
 var PreferredToolModels = []string{"gpt-oss-20b-fireworks", "claude-sonnet-4.6", "claude-sonnet-4.5", "predictable"}
 
+// GitAttributionMode controls what trailer (if any) is appended to git commit commands.
+type GitAttributionMode string
+
+const (
+	// AttributionDefault defers to git config shelley.no-trailer (legacy).
+	AttributionDefault GitAttributionMode = ""
+	// AttributionOff disables the trailer entirely.
+	AttributionOff GitAttributionMode = "off"
+	// AttributionCoAuthor adds "Co-authored-by: Shelley <shelley@exe.dev>".
+	AttributionCoAuthor GitAttributionMode = "co-author"
+	// AttributionAssistedBy adds "Assisted-by: <model> in Shelley" (no email).
+	AttributionAssistedBy GitAttributionMode = "assisted-by"
+)
+
 // BashTool specifies an llm.Tool for executing shell commands.
 type BashTool struct {
 	// CheckPermission is called before running any command, if set
@@ -45,6 +59,8 @@ type BashTool struct {
 	// Env holds the conversation context exposed to invoked commands as
 	// SHELLEY_* environment variables.
 	Env ShelleyEnv
+	// GitAttribution controls git commit trailer injection (co-author, assisted-by, or off).
+	GitAttribution GitAttributionMode
 }
 
 const (
@@ -77,6 +93,10 @@ func (t *Timeouts) slow() time.Duration {
 	return t.Slow
 }
 
+func (b *BashTool) attr() gitAttributor {
+	return gitAttributor{mode: b.GitAttribution, env: b.Env}
+}
+
 // Tool returns an llm.Tool based on b.
 func (b *BashTool) Tool() *llm.Tool {
 	return &llm.Tool{
@@ -92,13 +112,48 @@ func (b *BashTool) getWorkingDir() string {
 	return b.WorkingDir.Get()
 }
 
-// isNoTrailerSet checks if user has disabled co-author trailer via git config.
-func isNoTrailerSet() bool {
-	out, err := exec.Command("git", "config", "--get", "shelley.no-trailer").Output()
-	if err != nil {
-		return false
+// gitAttributor resolves git commit trailers for BashTool and ShellTool.
+type gitAttributor struct {
+	mode GitAttributionMode
+	env  ShelleyEnv
+}
+
+func (g gitAttributor) resolved() GitAttributionMode {
+	if g.mode != AttributionDefault {
+		return g.mode
 	}
-	return strings.TrimSpace(string(out)) == "true"
+	out, err := exec.Command("git", "config", "--get", "shelley.no-trailer").Output()
+	if err == nil && strings.TrimSpace(string(out)) == "true" {
+		return AttributionOff
+	}
+	return AttributionCoAuthor
+}
+
+func (g gitAttributor) trailer() string {
+	return gitAttributionTrailer(g.resolved(), g.displayName())
+}
+
+func (g gitAttributor) displayName() string {
+	if g.env.ModelDisplayName != "" {
+		return g.env.ModelDisplayName
+	}
+	if g.env.Model != "" {
+		return g.env.Model
+	}
+	return "Shelley"
+}
+
+// gitAttributionTrailer is the shared logic for deriving the git trailer from a
+// resolved mode and model display name.
+func gitAttributionTrailer(mode GitAttributionMode, displayName string) string {
+	switch mode {
+	case AttributionOff:
+		return ""
+	case AttributionAssistedBy:
+		return fmt.Sprintf("Assisted-by: %s in Shelley", displayName)
+	default:
+		return "Co-authored-by: Shelley <shelley@exe.dev>"
+	}
 }
 
 const (
@@ -193,9 +248,9 @@ func (b *BashTool) run(ctx context.Context, req bashInput) llm.ToolOut {
 		}
 	}
 
-	// Add co-author trailer to git commits unless user has disabled it
-	if !isNoTrailerSet() {
-		req.Command = bashkit.AddCoauthorTrailer(req.Command, "Co-authored-by: Shelley <shelley@exe.dev>")
+	// Add attribution trailer to git commits (mode: co-author, assisted-by, or off)
+	if trailer := b.attr().trailer(); trailer != "" {
+		req.Command = bashkit.AddCoauthorTrailer(req.Command, trailer)
 	}
 
 	timeout := req.timeout(b.Timeouts)
