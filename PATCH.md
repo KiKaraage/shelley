@@ -3,6 +3,42 @@
 `Base` = short SHA of the last upstream commit before the change (upstream SHAs are stable across rebases; ours are not).
 `Status`: active | superseded | reverted. `Intent`/`Watchouts` only when not self-explanatory.
 
+## Quick start
+
+```sh
+# 1. Check state
+cd ~/.config/shelley/shelley-customization
+git status --short && git branch --show-current   # expect: clean, on "custom"
+
+# 2. Check upstream
+git fetch origin main --tags
+git merge-base HEAD origin/main                   # current upstream base
+# if origin/main is ahead of this: rebase (below) before making new changes
+
+# 3. Build UI, then Go binary (custom stamp)
+cd ui && pnpm run build && cd ..
+BASE=$(git merge-base HEAD origin/main)
+TAG=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "$BASE"); SHA=$(git rev-parse --short HEAD)
+go build -ldflags "-X shelley.exe.dev/version.Version=${TAG#v}-custom.$SHA -X shelley.exe.dev/version.Tag=$TAG -X shelley.exe.dev/version.Customized=true" -o bin/shelley ./cmd/shelley
+bin/shelley version                               # verify: -custom.<sha>, customized:true
+
+# 4. Install (side-by-side + rename; never copy over the running binary)
+DEST=/var/home/ki/.local/bin/shelley; SRC=bin/shelley
+cp "$SRC" "$DEST.new" && chown --reference="$DEST" "$DEST.new" && chmod --reference="$DEST" "$DEST.new" && mv "$DEST.new" "$DEST"
+
+# 5. Restart (delayed so it doesn't kill the current turn; no tmux installed)
+setsid bash -c 'sleep 5; systemctl --user restart shelley' >/dev/null 2>&1 < /dev/null &
+```
+
+## Rules
+
+- Never plain `make build` — only the `build-custom` ldflags stamp.
+- Never copy over the running binary — side-by-side + rename only.
+- Never restart shelley mid-turn — always delayed via `setsid`.
+- Never anchor to our own commit SHAs (rewritten on rebase) — use upstream `Base` SHAs.
+- Always update PATCH.md in the same commit as the code change.
+- Don't edit existing DB migrations/schema — new tables only via new migrations.
+
 ## PATCH-001
 Status: active
 Base: 5c2cce3
