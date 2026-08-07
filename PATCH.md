@@ -58,3 +58,9 @@ Status: active
 Base: 1d4cbe7
 Files: BashTool.vue, styles.css
 Changes: In the bash tool call details, hid the "Working Directory" and "Command" sections; added "Copy Command" and "Copy Results" buttons to the right of the Output header.
+
+## PATCH-005
+Status: active
+Base: 1d4cbe7
+Files: skills/skills.go, skills/skills_test.go
+Changes: Added ~/.agents/skills/ to DefaultDirs discovery paths so Shelley recognizes skills installed by other agent tools (Claude Code, etc.). The directory is checked alongside ~/.config/shelley/, ~/.config/agents/skills/, and ~/.shelley/.
