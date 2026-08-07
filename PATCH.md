@@ -20,4 +20,4 @@ Changes: Added tooltips to the New Thread (+), overflow menu (⋮), and mobile h
 Status: active
 Base: 1d4cbe7
 Files: ChatInterface.vue
-Changes: In-app terminal now launches zsh by default instead of bash (`exec "${SHELL:-zsh}" -i`).
+Changes: In-app terminal now launches zsh instead of bash (`exec zsh -i`). The server wraps the command as `bash --login -c '<cmd>'`, but `exec zsh -i` replaces bash with zsh.
