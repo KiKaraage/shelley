@@ -473,12 +473,13 @@ func TestDefaultDirsReturnsExistingCandidates(t *testing.T) {
 	// Create a fake home directory with skill directories
 	tmpHome := t.TempDir()
 
-	// Create all three candidate directories
+	// Create all four candidate directories
 	configShelley := filepath.Join(tmpHome, ".config", "shelley")
+	dotAgentsSkills := filepath.Join(tmpHome, ".agents", "skills")
 	configAgents := filepath.Join(tmpHome, ".config", "agents", "skills")
 	dotShelley := filepath.Join(tmpHome, ".shelley")
 
-	for _, dir := range []string{configShelley, configAgents, dotShelley} {
+	for _, dir := range []string{configShelley, dotAgentsSkills, configAgents, dotShelley} {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -491,15 +492,16 @@ func TestDefaultDirsReturnsExistingCandidates(t *testing.T) {
 
 	dirs := DefaultDirs()
 
-	if len(dirs) != 3 {
-		t.Fatalf("expected 3 dirs, got %d: %v", len(dirs), dirs)
+	if len(dirs) != 4 {
+		t.Fatalf("expected 4 dirs, got %d: %v", len(dirs), dirs)
 	}
 
-	// Verify all three candidates are returned
+	// Verify all four candidates are returned
 	want := map[string]bool{
-		configShelley: true,
-		configAgents:  true,
-		dotShelley:    true,
+		configShelley:    true,
+		dotAgentsSkills:  true,
+		configAgents:     true,
+		dotShelley:       true,
 	}
 	for _, d := range dirs {
 		if !want[d] {
