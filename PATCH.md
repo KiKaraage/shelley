@@ -52,3 +52,9 @@ Status: active
 Base: 1d4cbe7
 Files: ChatInterface.vue
 Changes: In-app terminal now launches zsh instead of bash (`exec zsh -i`). The server wraps the command as `bash --login -c '<cmd>'`, but `exec zsh -i` replaces bash with zsh.
+
+## PATCH-004
+Status: active
+Base: 1d4cbe7
+Files: BashTool.vue, styles.css
+Changes: In the bash tool call details, hid the "Working Directory" and "Command" sections; added "Copy Command" and "Copy Results" buttons to the right of the Output header.
