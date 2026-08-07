@@ -41,15 +41,6 @@
     </div>
 
     <div v-if="isExpanded" class="bash-tool-details">
-      <div v-if="displayData?.workingDir" class="bash-tool-section">
-        <div class="bash-tool-label">Working Directory:</div>
-        <pre class="bash-tool-code bash-tool-code-cwd">{{ displayData.workingDir }}</pre>
-      </div>
-      <div class="bash-tool-section">
-        <div class="bash-tool-label">Command:</div>
-        <pre class="bash-tool-code">{{ command }}</pre>
-      </div>
-
       <div v-if="isRunning && streamingOutput" class="bash-tool-section">
         <div class="bash-tool-label">Output (streaming):</div>
         <AnsiText
@@ -60,9 +51,19 @@
       </div>
 
       <div v-if="isComplete" class="bash-tool-section">
-        <div class="bash-tool-label">
-          Output{{ hasError ? " (Error)" : "" }}:
-          <span v-if="executionTime" class="bash-tool-time">{{ executionTime }}</span>
+        <div class="bash-tool-label bash-tool-label-row">
+          <span class="bash-tool-output-title">
+            Output{{ hasError ? " (Error)" : "" }}:
+            <span v-if="executionTime" class="bash-tool-time">{{ executionTime }}</span>
+          </span>
+          <span class="bash-tool-copy-actions">
+            <button type="button" class="bash-tool-copy-btn" @click="copyCommand">
+              {{ copiedCommand ? "copied" : "Copy Command" }}
+            </button>
+            <button type="button" class="bash-tool-copy-btn" @click="copyResults">
+              {{ copiedResults ? "copied" : "Copy Results" }}
+            </button>
+          </span>
         </div>
         <AnsiText
           :class-name="`bash-tool-code ${hasError ? 'error' : ''}`"
@@ -77,6 +78,7 @@
 import { computed, nextTick, ref, watch } from "vue";
 import type { LLMContent } from "../../../types";
 import AnsiText from "./AnsiText.vue";
+import { copyText } from "../gitGraphLayout";
 import { useToolExpanded, useInToolDetail } from "../../composables/toolDetail";
 import ToolChevron from "./ToolChevron.vue";
 import ToolStatusIcon from "./ToolStatusIcon.vue";
@@ -182,4 +184,24 @@ const hasMoreLines = computed(
 const lineCount = computed(() =>
   props.streamingOutput ? props.streamingOutput.split("\n").length : 0,
 );
+
+const copiedCommand = ref(false);
+const copiedResults = ref(false);
+let copyTimer: ReturnType<typeof setTimeout> | null = null;
+
+async function copyCommand() {
+  if (await copyText(command.value)) {
+    copiedCommand.value = true;
+    if (copyTimer) clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => (copiedCommand.value = false), 1100);
+  }
+}
+
+async function copyResults() {
+  if (await copyText(output.value)) {
+    copiedResults.value = true;
+    if (copyTimer) clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => (copiedResults.value = false), 1100);
+  }
+}
 </script>

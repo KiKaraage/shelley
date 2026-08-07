@@ -1829,6 +1829,37 @@ body {
   font-weight: 400;
 }
 
+/* Output header row: title on the left, copy actions on the right. */
+.bash-tool-label-row {
+  justify-content: space-between;
+  width: 100%;
+}
+.bash-tool-output-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.bash-tool-copy-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.bash-tool-copy-btn {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  line-height: 1.4;
+}
+.bash-tool-copy-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--text-secondary);
+}
+
 .bash-tool-code {
   font-family: var(--font-mono);
   font-size: 0.875rem;
