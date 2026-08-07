@@ -118,6 +118,7 @@
           text
           severity="secondary"
           :aria-label="t('newConversation')"
+          v-tooltip.top="t('newConversation')"
           @click="onNewConversationClick"
         >
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,6 +135,7 @@
           text
           severity="secondary"
           :aria-label="t('closeConversations')"
+          v-tooltip.top="t('closeConversations')"
           @click="emit('close')"
         >
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
