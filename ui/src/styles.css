@@ -12621,6 +12621,19 @@ kbd {
 .overflow-menu-control {
   padding: 0.5rem;
 }
+
+/* A row holding multiple controls side by side (e.g. theme + notifications). */
+.overflow-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+}
+.overflow-menu-row .overflow-menu-control {
+  padding: 0.25rem 0;
+  flex: 1;
+  min-width: 0;
+}
 .overflow-menu-control .md-toggle-label {
   display: flex;
   justify-content: space-between;
