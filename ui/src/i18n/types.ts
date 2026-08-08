@@ -138,6 +138,11 @@ export interface TranslationKeys {
   // Models Modal
   manageModels: string;
   addModel: string;
+  importModels: string;
+  importing: string;
+  importedModelsCount: string;
+  skippedModelsCount: string;
+  done: string;
   refreshModels: string;
   refreshingModels: string;
   searchModels: string;
@@ -165,6 +170,8 @@ export interface TranslationKeys {
   apiKey: string;
   enterApiKey: string;
   maxContextTokens: string;
+  contextWindow: string;
+  contextWindowHint: string;
   imageSupport: string;
   imageSupportHelp: string;
   imageSupportAuto: string;

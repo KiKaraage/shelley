@@ -41,6 +41,9 @@ type Service struct {
 	// SupportsImages_ controls whether this service advertises image-input support.
 	// Default false (supports images).
 	SupportsImages_ bool
+
+	// ContextWindow overrides the hardcoded context-window lookup when non-zero.
+	ContextWindow int
 }
 
 var _ llm.Service = (*Service)(nil)
@@ -625,6 +628,9 @@ func (s *Service) SupportsImages() bool { return s.SupportsImages_ }
 
 // TokenContextWindow returns the maximum token context window size for this service
 func (s *Service) TokenContextWindow() int {
+	if s.ContextWindow > 0 {
+		return s.ContextWindow
+	}
 	model := s.Model
 	if model == "" {
 		model = DefaultModel

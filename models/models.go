@@ -592,7 +592,7 @@ func (m *Manager) customModelRows() ([]generated.Model, error) {
 	if m.db == nil {
 		return nil, nil
 	}
-	return m.db.GetModels(context.Background())
+	return m.db.GetEnabledModels(context.Background())
 }
 
 func (m *Manager) loadCustomModels() error {
@@ -823,6 +823,12 @@ func parseReasoningMap(raw string) (map[llm.ThinkingLevel]reasoningMapping, []ll
 // createServiceFromModel creates an LLM service from a database model configuration.
 func (m *Manager) createServiceFromModel(model *generated.Model) llm.Service {
 	supportsImages := ResolveSupportsImages(model.Endpoint, model.ModelName, model.ImageSupport)
+	// ContextWindow from the dedicated column; fall back to max_tokens for
+	// models created before the context_window column existed.
+	cw := int(model.ContextWindow)
+	if cw == 0 && model.MaxTokens > 0 {
+		cw = int(model.MaxTokens)
+	}
 	var service llm.Service
 	switch model.ProviderType {
 	case "anthropic":
@@ -833,6 +839,7 @@ func (m *Manager) createServiceFromModel(model *generated.Model) llm.Service {
 			HTTPC:           m.httpc,
 			ThinkingLevel:   llm.ThinkingLevelMedium,
 			SupportsImages_: supportsImages,
+			ContextWindow:   cw,
 		}
 	case "openai":
 		service = &oai.Service{
@@ -852,6 +859,7 @@ func (m *Manager) createServiceFromModel(model *generated.Model) llm.Service {
 			HTTPC:           m.httpc,
 			ProviderName:    "openai",
 			ReasoningEffort: model.ReasoningEffort,
+			ContextWindow:   cw,
 		}
 	case "openai-responses":
 		service = &oai.ResponsesService{
@@ -872,6 +880,7 @@ func (m *Manager) createServiceFromModel(model *generated.Model) llm.Service {
 			ThinkingLevel:   llm.ThinkingLevelMedium,
 			ReasoningEffort: model.ReasoningEffort,
 			ProviderName:    "openai",
+			ContextWindow:   cw,
 		}
 	case "gemini":
 		service = &gem.Service{
@@ -881,6 +890,7 @@ func (m *Manager) createServiceFromModel(model *generated.Model) llm.Service {
 			HTTPC:           m.httpc,
 			ReasoningEffort: model.ReasoningEffort,
 			SupportsImages_: supportsImages,
+			ContextWindow:   cw,
 		}
 	default:
 		if m.logger != nil {

@@ -555,6 +555,10 @@ type Service struct {
 	// value (used by custom-model config to pass provider-specific values like
 	// "xhigh" or "none"). Overridden by Request.ThinkingLevel when set.
 	ReasoningEffort string
+
+	// ContextWindow overrides the hardcoded context-window lookup when non-zero.
+	// Set from the DB for custom models so the UI meter shows the real limit.
+	ContextWindow int
 }
 
 var _ llm.Service = (*Service)(nil)
@@ -1239,8 +1243,9 @@ func (s *Service) SupportsImages() bool { return s.Model.SupportsImages }
 
 // TokenContextWindow returns the maximum token context window size for this service
 func (s *Service) TokenContextWindow() int {
-	// TODO: move TokenContextWindow information to Model struct
-
+	if s.ContextWindow > 0 {
+		return s.ContextWindow
+	}
 	model := cmp.Or(s.Model, DefaultModel)
 
 	// OpenAI models generally have 128k context windows

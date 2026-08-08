@@ -138,6 +138,11 @@ export const en: TranslationKeys = {
   // Models Modal
   manageModels: "Manage Models",
   addModel: "Add Model",
+  importModels: "Import Models",
+  importing: "Importing...",
+  importedModelsCount: "model(s) imported.",
+  skippedModelsCount: "skipped (already exist).",
+  done: "Done",
   refreshModels: "Refresh",
   refreshingModels: "Refreshing...",
   searchModels: "Search models",
@@ -165,6 +170,8 @@ export const en: TranslationKeys = {
   apiKey: "API Key",
   enterApiKey: "Enter API key",
   maxContextTokens: "Max Context Tokens",
+  contextWindow: "Context Window",
+  contextWindowHint: "Total context window size (0 = auto-detect from model name).",
   imageSupport: "Image input support",
   imageSupportHelp:
     "Auto detects this automatically. Pick Supported or Not supported to set it yourself.",

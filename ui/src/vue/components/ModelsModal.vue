@@ -1,14 +1,13 @@
 <!-- Manage Models: lists built-in + custom models and owns duplicate/delete +
-     refresh. The list is a compact PrimeVue DataTable (size="small" +
+     refresh + import. The list is a compact PrimeVue DataTable (size="small" +
      modelsTableDt tokens) grouped by source via rowGroupMode="subheader": in
      the default single-gateway install this collapses what used to be two
      full columns of the same repeated hostname/URL into one quiet group
      header line. Endpoints render per-row only when they differ from the
      group's common endpoint. Only custom rows carry a `model` and thus the
-     edit/duplicate/delete actions. Adding/editing opens ModelFormModal — a
-     separate stacked dialog layered on top of this one. Uses Modal.vue
-     (#title-right slot), useI18n, customModelsApi; shared form constants live
-     in customModelConstants.ts. -->
+     edit/duplicate/delete/toggle actions. Adding/editing opens ModelFormModal;
+     importing opens ImportModelsModal — separate stacked dialogs layered on
+     top of this one. -->
 <template>
   <Modal
     :is-open="isOpen"
@@ -25,6 +24,9 @@
           :disabled="refreshing || loading"
           @click="handleRefreshModels"
         />
+        <Button severity="secondary" size="small" @click="importOpen = true">
+          {{ t("importModels") }}
+        </Button>
         <Button size="small" @click="handleAddNew">+ {{ t("addModel") }}</Button>
       </div>
     </template>
@@ -58,7 +60,7 @@
         class="models-datatable"
         row-group-mode="subheader"
         group-rows-by="groupKey"
-        :pt="{ rowGroupHeaderCell: { colspan: 5 } }"
+        :pt="{ rowGroupHeaderCell: { colspan: 6 } }"
       >
         <template #groupheader="{ data }">
           <span class="models-group-name">{{ data.groupLabel }}</span>
@@ -98,6 +100,19 @@
                 t("imageSupportAutoShort")
               }}</span></span
             >
+          </template>
+        </Column>
+        <Column class="models-col-enabled">
+          <template #header>
+            <span class="sr-only">{{ t("enabled") }}</span>
+          </template>
+          <template #body="{ data }">
+            <ToggleSwitch
+              v-if="data.model"
+              :model-value="data.model.enabled"
+              @update:model-value="(v: boolean) => handleToggleEnabled(data.model!, v)"
+            />
+            <span v-else class="models-cell-muted">—</span>
           </template>
         </Column>
         <Column class="models-col-actions">
@@ -171,6 +186,13 @@
     @saved="handleFormSaved"
     @close="formOpen = false"
   />
+
+  <!-- Stacked import dialog. -->
+  <ImportModelsModal
+    :is-open="importOpen"
+    @imported="handleImported"
+    @close="importOpen = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -178,8 +200,10 @@ import { computed, ref, watch } from "vue";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Button from "primevue/button";
+import ToggleSwitch from "primevue/toggleswitch";
 import Modal from "./Modal.vue";
 import ModelFormModal from "./ModelFormModal.vue";
+import ImportModelsModal from "./ImportModelsModal.vue";
 import { modelsTableDt } from "./modelsTableDt";
 import { prettyModelLabels } from "../../utils/modelNames";
 import { API_TYPE_LABELS, PROVIDER_LABELS } from "./customModelConstants";
@@ -197,28 +221,21 @@ const refreshing = ref(false);
 const error = ref<string | null>(null);
 const builtInModels = ref<AvailableModel[]>([]);
 
-// Stacked add/edit dialog state. `editModel` is the custom model being edited,
-// or null when adding a new one.
+// Stacked add/edit dialog state.
 const formOpen = ref(false);
 const editModel = ref<CustomModel | null>(null);
+
+// Stacked import dialog state.
+const importOpen = ref(false);
 
 const builtInModelsFiltered = computed(() =>
   builtInModels.value.filter((m) => m.id !== "predictable"),
 );
 
-// True when the model-list DataTable (not the empty/loading views) is showing.
-// The list fills the modal edge-to-edge, so we drop the wrapper padding in that
-// state (see .models-modal-list).
 const showList = computed(
   () => !loading.value && (builtInModels.value.length > 0 || models.value.length > 0),
 );
 
-// Normalized rows so built-in + custom models render through one DataTable.
-// `model` is only present for custom rows, which are the editable/deletable
-// ones (built-ins have no actions). Rows are grouped by source (groupKey /
-// groupLabel drive the subheader); a group's common endpoint renders once in
-// the header, so per-row `endpoint` is only set when it differs (or for
-// custom rows, whose endpoints are user-configured and always shown).
 interface TableRow {
   key: string;
   groupKey: string;
@@ -237,8 +254,6 @@ interface TableRow {
 
 const tableRows = computed<TableRow[]>(() => {
   const labels = prettyModelLabels(builtInModelsFiltered.value);
-  // Group built-ins by source, preserving catalog order within and across
-  // groups (first appearance wins).
   const groups = new Map<string, AvailableModel[]>();
   for (const m of builtInModelsFiltered.value) {
     const src = m.source || "";
@@ -247,8 +262,6 @@ const tableRows = computed<TableRow[]>(() => {
   }
   const rows: TableRow[] = [];
   for (const [src, group] of groups) {
-    // Endpoint shared by every model in the group renders once in the group
-    // header; otherwise it stays per-row.
     const endpoints = new Set(group.map((m) => m.base_url || ""));
     const common = endpoints.size === 1 ? (group[0].base_url ?? "") : "";
     for (const m of group) {
@@ -292,7 +305,6 @@ const tableRows = computed<TableRow[]>(() => {
   return rows;
 });
 
-// Row counts per group for the "(N)" in each group header.
 const groupCounts = computed<Record<string, number>>(() => {
   const counts: Record<string, number> = {};
   for (const row of tableRows.value) {
@@ -301,8 +313,6 @@ const groupCounts = computed<Record<string, number>>(() => {
   return counts;
 });
 
-// For a custom model, the boolean its image_support setting evaluates to. When
-// set to "auto" we use the server-resolved supports_images; explicit yes/no win.
 function customModelSupportsImages(model: CustomModel): boolean {
   const setting = model.image_support ?? "auto";
   if (setting === "yes") return true;
@@ -312,7 +322,6 @@ function customModelSupportsImages(model: CustomModel): boolean {
 
 function customModelImageTitle(model: CustomModel): string {
   const label = customModelSupportsImages(model) ? t("imageSupportYes") : t("imageSupportNo");
-  // Surface what auto resolved to for auto models.
   if ((model.image_support ?? "auto") === "auto") {
     return `${t("imageSupportAuto")} \u2014 ${label}`;
   }
@@ -345,7 +354,6 @@ function handleEdit(model: CustomModel) {
   formOpen.value = true;
 }
 
-// The stacked form dialog saved a model; reload the list and notify the app.
 async function handleFormSaved() {
   await loadModels();
   emit("modelsChanged");
@@ -388,6 +396,22 @@ async function handleRefreshModels() {
   } finally {
     refreshing.value = false;
   }
+}
+
+async function handleToggleEnabled(model: CustomModel, enabled: boolean) {
+  try {
+    error.value = null;
+    await customModelsApi.updateCustomModel(model.model_id, { enabled });
+    await loadModels();
+    emit("modelsChanged");
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : "Failed to update model";
+  }
+}
+
+async function handleImported() {
+  await loadModels();
+  emit("modelsChanged");
 }
 
 watch(

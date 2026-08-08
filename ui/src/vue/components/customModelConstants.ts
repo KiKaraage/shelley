@@ -86,11 +86,13 @@ export interface FormData {
   api_key: string;
   model_name: string;
   max_tokens: number;
+  context_window: number;
   tags: string;
   reasoning_effort: string;
   reasoning_support: "auto" | "yes" | "no";
   reasoning_map: ReasoningMap;
   image_support: "auto" | "yes" | "no";
+  enabled: boolean;
 }
 
 export const emptyForm: FormData = {
@@ -101,9 +103,11 @@ export const emptyForm: FormData = {
   api_key: "",
   model_name: "",
   max_tokens: 200000,
+  context_window: 0,
   tags: "",
   reasoning_effort: "",
   reasoning_support: "auto",
   reasoning_map: { ...DEFAULT_REASONING_MAP },
   image_support: "auto",
+  enabled: true,
 };

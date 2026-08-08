@@ -120,6 +120,19 @@
         />
       </div>
 
+      <!-- Context Window -->
+      <div class="form-group">
+        <label>{{ t("contextWindow") }}</label>
+        <InputText
+          type="number"
+          :model-value="String(form.context_window)"
+          fluid
+          :dt="inputFieldDt"
+          @update:model-value="form.context_window = parseInt($event ?? '') || 0"
+        />
+        <div class="form-hint">{{ t("contextWindowHint") }}</div>
+      </div>
+
       <!-- Image input support -->
       <div class="form-group">
         <label>{{ t("imageSupport") }}</label>
@@ -368,11 +381,13 @@ watch(
         api_key: m.api_key,
         model_name: m.model_name,
         max_tokens: m.max_tokens,
+        context_window: m.context_window ?? 0,
         tags: m.tags,
         reasoning_effort: m.reasoning_effort || "",
         reasoning_support: m.reasoning_support || "auto",
         reasoning_map: parseReasoningMap(m.reasoning_map),
         image_support: m.image_support ?? "auto",
+        enabled: m.enabled ?? true,
       });
     } else {
       resetForm();
@@ -444,11 +459,13 @@ async function handleSave() {
       api_key: form.api_key,
       model_name: form.model_name,
       max_tokens: form.max_tokens,
+      context_window: form.context_window,
       tags: form.tags,
       reasoning_effort: form.reasoning_effort,
       reasoning_support: form.reasoning_support,
       reasoning_map: serializeReasoningMap(),
       image_support: form.image_support,
+      enabled: form.enabled,
     };
     if (props.editModel) {
       await customModelsApi.updateCustomModel(props.editModel.model_id, request);
