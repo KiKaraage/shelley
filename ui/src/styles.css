@@ -12203,8 +12203,14 @@ kbd {
 }
 .overflow-menu-row .overflow-menu-control {
   padding: 0.25rem 0;
-  flex: 1;
   min-width: 0;
+}
+/* Theme has 3 options, notifications 2 — give theme 60%, notif 40%. */
+.overflow-menu-row .overflow-menu-control-theme {
+  flex: 3;
+}
+.overflow-menu-row .overflow-menu-control-notif {
+  flex: 2;
 }
 .overflow-menu-control .md-toggle-label {
   display: flex;
