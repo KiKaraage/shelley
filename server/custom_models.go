@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"shelley.exe.dev/llm"
 	"shelley.exe.dev/llm/ant"
 	"shelley.exe.dev/llm/gem"
+	"shelley.exe.dev/llm/llmhttp"
 	"shelley.exe.dev/llm/oai"
 	"shelley.exe.dev/models"
 )
@@ -36,6 +38,8 @@ type ModelAPI struct {
 	// SupportsImages is the resolved boolean that "image_support" evaluates
 	// to for this model. It lets the UI show what "auto" resolves to.
 	SupportsImages bool `json:"supports_images"`
+	Enabled        bool `json:"enabled"`
+	ContextWindow  int64 `json:"context_window"`
 }
 
 // CreateModelRequest is the request body for creating a model.
@@ -51,6 +55,8 @@ type CreateModelRequest struct {
 	ImageSupport     string `json:"image_support"`     // "auto"|"yes"|"no"; empty = "auto"
 	ReasoningSupport string `json:"reasoning_support"` // "auto"|"yes"|"no"; empty = "auto"
 	ReasoningMap     string `json:"reasoning_map"`     // JSON map of Shelley level to provider-supported level
+	Enabled          bool   `json:"enabled"`
+	ContextWindow    int64  `json:"context_window"`
 }
 
 // UpdateModelRequest is the request body for updating a model.
@@ -66,6 +72,8 @@ type UpdateModelRequest struct {
 	ImageSupport     string  `json:"image_support"`     // "auto"|"yes"|"no"; empty preserves existing
 	ReasoningSupport string  `json:"reasoning_support"` // "auto"|"yes"|"no"; empty preserves existing
 	ReasoningMap     string  `json:"reasoning_map"`
+	Enabled          *bool   `json:"enabled,omitempty"`
+	ContextWindow    *int64  `json:"context_window,omitempty"`
 }
 
 // validImageSupport returns the canonical value or an error.
@@ -133,6 +141,8 @@ func toModelAPI(m generated.Model) ModelAPI {
 		ReasoningMap:      m.ReasoningMap,
 		SupportsReasoning: models.ResolveSupportsReasoning(m.Endpoint, m.ModelName, m.ReasoningSupport),
 		SupportsImages:    models.ResolveSupportsImages(m.Endpoint, m.ModelName, m.ImageSupport),
+		Enabled:           m.Enabled == 1,
+		ContextWindow:     m.ContextWindow,
 	}
 }
 
@@ -209,6 +219,10 @@ func (s *Server) handleCreateModel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	enabled := int64(1)
+	if !req.Enabled {
+		enabled = 0
+	}
 	model, err := s.db.CreateModel(r.Context(), generated.CreateModelParams{
 		ModelID:          modelID,
 		DisplayName:      req.DisplayName,
@@ -222,6 +236,8 @@ func (s *Server) handleCreateModel(w http.ResponseWriter, r *http.Request) {
 		ImageSupport:     imageSupport,
 		ReasoningSupport: reasoningSupport,
 		ReasoningMap:     req.ReasoningMap,
+		Enabled:          enabled,
+		ContextWindow:    req.ContextWindow,
 	})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to create model: %v", err), http.StatusInternalServerError)
@@ -338,6 +354,18 @@ func (s *Server) handleUpdateModel(w http.ResponseWriter, r *http.Request, model
 	if req.ReasoningEffort != nil {
 		reasoningEffort = *req.ReasoningEffort
 	}
+	enabled := existing.Enabled
+	if req.Enabled != nil {
+		if *req.Enabled {
+			enabled = 1
+		} else {
+			enabled = 0
+		}
+	}
+	contextWindow := existing.ContextWindow
+	if req.ContextWindow != nil {
+		contextWindow = *req.ContextWindow
+	}
 
 	model, err := s.db.UpdateModel(r.Context(), generated.UpdateModelParams{
 		DisplayName:      req.DisplayName,
@@ -351,6 +379,8 @@ func (s *Server) handleUpdateModel(w http.ResponseWriter, r *http.Request, model
 		ImageSupport:     imageSupport,
 		ReasoningSupport: reasoningSupport,
 		ReasoningMap:     req.ReasoningMap,
+		Enabled:          enabled,
+		ContextWindow:    contextWindow,
 		ModelID:          modelID,
 	})
 	if err != nil {
@@ -429,6 +459,8 @@ func (s *Server) handleDuplicateModel(w http.ResponseWriter, r *http.Request, mo
 		ImageSupport:     source.ImageSupport,
 		ReasoningSupport: source.ReasoningSupport,
 		ReasoningMap:     source.ReasoningMap,
+		Enabled:          source.Enabled,
+		ContextWindow:    source.ContextWindow,
 	})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to duplicate model: %v", err), http.StatusInternalServerError)
@@ -598,4 +630,147 @@ func (s *Server) handleTestModel(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"message": fmt.Sprintf("Test successful! Response: %s", responseText),
 	})
+}
+
+// ImportModelsRequest is the body for POST /api/custom-models/import.
+type ImportModelsRequest struct {
+	ProviderType string `json:"provider_type"` // only "openai" accepted
+	Endpoint     string `json:"endpoint"`
+	APIKey       string `json:"api_key"`
+}
+
+// ImportModelsResponse reports the result of an import.
+type ImportModelsResponse struct {
+	Imported int          `json:"imported"`
+	Skipped  int          `json:"skipped"`
+	Models   []ModelAPI   `json:"models"`
+}
+
+// oaiListModelsResponse is the shape of GET /v1/models for OpenAI-compatible APIs.
+type oaiListModelsResponse struct {
+	Data []struct {
+		ID string `json:"id"`
+		// Name is present in some extended endpoints (e.g. "DeepSeek: V4 Flash 0731").
+		Name string `json:"name"`
+	} `json:"data"`
+}
+
+const maxImportModelsBytes = 4 << 20 // 4 MiB
+
+func (s *Server) handleImportModels(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req ImportModelsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	if req.ProviderType != "openai" {
+		http.Error(w, "provider_type must be 'openai' (only OpenAI Chat Completions endpoints supported for import)", http.StatusBadRequest)
+		return
+	}
+	if req.Endpoint == "" || req.APIKey == "" {
+		http.Error(w, "endpoint and api_key are required", http.StatusBadRequest)
+		return
+	}
+
+	// Fetch /v1/models from the endpoint.
+	modelsURL := strings.TrimRight(req.Endpoint, "/") + "/v1/models"
+	fetchReq, err := http.NewRequestWithContext(r.Context(), "GET", modelsURL, nil)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
+		return
+	}
+	fetchReq.Header.Set("Authorization", "Bearer "+req.APIKey)
+
+	httpc := llmhttp.NewClient(nil)
+	resp, err := httpc.Do(fetchReq)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to fetch models from endpoint: %v", err), http.StatusBadGateway)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		http.Error(w, fmt.Sprintf("Endpoint returned %d: %s", resp.StatusCode, string(body)), http.StatusBadGateway)
+		return
+	}
+
+	var list oaiListModelsResponse
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxImportModelsBytes)).Decode(&list); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to parse models response: %v", err), http.StatusBadGateway)
+		return
+	}
+
+	// Fetch existing models to detect duplicates.
+	existing, err := s.db.GetModels(r.Context())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to list existing models: %v", err), http.StatusInternalServerError)
+		return
+	}
+	existingKeys := make(map[string]bool, len(existing))
+	for _, m := range existing {
+		// Match by endpoint + model_name.
+		existingKeys[m.Endpoint+"|"+m.ModelName] = true
+	}
+
+	var result ImportModelsResponse
+	for _, m := range list.Data {
+		if m.ID == "" {
+			continue
+		}
+		key := req.Endpoint + "|" + m.ID
+		if existingKeys[key] {
+			result.Skipped++
+			continue
+		}
+		existingKeys[key] = true
+
+		displayName := m.Name
+		if displayName == "" {
+			displayName = m.ID
+		}
+
+		modelID, err := s.generateUniqueModelID(r.Context(), req.Endpoint, m.ID)
+		if err != nil {
+			s.logger.Warn("Failed to generate model ID for imported model", "model_name", m.ID, "error", err)
+			continue
+		}
+
+		created, err := s.db.CreateModel(r.Context(), generated.CreateModelParams{
+			ModelID:          modelID,
+			DisplayName:      displayName,
+			ProviderType:     "openai",
+			Endpoint:         req.Endpoint,
+			ApiKey:           req.APIKey,
+			ModelName:        m.ID,
+			MaxTokens:        200000,
+			Tags:             "",
+			ReasoningEffort:  "",
+			ImageSupport:     "auto",
+			ReasoningSupport: "auto",
+			ReasoningMap:     "",
+			Enabled:          1,
+			ContextWindow:    0, // auto-detect from model name
+		})
+		if err != nil {
+			s.logger.Warn("Failed to create imported model", "model_name", m.ID, "error", err)
+			continue
+		}
+		result.Models = append(result.Models, toModelAPI(*created))
+		result.Imported++
+	}
+
+	// Refresh the model manager so imported models are available immediately.
+	if err := s.llmManager.RefreshCustomModels(); err != nil {
+		s.logger.Warn("Failed to refresh custom models after import", "error", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }

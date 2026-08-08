@@ -131,6 +131,11 @@ export const ru: TranslationKeys = {
   // Models Modal
   manageModels: "Управление моделями",
   addModel: "Добавить модель",
+  importModels: "Import Models",
+  importing: "Importing...",
+  importedModelsCount: "model(s) imported.",
+  skippedModelsCount: "skipped.",
+  done: "Done",
   refreshModels: "Обновить",
   refreshingModels: "Обновление...",
   searchModels: "Поиск моделей",
@@ -158,6 +163,8 @@ export const ru: TranslationKeys = {
   apiKey: "API-ключ",
   enterApiKey: "Введите API-ключ",
   maxContextTokens: "Макс. токенов контекста",
+  contextWindow: "Окно контекста",
+  contextWindowHint: "Общий размер окна контекста (0 = автоопределение).",
   imageSupport: "Image input support",
   imageSupportHelp:
     "Auto определяет это автоматически. Выберите «Поддерживается» или «Не поддерживается», чтобы задать вручную.",

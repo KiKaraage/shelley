@@ -40,6 +40,9 @@ type ResponsesService struct {
 	// custom-model configurations to pass through provider-specific values
 	// (e.g. "xhigh", "none") without Shelley needing to know them.
 	ReasoningEffort string
+
+	// ContextWindow overrides the hardcoded context-window lookup when non-zero.
+	ContextWindow int
 }
 
 var _ llm.Service = (*ResponsesService)(nil)
@@ -491,6 +494,9 @@ func (s *ResponsesService) SupportsImages() bool { return s.Model.SupportsImages
 
 // TokenContextWindow returns the maximum token context window size for this service
 func (s *ResponsesService) TokenContextWindow() int {
+	if s.ContextWindow > 0 {
+		return s.ContextWindow
+	}
 	model := cmp.Or(s.Model, DefaultModel)
 
 	// Use the same context window logic as the regular service

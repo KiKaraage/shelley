@@ -2007,6 +2007,19 @@ func (db *DB) GetModels(ctx context.Context) ([]generated.Model, error) {
 	return models, err
 }
 
+// GetEnabledModels returns only enabled models for the runtime model manager.
+// The management UI uses GetModels (all models) so disabled models can be re-enabled.
+func (db *DB) GetEnabledModels(ctx context.Context) ([]generated.Model, error) {
+	var models []generated.Model
+	err := db.pool.Rx(ctx, func(ctx context.Context, rx *Rx) error {
+		q := generated.New(rx.Conn())
+		var err error
+		models, err = q.GetEnabledModels(ctx)
+		return err
+	})
+	return models, err
+}
+
 // GetModel returns a model by ID
 func (db *DB) GetModel(ctx context.Context, modelID string) (*generated.Model, error) {
 	var model generated.Model

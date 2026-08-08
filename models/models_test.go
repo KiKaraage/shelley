@@ -370,6 +370,7 @@ func TestRefreshCustomModelsConcurrent(t *testing.T) {
 		ApiKey:       "test-key",
 		ModelName:    "test-model",
 		MaxTokens:    4096,
+		Enabled:      1,
 	}); err != nil {
 		t.Fatalf("failed to create test model: %v", err)
 	}
@@ -420,6 +421,7 @@ func TestRefreshBuiltModelsReplacesBuiltModelsAndPreservesCustomModels(t *testin
 		ApiKey:       "test-key",
 		ModelName:    "test-model",
 		MaxTokens:    4096,
+		Enabled:      1,
 	}); err != nil {
 		t.Fatalf("failed to create test model: %v", err)
 	}

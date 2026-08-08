@@ -116,6 +116,9 @@ func (s *Service) SupportsImages() bool { return s.SupportsImages_ }
 
 // TokenContextWindow returns the maximum token context window size for this service
 func (s *Service) TokenContextWindow() int {
+	if s.ContextWindow > 0 {
+		return s.ContextWindow
+	}
 	return 200000
 }
 
@@ -161,6 +164,9 @@ type Service struct {
 	ThinkingLevel   llm.ThinkingLevel // service-level default; ThinkingLevelDefault (zero) means "none configured"
 	Backoff         []time.Duration   // retry backoff durations; defaults to {15s, 30s, 60s} if nil
 	SupportsImages_ bool              // whether this service accepts image inputs
+
+	// ContextWindow overrides the hardcoded context-window when non-zero.
+	ContextWindow int
 }
 
 var _ llm.Service = (*Service)(nil)

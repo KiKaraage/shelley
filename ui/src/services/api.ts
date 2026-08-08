@@ -849,6 +849,8 @@ export interface CustomModel {
   supports_reasoning: boolean;
   image_support: "auto" | "yes" | "no";
   supports_images: boolean; // Resolved boolean that image_support evaluates to
+  enabled: boolean;
+  context_window: number;
 }
 
 export interface CreateCustomModelRequest {
@@ -863,6 +865,20 @@ export interface CreateCustomModelRequest {
   reasoning_support: "auto" | "yes" | "no";
   reasoning_map: string;
   image_support: "auto" | "yes" | "no";
+  enabled?: boolean;
+  context_window?: number;
+}
+
+export interface ImportModelsRequest {
+  provider_type: string;
+  endpoint: string;
+  api_key: string;
+}
+
+export interface ImportModelsResponse {
+  imported: number;
+  skipped: number;
+  models: CustomModel[];
 }
 
 export interface TestCustomModelRequest {
@@ -949,6 +965,18 @@ class CustomModelsApi {
     });
     if (!response.ok) {
       throw await responseError(response, "Failed to test custom model");
+    }
+    return response.json();
+  }
+
+  async importModels(request: ImportModelsRequest): Promise<ImportModelsResponse> {
+    const response = await fetch(`${this.baseUrl}/custom-models/import`, {
+      method: "POST",
+      headers: this.postHeaders,
+      body: JSON.stringify(request),
+    });
+    if (!response.ok) {
+      throw await responseError(response, "Failed to import models");
     }
     return response.json();
   }

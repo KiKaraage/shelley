@@ -509,6 +509,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 
 	// Custom models API
 	mux.Handle("/api/custom-models", http.HandlerFunc(s.handleCustomModels))
+	mux.Handle("/api/custom-models/import", http.HandlerFunc(s.handleImportModels))
 	mux.Handle("/api/custom-models/", http.HandlerFunc(s.handleCustomModel))
 	mux.Handle("/api/custom-models-test", http.HandlerFunc(s.handleTestModel))
 

@@ -1,0 +1,1 @@
+ALTER TABLE models ADD COLUMN context_window INTEGER NOT NULL DEFAULT 0;
