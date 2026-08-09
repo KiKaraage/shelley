@@ -457,7 +457,7 @@ body {
 /* Header */
 .app-bar-title {
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 600;
   line-height: 2rem;
@@ -867,7 +867,8 @@ body {
 }
 
 .conversation-item .conversation-cwd {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
+  font-weight: bold;
   font-size: 0.75rem;
   opacity: 0.8;
   overflow: hidden;
@@ -1663,13 +1664,13 @@ body {
   gap: 0.4rem;
 }
 .bash-tool-copy-btn {
-  background: var(--bg-base);
+  background: var(--gray-100);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   border-radius: 0.25rem;
   padding: 0.1rem 0.4rem;
   font-size: 0.7rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   cursor: pointer;
   line-height: 1.4;
 }
@@ -3270,6 +3271,7 @@ select:disabled {
 }
 
 .status-message {
+  font-family: var(--font-sans);
   color: var(--text-secondary);
   font-size: 0.875rem;
   flex: 1;
@@ -3277,11 +3279,11 @@ select:disabled {
 }
 
 /* "Ready on <hostname>" is a readout like the cwd/tokens/model group on the
-   other end of the bar, not prose — same mono type, so the bar reads as one
+   other end of the bar, not prose — same sans type, so the bar reads as one
    thing. The other .status-message variants (error, disconnected, no-models)
    are sentences and stay in the default sans. */
 .status-message.status-ready {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.75rem;
   line-height: 1.2;
   color: var(--text-tertiary);
@@ -3326,7 +3328,7 @@ select:disabled {
 
 .animated-working {
   display: inline;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
 }
 
 .animated-working .bold-letter {
@@ -4776,7 +4778,7 @@ svg {
   gap: 0.375rem;
   margin-left: auto;
   min-width: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.75rem;
   line-height: 1.2;
   color: var(--text-secondary);
@@ -8096,7 +8098,7 @@ kbd {
 }
 
 .system-prompt-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.875rem;
   color: var(--text-primary);
   font-weight: 500;
@@ -8558,7 +8560,7 @@ kbd {
 }
 
 .system-prompt-tools-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.875rem;
   color: var(--text-primary);
   font-weight: 500;
@@ -8620,7 +8622,7 @@ kbd {
 }
 
 .system-prompt-tool-name {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.75rem;
   color: var(--text-accent);
   white-space: nowrap;
@@ -10039,7 +10041,7 @@ kbd {
 .model-bar-name {
   color: var(--text-secondary);
   font-size: 0.875rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
 }
 
 /* Floating toolbar shown above/below a text selection inside a commentable
