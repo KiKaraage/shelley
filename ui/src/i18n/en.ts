@@ -202,6 +202,8 @@ export const en: TranslationKeys = {
   cancel: "Cancel",
   duplicate: "Duplicate",
   delete_: "Delete",
+  disable: "Disable",
+  enable: "Enable",
   modelNameRequired: "Model name is required",
   apiKeyRequired: "API key is required",
   noModelsConfigured: "No models configured",
