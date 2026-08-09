@@ -87,3 +87,15 @@ Changes: Overhauled custom-model storage and management:
   - **Context window fix**: new `context_window` column on `models` (default 0). Each llm.Service struct (`oai.Service`, `oai.ResponsesService`, `gem.Service`, `ant.Service`) gained a `ContextWindow int` field; `TokenContextWindow()` returns it when non-zero, falling back to the existing hardcoded per-model switch. `createServiceFromModel()` sets `ContextWindow` from the DB column (falling back to `max_tokens` for pre-migration rows). The add/edit form (`ModelFormModal.vue`) now exposes a "Context Window" input alongside "Max Context Tokens" so users can set the real context limit that drives the UI meter, instead of the hardcoded 128k default that unknown models fell into.
   - **Usage cost and cache hit rate**: The status bar context-usage label shows the estimated cost (from the pricing lookup) alongside the token count (e.g. `76k $0.43`). The token marker in the chat timeline also shows per-call cost. The Usage Details modal (per-message) shows Cache Hit Rate = (cache_read + cache_write) / (cache_read + cache_write + input + output) * 100%. The pricing lookup runs when usage entries are first needed (hover/focus/click on the context bar).
 Watchouts: `max_tokens` still controls max output/completion tokens (`max_completion_tokens` on the wire) — it is NOT the context window. `context_window` is the total context size for the UI meter. Only OpenAI Chat Completions (`provider_type: "openai"`) is supported for import; Anthropic/Gemini/OpenAI Responses have different model-list APIs. The sqlc-generated files picked up a version bump (v1.30.0 -> v1.31.1) in their headers — harmless. The `customModelRows()` change means any test that creates a model without `Enabled: 1` will have it filtered from the runtime; `models_test.go` was updated to set `Enabled: 1`.
+
+## PATCH-008
+Status: active
+Base: 1d4cbe7
+Files: db/schema/040-model-pricing.sql, db/query/models.sql, db/generated/models.sql.go, db/generated/models.go, server/custom_models.go, server/model_costs.go
+Changes: Import pricing from /v1/models into the DB:
+  - New migration adds `input_price`, `output_price`, `cache_read_price`, `cache_write_price` columns to `models` (all REAL, default 0).
+  - Import (`POST /api/custom-models/import`) now parses the `pricing` field from the `/v1/models` response and stores per-million-token prices. Per-token strings are converted (×1M). When only `cache_prompt` is set (no `cache_write`), it is used for both cache read and cache write.
+  - `POST /api/model-costs` resolves pricing by checking DB-stored custom model prices first, then falling back to the models.dev snapshot.
+  - `PUT /api/custom-models/{id}` supports optional `input_price`, `output_price`, `cache_read_price`, `cache_write_price` fields (pointer types — omit to preserve existing).
+  - Duplicate model preserves pricing from source.
+Watchouts: Existing models in the DB will have 0 pricing — re-import from the provider to populate. The embedded models.dev snapshot also covers crof.ai models as a fallback.
