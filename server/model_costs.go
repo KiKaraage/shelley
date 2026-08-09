@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"shelley.exe.dev/models/modelsdev"
 )
@@ -15,16 +16,22 @@ func (s *Server) resolveCost(ctx context.Context, endpoint, model string) (model
 	if model == "" {
 		return modelsdev.Cost{}, false
 	}
-	// Check DB-stored pricing (from /v1/models import).
+	// Check DB-stored pricing (from /v1/models import). Usage URLs carry
+	// extra path segments (e.g. /chat/completions) that are not part of the
+	// DB-stored base endpoint. Match by prefix, but only when the next byte
+	// after the base is '/' or end-of-string (prevents hostname spoofing).
 	if dbModels, err := s.db.GetEnabledModels(ctx); err == nil {
 		for _, m := range dbModels {
-			if m.Endpoint == endpoint && m.ModelName == model && m.InputPrice > 0 {
-				return modelsdev.Cost{
-					Input:      m.InputPrice,
-					Output:     m.OutputPrice,
-					CacheRead:  m.CacheReadPrice,
-					CacheWrite: m.CacheWritePrice,
-				}, true
+			if m.ModelName == model && m.InputPrice > 0 {
+				if m.Endpoint == endpoint ||
+					(len(endpoint) > len(m.Endpoint) && endpoint[len(m.Endpoint)] == '/' && strings.HasPrefix(endpoint, m.Endpoint)) {
+					return modelsdev.Cost{
+						Input:      m.InputPrice,
+						Output:     m.OutputPrice,
+						CacheRead:  m.CacheReadPrice,
+						CacheWrite: m.CacheWritePrice,
+					}, true
+				}
 			}
 		}
 	}
