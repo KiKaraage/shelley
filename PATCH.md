@@ -8,7 +8,7 @@
 ```sh
 # 1. Check state
 cd ~/.config/shelley/shelley-customization
-git status --short && git branch --show-current   # expect: clean, on "custom"
+git status --short && git branch --show-current   # expect: clean, on "ki"
 
 # 2. Check upstream
 git fetch origin main --tags
@@ -19,8 +19,8 @@ git merge-base HEAD origin/main                   # current upstream base
 cd ui && pnpm run build && cd ..
 BASE=$(git merge-base HEAD origin/main)
 TAG=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "$BASE"); SHA=$(git rev-parse --short HEAD)
-go build -ldflags "-X shelley.exe.dev/version.Version=${TAG#v}-custom.$SHA -X shelley.exe.dev/version.Tag=$TAG -X shelley.exe.dev/version.Customized=true" -o bin/shelley ./cmd/shelley
-bin/shelley version                               # verify: -custom.<sha>, customized:true
+go build -ldflags "-X shelley.exe.dev/version.Version=${TAG#v}-ki.$SHA -X shelley.exe.dev/version.Tag=$TAG -X shelley.exe.dev/version.Customized=true" -o bin/shelley ./cmd/shelley
+bin/shelley version                               # verify: -ki.<sha>, customized:true
 
 # 4. Install (side-by-side + rename; never copy over the running binary)
 DEST=/var/home/ki/.local/bin/shelley; SRC=bin/shelley
