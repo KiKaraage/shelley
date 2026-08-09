@@ -18,6 +18,7 @@
     :title="`Context size: ${node.ctx.toLocaleString()} tokens`"
   >
     <span>{{ node.label }}</span>
+    <span v-if="node.cost" class="context-token-cost">${{ node.cost < 0.01 ? node.cost.toFixed(4) : node.cost.toFixed(2) }}</span>
   </div>
   <MessageComponent
     v-else-if="node.kind === 'message' && node.item.message"
