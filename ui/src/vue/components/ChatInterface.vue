@@ -141,9 +141,12 @@
           "
           :can-export="!!(conversationId && messages.length > 0)"
           :has-update="hasUpdate"
+          :gist-id="gistId"
+          :gist-url="gistUrl"
           @open-external-link="openExternalLink"
           @archive="archiveFromMenu"
           @export="openExport"
+          @export-gist="exportGistAction"
           @edit-agents-md="showAgentsMdEditor = true"
           @edit-file="props.onOpenFileFinder?.()"
           @check-version="openVersionModal"
@@ -428,6 +431,9 @@
       :is-loading="versionLoading"
       @close="closeVersionModal"
     />
+
+    <!-- Gist toast -->
+    <div :class="['gist-toast', { 'gist-toast-show': toast }]">{{ toast }}</div>
   </div>
 </template>
 
@@ -521,6 +527,7 @@ import MessageRenderNode from "./MessageRenderNode.vue";
 import QueuedGhostMessage from "./QueuedGhostMessage.vue";
 import ChatStatusContent from "./ChatStatusContent.vue";
 import MarkdownContent from "./MarkdownContent.vue";
+import { gistApi, type GistStatus } from "../../services/api_gist";
 
 // Props mirror ChatInterfaceProps in the React source. Callbacks that
 // ChatInterface awaits or simply invokes are passed as function props
@@ -2463,6 +2470,48 @@ function focusOrOpenTerminal() {
 }
 function openExport() {
   window.open(`/export/${props.conversationId}`, "_blank", "noopener");
+}
+
+// ---- Gist export ----
+const toast = ref<string | null>(null);
+const gistId = ref<string | null>(null);
+const gistUrl = ref<string | null>(null);
+
+// Load gist status when conversation changes.
+watch(
+  () => props.conversationId,
+  async (id) => {
+    if (!id) { gistId.value = null; gistUrl.value = null; return; }
+    try {
+      const status: GistStatus = await gistApi.getGistStatus(id);
+      gistId.value = status.gist_id ?? null;
+      gistUrl.value = status.gist_url ?? null;
+    } catch { /* ignore */ }
+  },
+  { immediate: true },
+);
+
+let gistToastTimer: ReturnType<typeof setTimeout> | undefined;
+function gistToast(msg: string) {
+  toast.value = msg;
+  if (gistToastTimer) clearTimeout(gistToastTimer);
+  gistToastTimer = setTimeout(() => (toast.value = null), 3000);
+}
+
+async function exportGistAction() {
+  if (!props.conversationId) return;
+  try {
+    const isUpdate = !!gistId.value;
+    const result = await (isUpdate ? gistApi.updateGist : gistApi.exportGist)(props.conversationId);
+    gistId.value = result.gist_id;
+    gistUrl.value = result.gist_url;
+    gistToast(isUpdate ? "Gist updated" : "Gist created — " + result.gist_url);
+  } catch (err: any) {
+    const msg = err?.message || "Gist export failed";
+    if (msg.includes("gh_not_auth")) gistToast("Not logged in to GitHub — run: gh auth login");
+    else if (msg.includes("gist_needs_name")) gistToast("Session must have a name (not 'Untitled')");
+    else gistToast(msg);
+  }
 }
 async function archiveFromMenu() {
   if (!props.conversationId || !props.onArchiveConversation) return;

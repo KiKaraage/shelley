@@ -96,6 +96,19 @@
         </button>
       </template>
 
+      <template v-if="canExport">
+        <button
+          class="overflow-menu-item"
+          v-tooltip.left="gistId ? t('updateGist') : t('exportToGist')"
+          @click="onExportGist"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="chat-menu-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          {{ gistId ? t("updateGist") : t("exportToGist") }}
+        </button>
+      </template>
+
       <div class="overflow-menu-divider" />
       <button class="overflow-menu-item" @click="onEditAgentsMd">
         <i class="pi pi-pencil chat-menu-icon" aria-hidden="true" />
@@ -307,12 +320,15 @@ defineProps<{
   canArchive: boolean;
   canExport: boolean;
   hasUpdate: boolean;
+  gistId: string | null;
+  gistUrl: string | null;
 }>();
 
 const emit = defineEmits<{
   (e: "open-external-link", url: string): void;
   (e: "archive"): void;
   (e: "export"): void;
+  (e: "export-gist"): void;
   (e: "edit-agents-md"): void;
   (e: "edit-file"): void;
   (e: "check-version"): void;
@@ -353,6 +369,7 @@ function hide() {
 // overloads type-check cleanly.
 const onArchive = () => (emit("archive"), hide());
 const onExport = () => (emit("export"), hide());
+const onExportGist = () => (emit("export-gist"), hide());
 const onEditAgentsMd = () => (emit("edit-agents-md"), hide());
 const onEditFile = () => (emit("edit-file"), hide());
 const onCheckVersion = () => (emit("check-version"), hide());

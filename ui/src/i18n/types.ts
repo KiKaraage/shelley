@@ -17,6 +17,11 @@ export interface TranslationKeys {
   terminal: string;
   archiveConversation: string;
   exportConversation: string;
+  exportToGist: string;
+  updateGist: string;
+  gistNeedsName: string;
+  gistGhNotInstalled: string;
+  gistGhNotAuth: string;
   checkForNewVersion: string;
   conversationView: string;
   seeAllMessages: string;

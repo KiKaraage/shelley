@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Slug}} — Shelley Session</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8f9fa; color: #1a1a2e; line-height: 1.6; }
+.page { max-width: 860px; margin: 0 auto; padding: 2rem 1rem; }
+.header { text-align: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e0e0e0; }
+.header h1 { font-size: 1.5rem; color: #2d3748; }
+.header .meta { font-size: 0.85rem; color: #718096; margin-top: 0.5rem; }
+.header .meta span { margin: 0 0.5rem; }
+.message { margin-bottom: 1rem; display: flex; flex-direction: column; }
+.message-user .bubble { background: #e8f4fd; border-radius: 1rem 1rem 0 1rem; max-width: 80%; margin-left: auto; }
+.message-agent .bubble { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem 1rem 1rem 0; }
+.message-system .bubble { background: #f0f0f0; border-radius: 0.5rem; font-size: 0.85rem; color: #718096; text-align: center; }
+.message-error .bubble { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 0.5rem; color: #c53030; }
+.bubble { padding: 0.75rem 1rem; overflow-wrap: break-word; word-wrap: break-word; }
+.role { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #a0aec0; margin-bottom: 0.25rem; padding-left: 0.5rem; }
+.message-user .role { text-align: right; padding-right: 0.5rem; padding-left: 0; }
+/* Markdown content */
+.bubble p { margin: 0.5rem 0; }
+.bubble p:first-child { margin-top: 0; }
+.bubble p:last-child { margin-bottom: 0; }
+.bubble ul, .bubble ol { margin: 0.5rem 0; padding-left: 1.5rem; }
+.bubble h1, .bubble h2, .bubble h3, .bubble h4 { margin: 1rem 0 0.5rem; }
+.bubble h1 { font-size: 1.25rem; }
+.bubble h2 { font-size: 1.1rem; }
+.bubble h3 { font-size: 1rem; }
+.bubble code { background: #edf2f7; padding: 0.15em 0.35em; border-radius: 3px; font-size: 0.9em; }
+.bubble pre { background: #1a202c; color: #e2e8f0; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0; }
+.bubble pre code { background: none; padding: 0; color: inherit; font-size: 0.85rem; }
+.bubble blockquote { border-left: 3px solid #cbd5e0; padding-left: 0.75rem; color: #4a5568; margin: 0.5rem 0; }
+.bubble table { border-collapse: collapse; margin: 0.5rem 0; width: 100%; }
+.bubble th, .bubble td { border: 1px solid #e2e8f0; padding: 0.4rem 0.6rem; text-align: left; font-size: 0.85rem; }
+.bubble th { background: #f7fafc; }
+.bubble a { color: #3182ce; text-decoration: none; }
+.bubble a:hover { text-decoration: underline; }
+.bubble img { max-width: 100%; border-radius: 0.5rem; margin: 0.5rem 0; }
+.bubble strong { font-weight: 600; }
+.bubble em { font-style: italic; }
+.bubble hr { border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0; }
+/* Tool calls and thinking */
+details { margin: 0.5rem 0; }
+summary { cursor: pointer; font-size: 0.85rem; color: #4a5568; padding: 0.25rem 0; user-select: none; }
+summary:hover { color: #2d3748; }
+.tool-call { border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem 0.75rem; margin: 0.5rem 0; background: #fafbfc; }
+.tool-call .tool-name { font-weight: 600; font-size: 0.85rem; color: #2d3748; }
+.tool-call pre { margin: 0.5rem 0 0; }
+footer { text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e0e0e0; font-size: 0.8rem; color: #a0aec0; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header" id="header"></div>
+  <div id="messages"></div>
+  <footer>Exported by <a href="https://shelley.dev">Shelley</a></footer>
+</div>
+<script id="session-data" type="application/json">{{.EncodedData}}</script>
+<script>
+(function() {
+  "use strict";
+  var raw = document.getElementById("session-data").textContent;
+  var data = JSON.parse(atob(raw));
+
+  // Render header
+  var hdr = document.getElementById("header");
+  var h = "<h1>" + escHtml(data.conversation.slug || "Session") + "</h1>";
+  var meta = [];
+  if (data.conversation.model) meta.push("Model: " + escHtml(data.conversation.model));
+  if (data.conversation.cwd) meta.push("Dir: " + escHtml(data.conversation.cwd));
+  if (data.conversation.date) meta.push("Started: " + fmtDate(data.conversation.date));
+  meta.push("Exported: " + fmtDate(new Date().toISOString()));
+  h += "<div class=\"meta\">" + meta.map(function(s){return "<span>"+s+"</span>"}).join("") + "</div>";
+  hdr.innerHTML = h;
+
+  // Content type constants (mirror llm/llm.go)
+  var TYPE_TEXT = 2, TYPE_THINKING = 3, TYPE_REDACTED_THINKING = 4,
+      TYPE_TOOL_USE = 5, TYPE_TOOL_RESULT = 6, TYPE_SERVER_TOOL_USE = 7;
+
+  var msgDiv = document.getElementById("messages");
+  for (var i = 0; i < data.messages.length; i++) {
+    var m = data.messages[i];
+    if (m.type === "system") continue;
+    var div = document.createElement("div");
+    div.className = "message message-" + m.type;
+    var role = m.type === "agent" ? "Assistant" : m.type === "user" ? "User" : m.type;
+    if (m.type !== "error" && m.type !== "warning") {
+      div.innerHTML = "<div class=\"role\">" + escHtml(role) + "</div>";
+    }
+    var bubble = document.createElement("div");
+    bubble.className = "bubble";
+
+    if (m.type === "error" || m.type === "warning") {
+      var text = extractText(m);
+      bubble.innerHTML = "<div class=\"role\">\u26a0\ufe0f " + escHtml(role) + "</div><p>" + escHtml(text) + "</p>";
+    } else {
+      var llm = parseLLM(m);
+      if (llm && llm.Content) {
+        for (var j = 0; j < llm.Content.length; j++) {
+          var c = llm.Content[j];
+          renderContent(bubble, c);
+        }
+      }
+    }
+
+    if (bubble.innerHTML.trim()) {
+      div.appendChild(bubble);
+      msgDiv.appendChild(div);
+    }
+  }
+
+  function renderContent(bubble, c) {
+    if (c.Type === TYPE_TEXT && c.Text && c.Text.trim()) {
+      bubble.innerHTML += renderMarkdown(c.Text.trim());
+    } else if (c.Type === TYPE_THINKING || c.Type === TYPE_REDACTED_THINKING) {
+      var th = (c.Thinking || c.Text || "").trim();
+      if (th) {
+        bubble.innerHTML += "<details><summary>\ud83d\udcad Thinking</summary>" + renderMarkdown(th) + "</details>";
+      }
+    } else if (c.Type === TYPE_TOOL_USE || c.Type === TYPE_SERVER_TOOL_USE) {
+      var name = c.ToolName || "tool";
+      var input = "";
+      if (c.ToolInput != null) {
+        input = typeof c.ToolInput === "string" ? c.ToolInput : JSON.stringify(c.ToolInput, null, 2);
+      }
+      bubble.innerHTML += "<div class=\"tool-call\"><span class=\"tool-name\">\ud83d\udee0\ufe0f " + escHtml(name) + "</span><details><summary>Show input</summary><pre><code>" + escHtml(input) + "</code></pre></details></div>";
+    }
+  }
+
+  function extractText(m) {
+    try {
+      var ud = m.user_data ? (typeof m.user_data === "string" ? JSON.parse(m.user_data) : m.user_data) : null;
+      if (ud && ud.text) return ud.text;
+    } catch(e) {}
+    var llm = parseLLM(m);
+    if (llm && llm.Content) {
+      for (var k = 0; k < llm.Content.length; k++) {
+        if (llm.Content[k].Type === TYPE_TEXT && llm.Content[k].Text) return llm.Content[k].Text;
+      }
+    }
+    return "Error";
+  }
+
+  function parseLLM(m) {
+    if (!m.llm_data) return null;
+    try { return typeof m.llm_data === "string" ? JSON.parse(m.llm_data) : m.llm_data; }
+    catch(e) { return null; }
+  }
+
+  // Minimal markdown renderer (bold, italic, code, links, headers, lists)
+  function renderMarkdown(md) {
+    var s = escHtml(md);
+    // Code blocks first
+    s = s.replace(/
