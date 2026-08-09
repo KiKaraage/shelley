@@ -91,6 +91,7 @@ Watchouts: `max_tokens` still controls max output/completion tokens (`max_comple
 ## PATCH-008
 Status: active
 Base: 1d4cbe7
+Fixes: resolveCost now matches imported-model pricing by endpoint prefix (usage URLs carry trailing segments like /chat/completions that never matched the base endpoint); path-boundary guard prevents hostname spoofing.
 Files: db/schema/040-model-pricing.sql, db/query/models.sql, db/generated/models.sql.go, db/generated/models.go, server/custom_models.go, server/model_costs.go
 Changes: Import pricing from /v1/models into the DB:
   - New migration adds `input_price`, `output_price`, `cache_read_price`, `cache_write_price` columns to `models` (all REAL, default 0).
