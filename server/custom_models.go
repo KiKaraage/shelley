@@ -717,6 +717,8 @@ type oaiListModelsResponse struct {
 			CacheRead  string `json:"cache_prompt"`
 			CacheWrite string `json:"cache_write"`
 		} `json:"pricing"`
+		ContextLength        int64 `json:"context_length"`
+		MaxCompletionTokens  int64 `json:"max_completion_tokens"`
 	} `json:"data"`
 }
 
@@ -830,6 +832,9 @@ func (s *Server) handleImportModels(w http.ResponseWriter, r *http.Request) {
 		existingKeys[key] = true
 
 		displayName := m.Name
+		if i := strings.Index(displayName, ":"); i >= 0 {
+			displayName = strings.TrimSpace(displayName[i+1:])
+		}
 		if displayName == "" {
 			displayName = m.ID
 		}
@@ -841,6 +846,11 @@ func (s *Server) handleImportModels(w http.ResponseWriter, r *http.Request) {
 		}
 
 		inputPrice, outputPrice, cacheReadPrice, cacheWritePrice := parseModelPricing(m.Pricing)
+		maxTokens := int64(200000)
+		if m.MaxCompletionTokens > 0 {
+			maxTokens = m.MaxCompletionTokens
+		}
+		contextWindow := m.ContextLength
 		created, err := s.db.CreateModel(r.Context(), generated.CreateModelParams{
 			ModelID:          modelID,
 			DisplayName:      displayName,
@@ -848,14 +858,14 @@ func (s *Server) handleImportModels(w http.ResponseWriter, r *http.Request) {
 			Endpoint:         req.Endpoint,
 			ApiKey:           req.APIKey,
 			ModelName:        m.ID,
-			MaxTokens:        200000,
+			MaxTokens:        maxTokens,
 			Tags:             "",
 			ReasoningEffort:  "",
 			ImageSupport:     "auto",
 			ReasoningSupport: "auto",
 			ReasoningMap:     "",
 			Enabled:          1,
-			ContextWindow:    0, // auto-detect from model name
+			ContextWindow:    contextWindow,
 			InputPrice:       inputPrice,
 			OutputPrice:      outputPrice,
 			CacheReadPrice:   cacheReadPrice,
