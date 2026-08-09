@@ -249,6 +249,7 @@ const props = defineProps<{
   /** Told before the context usage popup opens, so ChatInterface can start
    *  computing the cost graph's usage entries (see usageWanted there). */
   onUsageNeeded: () => void;
+  estimatedCost?: number;
 }>();
 
 const { t } = useI18n();
@@ -279,6 +280,7 @@ const readoutProps = computed(() => ({
   onSwitchConversationThinkingLevel: props.onSwitchConversationThinkingLevel,
   onManageModels: props.onManageModels,
   onRefreshModels: props.onRefreshModels,
+  estimatedCost: props.estimatedCost,
 }));
 
 // Local advanced-settings popover state + outside-click close.
