@@ -125,3 +125,9 @@ Status: active
 Base: 1d4cbe7
 Files: ConversationDrawer.vue
 Changes: The conversation drawer's CWD display now shows only the repo basename (e.g. `shelley-customization`) instead of the tildified full path (`~/.config/shelley/shelley-customization`). The full path remains in the title tooltip. Also removed the now-unused `tildifyPath` import.
+
+## PATCH-012
+Status: active
+Base: 1d4cbe7
+Files: ui/src/styles.css
+Changes: Switched several UI elements from monospace (`var(--font-mono)`) to sans-serif (`var(--font-sans)`): `.app-bar-title`, `.conversation-cwd` (also added `font-weight: bold`), `.model-bar-name`, `.system-prompt-label`, `.system-prompt-tools-label`, `.system-prompt-tool-name`, `.bash-tool-copy-btn`, `.status-message`, `.status-readout`, and `.animated-working`.
