@@ -13,6 +13,7 @@ Here's some patches I've made on top of Shelley:
 | [PATCH-007](PATCH.md#patch-007) | active | Custom model enable/disable, import from /v1/models, context window fix |
 | [PATCH-008](PATCH.md#patch-008) | active | Import pricing from /v1/models into DB |
 | [PATCH-009](PATCH.md#patch-009) | active | ModelsModal optimistic toggle/delete + checkpoint selection bar |
+| [PATCH-010](PATCH.md#patch-010) | active | Use 24h for all time display |
 
 ---
 

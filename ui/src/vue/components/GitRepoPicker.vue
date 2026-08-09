@@ -71,7 +71,7 @@
               <span
                 v-if="hit.repo.last_activity"
                 class="grp-when"
-                :title="new Date(hit.repo.last_activity * 1000).toLocaleString()"
+                :title="new Date(hit.repo.last_activity * 1000).toLocaleString([], { hour12: false })"
               >
                 {{ formatRelative(hit.repo.last_activity) }}
               </span>

@@ -4,16 +4,18 @@
 // implementation. The React file re-exports formatDay/formatRelative from here.
 
 const timeFormatter = new Intl.DateTimeFormat([], {
-  hour: "numeric",
+  hour: "2-digit",
   minute: "2-digit",
+  hour12: false,
 });
 const absoluteFormatter = new Intl.DateTimeFormat([], {
   year: "numeric",
   month: "short",
   day: "numeric",
-  hour: "numeric",
+  hour: "2-digit",
   minute: "2-digit",
   second: "2-digit",
+  hour12: false,
 });
 const currentYearDayFormatter = new Intl.DateTimeFormat([], {
   weekday: "short",

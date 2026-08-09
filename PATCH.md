@@ -112,3 +112,10 @@ Changes:
   - **Checkbox alignment**: header "select all" checkbox visually aligned with per-row checkboxes via PrimeVue `pt` pass-through + scoped CSS.
   - Added `disable`/`enable` i18n keys across all 9 locale files.
 Watchouts: `bulkToggleEnabled` only clears `_pending` on the affected models (not all) to avoid interfering with concurrent individual toggles. `handleDelete` re-finds the index on rollback to handle concurrent array shifts. `bulkDelete` and `handleDelete` restore `selectedKeys` on error.
+
+## PATCH-010
+Status: active
+Base: 1d4cbe7
+Files: ui/src/utils/messageTime.ts, ui/src/utils/messageTime.test.ts, ui/src/vue/components/ConversationDrawer.vue, ui/src/vue/components/MessageInfoModal.vue, ui/src/vue/components/UsageDetailModal.vue, ui/src/vue/components/VersionChecker.vue, ui/src/vue/components/TokenCostGraph.vue, ui/src/vue/components/GitGraphViewer.vue, ui/src/vue/components/GitRepoPicker.vue, ui/src/utils/conversationMarkdown.ts
+Changes: All time displays now use 24-hour format instead of 12-hour. Added `hour12: false` to the shared `messageTime.ts` formatters (message timestamps, absolute timestamps) and to every other explicit time formatter: ConversationDrawer's today-timestamp, MessageInfoModal, UsageDetailModal, VersionChecker, TokenCostGraph hover time, GitGraphViewer commit date, GitRepoPicker tooltip, and conversationMarkdown's Started/Exported timestamps. The `hour` fields were bumped from `numeric` to `2-digit` in `messageTime.ts` so 24h times render zero-padded (e.g. `09:05` not `9:05`).
+Watchouts: `hour12: false` forces 24h regardless of the user's locale; this intentionally overrides locale defaults. The day-only formatters (formatDay) were left unchanged — they don't render a time-of-day.
