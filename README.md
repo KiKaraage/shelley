@@ -10,6 +10,9 @@ Here's some patches I've made on top of Shelley:
 | [PATCH-004](PATCH.md#patch-004) | active | Hid working directory/command sections in BashTool; added Copy Command/Results buttons |
 | [PATCH-005](PATCH.md#patch-005) | active | Added `~/.agents/skills/` to skill discovery paths |
 | [PATCH-006](PATCH.md#patch-006) | active | Git commit attribution is now a user-configurable dropdown (co-author, assisted-by, off) |
+| [PATCH-007](PATCH.md#patch-007) | active | Custom model enable/disable, import from /v1/models, context window fix |
+| [PATCH-008](PATCH.md#patch-008) | active | Import pricing from /v1/models into DB |
+| [PATCH-009](PATCH.md#patch-009) | active | ModelsModal optimistic toggle/delete + checkpoint selection bar |
 
 ---
 
