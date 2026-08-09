@@ -7679,6 +7679,30 @@ svg {
   vertical-align: middle;
 }
 
+/* Checkpoint bar: sticky toolbar shown when custom models are selected via
+   checkboxes. Sits at the bottom of the scrollable table area. */
+.models-checkpoint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-section, var(--surface-card));
+  border-top: 1px solid var(--surface-border);
+  border-radius: 0 0 var(--content-border-radius, 0.5rem) var(--content-border-radius, 0.5rem);
+  flex-shrink: 0;
+}
+
+.models-checkpoint-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.models-checkpoint-actions {
+  display: flex;
+  gap: 0.375rem;
+}
+
 .model-card {
   padding: 0.75rem 1rem;
   background: var(--bg-base);

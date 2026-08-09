@@ -205,6 +205,8 @@ export interface TranslationKeys {
   cancel: string;
   duplicate: string;
   delete_: string;
+  disable: string;
+  enable: string;
   modelNameRequired: string;
   apiKeyRequired: string;
   noModelsConfigured: string;

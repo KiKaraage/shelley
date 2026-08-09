@@ -7,7 +7,12 @@
      group's common endpoint. Only custom rows carry a `model` and thus the
      edit/duplicate/delete/toggle actions. Adding/editing opens ModelFormModal;
      importing opens ImportModelsModal — separate stacked dialogs layered on
-     top of this one. -->
+     top of this one.
+
+     A sticky checkpoint bar appears when custom models are selected via
+     checkboxes, offering bulk disable/enable and delete. Toggle and delete
+     operate optimistically — local state updates instantly without a full
+     list reload, and server errors roll back only the affected rows. -->
 <template>
   <Modal
     :is-open="isOpen"
@@ -60,7 +65,7 @@
         class="models-datatable"
         row-group-mode="subheader"
         group-rows-by="groupKey"
-        :pt="{ rowGroupHeaderCell: { colspan: 6 } }"
+        :pt="{ rowGroupHeaderCell: { colspan: 7 } }"
       >
         <template #groupheader="{ data }">
           <span class="models-group-name">{{ data.groupLabel }}</span>
@@ -69,6 +74,30 @@
             data.groupEndpoint
           }}</span>
         </template>
+        <Column
+          v-if="customModels.length > 0"
+          selection-mode="multiple"
+          header-style="width: 3rem"
+          body-style="width: 3rem; text-align: center"
+          :pt="{ headerCell: { style: 'padding:0' }, bodyCell: { style: 'padding:0' } }"
+        >
+          <template #header>
+            <Checkbox
+              :model-value="allCustomSelected"
+              :indeterminate="someCustomSelected && !allCustomSelected"
+              :binary="true"
+              @update:model-value="toggleSelectAll"
+            />
+          </template>
+          <template #body="{ data }">
+            <Checkbox
+              v-if="data.model"
+              :model-value="selectedKeys.has(data.key)"
+              :binary="true"
+              @update:model-value="toggleSelect(data.key)"
+            />
+          </template>
+        </Column>
         <Column :header="t('columnName')" field="name">
           <template #body="{ data }">
             <span class="models-cell-name">{{ data.name }}</span>
@@ -110,6 +139,7 @@
             <ToggleSwitch
               v-if="data.model"
               :model-value="data.model.enabled"
+              :disabled="data.model._pending"
               @update:model-value="(v: boolean) => handleToggleEnabled(data.model!, v)"
             />
             <span v-else class="models-cell-muted">—</span>
@@ -127,6 +157,7 @@
                 severity="secondary"
                 v-tooltip.top="t('duplicate')"
                 :aria-label="t('duplicate')"
+                :disabled="data.model._pending"
                 @click="handleDuplicate(data.model)"
               >
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
@@ -144,6 +175,7 @@
                 severity="secondary"
                 v-tooltip.top="t('editModel')"
                 :aria-label="t('editModel')"
+                :disabled="data.model._pending"
                 @click="handleEdit(data.model)"
               >
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
@@ -161,6 +193,7 @@
                 severity="danger"
                 v-tooltip.top="t('delete_')"
                 :aria-label="t('delete_')"
+                :disabled="data.model._pending"
                 @click="handleDelete(data.model.model_id)"
               >
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
@@ -176,6 +209,39 @@
           </template>
         </Column>
       </DataTable>
+
+      <!-- Checkpoint bar: sticky toolbar when custom models are selected -->
+      <div v-if="selectedKeys.size > 0" class="models-checkpoint">
+        <span class="models-checkpoint-count">
+          {{ selectedKeys.size }} {{ selectedKeys.size === 1 ? "model" : "models" }} selected
+        </span>
+        <div class="models-checkpoint-actions">
+          <Button
+            severity="secondary"
+            size="small"
+            :disabled="bulkPending"
+            @click="bulkToggleEnabled(false)"
+          >
+            {{ t("disable") }}
+          </Button>
+          <Button
+            severity="secondary"
+            size="small"
+            :disabled="bulkPending"
+            @click="bulkToggleEnabled(true)"
+          >
+            {{ t("enable") }}
+          </Button>
+          <Button
+            severity="danger"
+            size="small"
+            :disabled="bulkPending"
+            @click="bulkDelete"
+          >
+            {{ t("delete_") }}
+          </Button>
+        </div>
+      </div>
     </div>
   </Modal>
 
@@ -196,10 +262,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Button from "primevue/button";
+import Checkbox from "primevue/checkbox";
 import ToggleSwitch from "primevue/toggleswitch";
 import Modal from "./Modal.vue";
 import ModelFormModal from "./ModelFormModal.vue";
@@ -215,15 +282,24 @@ const emit = defineEmits<{ (e: "close"): void; (e: "modelsChanged"): void }>();
 
 const { t } = useI18n();
 
-const models = ref<CustomModel[]>([]);
+// Extend CustomModel with a local pending flag for optimistic UI.
+interface TrackedModel extends CustomModel {
+  _pending?: boolean;
+}
+
+const models = ref<TrackedModel[]>([]);
 const loading = ref(true);
 const refreshing = ref(false);
 const error = ref<string | null>(null);
 const builtInModels = ref<AvailableModel[]>([]);
 
+// Checkpoint: selection state.
+const selectedKeys = reactive(new Set<string>());
+const bulkPending = ref(false);
+
 // Stacked add/edit dialog state.
 const formOpen = ref(false);
-const editModel = ref<CustomModel | null>(null);
+const editModel = ref<TrackedModel | null>(null);
 
 // Stacked import dialog state.
 const importOpen = ref(false);
@@ -235,6 +311,29 @@ const builtInModelsFiltered = computed(() =>
 const showList = computed(
   () => !loading.value && (builtInModels.value.length > 0 || models.value.length > 0),
 );
+
+// Custom-model-only subset for the select-all checkbox.
+const customModels = computed(() => models.value);
+const allCustomSelected = computed(
+  () => customModels.value.length > 0 && customModels.value.every((m) => selectedKeys.has(`custom:${m.model_id}`)),
+);
+const someCustomSelected = computed(
+  () => customModels.value.some((m) => selectedKeys.has(`custom:${m.model_id}`)),
+);
+
+function toggleSelectAll(v: boolean | Event) {
+  const on = v === true;
+  for (const m of customModels.value) {
+    const key = `custom:${m.model_id}`;
+    if (on) selectedKeys.add(key);
+    else selectedKeys.delete(key);
+  }
+}
+
+function toggleSelect(key: string) {
+  if (selectedKeys.has(key)) selectedKeys.delete(key);
+  else selectedKeys.add(key);
+}
 
 interface TableRow {
   key: string;
@@ -249,7 +348,7 @@ interface TableRow {
   supportsImages: boolean;
   imageTitle: string;
   imageAuto: boolean;
-  model: CustomModel | null;
+  model: TrackedModel | null;
 }
 
 const tableRows = computed<TableRow[]>(() => {
@@ -349,7 +448,7 @@ function handleAddNew() {
   formOpen.value = true;
 }
 
-function handleEdit(model: CustomModel) {
+function handleEdit(model: TrackedModel) {
   editModel.value = model;
   formOpen.value = true;
 }
@@ -359,7 +458,7 @@ async function handleFormSaved() {
   emit("modelsChanged");
 }
 
-async function handleDuplicate(model: CustomModel) {
+async function handleDuplicate(model: TrackedModel) {
   try {
     error.value = null;
     await customModelsApi.duplicateCustomModel(model.model_id);
@@ -370,13 +469,18 @@ async function handleDuplicate(model: CustomModel) {
   }
 }
 
+/** Optimistic delete: remove from list immediately, roll back on error. */
 async function handleDelete(modelId: string) {
+  const idx = models.value.findIndex((m) => m.model_id === modelId);
+  if (idx === -1) return;
+  const removed = models.value.splice(idx, 1)[0];
+  selectedKeys.delete(`custom:${modelId}`);
   try {
     error.value = null;
     await customModelsApi.deleteCustomModel(modelId);
-    await loadModels();
     emit("modelsChanged");
   } catch (err) {
+    models.value.splice(idx, 0, removed);
     error.value = err instanceof Error ? err.message : "Failed to delete model";
   }
 }
@@ -398,14 +502,20 @@ async function handleRefreshModels() {
   }
 }
 
-async function handleToggleEnabled(model: CustomModel, enabled: boolean) {
+/** Optimistic toggle: flip enabled in place, roll back on error. */
+async function handleToggleEnabled(model: TrackedModel, enabled: boolean) {
+  const previous = model.enabled;
+  model._pending = true;
+  model.enabled = enabled;
   try {
     error.value = null;
     await customModelsApi.updateCustomModel(model.model_id, { enabled });
-    await loadModels();
     emit("modelsChanged");
   } catch (err) {
+    model.enabled = previous;
     error.value = err instanceof Error ? err.message : "Failed to update model";
+  } finally {
+    model._pending = false;
   }
 }
 
@@ -414,10 +524,73 @@ async function handleImported() {
   emit("modelsChanged");
 }
 
+// ---- Bulk actions (checkpoint bar) ----
+
+/** Bulk toggle enabled: optimistic for all selected, roll back any failures. */
+async function bulkToggleEnabled(enabled: boolean) {
+  bulkPending.value = true;
+  const ids = models.value
+    .filter((m) => selectedKeys.has(`custom:${m.model_id}`))
+    .map((m) => m.model_id);
+  const previous = new Map<string, boolean>();
+  for (const m of models.value) {
+    if (ids.includes(m.model_id)) previous.set(m.model_id, m.enabled);
+  }
+  for (const m of models.value) {
+    if (ids.includes(m.model_id)) {
+      m._pending = true;
+      m.enabled = enabled;
+    }
+  }
+  try {
+    error.value = null;
+    await Promise.all(ids.map((id) => customModelsApi.updateCustomModel(id, { enabled })))
+    emit("modelsChanged");
+  } catch (err) {
+    for (const m of models.value) {
+      const prev = previous.get(m.model_id);
+      if (prev !== undefined) m.enabled = prev;
+    }
+    error.value = err instanceof Error ? err.message : "Failed to update models";
+  } finally {
+    for (const m of models.value) m._pending = false;
+    bulkPending.value = false;
+  }
+}
+
+/** Bulk delete: optimistic, remove all selected, roll back on error. */
+async function bulkDelete() {
+  bulkPending.value = true;
+  const ids = models.value
+    .filter((m) => selectedKeys.has(`custom:${m.model_id}`))
+    .map((m) => m.model_id);
+  const removed = new Map<string, { model: TrackedModel; index: number }>();
+  for (const id of ids) {
+    const idx = models.value.findIndex((m) => m.model_id === id);
+    if (idx !== -1) removed.set(id, { model: models.value[idx], index: idx });
+  }
+  // Remove in reverse index order so splice indices stay valid.
+  const sorted = [...removed.values()].sort((a, b) => b.index - a.index);
+  for (const { index } of sorted) models.value.splice(index, 1);
+  for (const id of ids) selectedKeys.delete(`custom:${id}`);
+  try {
+    error.value = null;
+    await Promise.all(ids.map((id) => customModelsApi.deleteCustomModel(id)))
+    emit("modelsChanged");
+  } catch (err) {
+    const restored = [...removed.values()].sort((a, b) => a.index - b.index);
+    for (const { model, index } of restored) models.value.splice(index, 0, model);
+    error.value = err instanceof Error ? err.message : "Failed to delete models";
+  } finally {
+    bulkPending.value = false;
+  }
+}
+
 watch(
   () => props.isOpen,
   (open) => {
     if (open) {
+      selectedKeys.clear();
       loadModels();
       const initData = window.__SHELLEY_INIT__;
       if (initData?.models) {
