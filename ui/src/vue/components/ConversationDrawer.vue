@@ -375,7 +375,6 @@ import {
   applyStableKeyOrder,
   neighborAfterRemoval,
 } from "../../utils/conversationSort";
-import { tildifyPath } from "../../utils/tildify";
 import { isImeComposing } from "../../utils/imeComposing";
 import { handleModifiedNavClick } from "../utils/openInNewTab";
 import ConversationRow from "./ConversationDrawerRow.vue";
@@ -699,7 +698,10 @@ function formatDate(timestamp: string): string {
   }
 }
 
-const formatCwdForDisplay = tildifyPath;
+const formatCwdForDisplay = (p: string | null | undefined): string | null => {
+  if (!p) return null;
+  return p.split("/").pop() ?? p;
+};
 
 // --- Archive / unarchive / delete ---
 async function handleArchive(e: MouseEvent, conversationId: string) {
