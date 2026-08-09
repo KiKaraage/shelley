@@ -741,7 +741,7 @@ func parseModelPricing(p *struct {
 		if err != nil {
 			return 0
 		}
-		return v * 1_000_000 // per-token -> per-million
+		return v // already per-million
 	}
 	input = parseFloat(p.Prompt)
 	output = parseFloat(p.Completion)
