@@ -163,9 +163,10 @@ export const es: TranslationKeys = {
   nameShownInSelector: "Nombre que se muestra en el selector de modelos",
   apiKey: "Clave de API",
   enterApiKey: "Ingrese la clave de API",
-  maxContextTokens: "Tokens de contexto máximos",
+  maxOutputTokens: "Salida máxima",
   contextWindow: "Ventana de contexto",
   contextWindowHint: "Tamaño total de la ventana de contexto (0 = autodetectar).",
+  maxOutputTokensHint: "Tokens de salida máximos por respuesta (0 = 200k por defecto).",
   imageSupport: "Image input support",
   imageSupportHelp:
     "Auto detecta esto automáticamente. Elige Compatible o No compatible para definirlo tú.",

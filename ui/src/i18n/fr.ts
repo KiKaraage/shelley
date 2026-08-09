@@ -164,9 +164,10 @@ export const fr: TranslationKeys = {
   nameShownInSelector: "Nom affiché dans le sélecteur de modèle",
   apiKey: "Clé API",
   enterApiKey: "Saisir la clé API",
-  maxContextTokens: "Nombre maximum de tokens de contexte",
+  maxOutputTokens: "Sortie maximale",
   contextWindow: "Fenêtre de contexte",
   contextWindowHint: "Taille totale de la fenêtre de contexte (0 = auto-détect).",
+  maxOutputTokensHint: "Tokens de sortie max par réponse (0 = 200k par défaut).",
   imageSupport: "Image input support",
   imageSupportHelp:
     "Auto le détecte automatiquement. Choisissez Pris en charge ou Non pris en charge pour le définir.",

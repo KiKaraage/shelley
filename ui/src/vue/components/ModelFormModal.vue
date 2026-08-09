@@ -108,18 +108,6 @@
         />
       </div>
 
-      <!-- Max Tokens -->
-      <div class="form-group">
-        <label>{{ t("maxContextTokens") }}</label>
-        <InputText
-          type="number"
-          :model-value="String(form.max_tokens)"
-          fluid
-          :dt="inputFieldDt"
-          @update:model-value="form.max_tokens = parseInt($event ?? '') || 200000"
-        />
-      </div>
-
       <!-- Context Window -->
       <div class="form-group">
         <label>{{ t("contextWindow") }}</label>
@@ -131,6 +119,19 @@
           @update:model-value="form.context_window = parseInt($event ?? '') || 0"
         />
         <div class="form-hint">{{ t("contextWindowHint") }}</div>
+      </div>
+
+      <!-- Max Outputs -->
+      <div class="form-group">
+        <label>{{ t("maxOutputTokens") }}</label>
+        <InputText
+          type="number"
+          :model-value="String(form.max_tokens)"
+          fluid
+          :dt="inputFieldDt"
+          @update:model-value="form.max_tokens = parseInt($event ?? '') || 200000"
+        />
+        <div class="form-hint">{{ t("maxOutputTokensHint") }}</div>
       </div>
 
       <!-- Image input support -->
