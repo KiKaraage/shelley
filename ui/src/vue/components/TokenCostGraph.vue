@@ -156,6 +156,9 @@
           </div>
         </template>
       </div>
+      <div v-if="cacheHitRate !== null" class="token-cost-graph-note">
+        Cache hit rate: {{ cacheHitRate }}%
+      </div>
       <div class="token-cost-graph-note">
         <template v-if="fetchFailed && !stack.weighted">
           Pricing lookup failed — showing raw token counts.
@@ -217,6 +220,10 @@ const props = defineProps<{
   conversationId?: string | null;
 }>();
 
+const emit = defineEmits<{
+  (e: 'update:estimatedCost', value: number): void;
+}>();
+
 const W = 280;
 const H = 150;
 const PADL = 32;
@@ -269,6 +276,11 @@ watch(
 const stack = computed<TokenCostStack | null>(() =>
   props.entries.length > 0 ? buildTokenCostStack(props.entries, costs.value) : null,
 );
+
+// Emit estimated cost to parent for the status bar label.
+watch(stack, (s) => {
+  emit('update:estimatedCost', s?.weighted ? s.maxY : 0);
+}, { immediate: true });
 
 // Subagent usage is aggregated server-side (a recursive query over descendant
 // conversations) and shown as a separate note line, not in the graph.
@@ -394,6 +406,22 @@ const hintText = computed(() => {
   if (xMode.value === "time" && layout.value.turns.length > 1)
     parts.push("Idle time between turns is not to scale.");
   return parts.join(" ");
+});
+
+
+// cache hit rate = (cache_write + cache_read) / (cache_write + cache_read + input + output) * 100%
+const cacheHitRate = computed(() => {
+  let cacheHit = 0, cacheRead = 0, input = 0, output = 0;
+  for (const e of props.entries) {
+    cacheHit += e.cache_creation_input_tokens || 0;
+    cacheRead += e.cache_read_input_tokens || 0;
+    input += e.input_tokens || 0;
+    output += e.output_tokens || 0;
+  }
+  const total = cacheHit + cacheRead + input + output;
+  if (total === 0) return null;
+  const rate = ((cacheHit + cacheRead) / total) * 100;
+  return rate % 1 === 0 ? rate.toFixed(0) : rate.toFixed(1);
 });
 
 // Rows top-to-bottom mirror the band stacking order within the model.

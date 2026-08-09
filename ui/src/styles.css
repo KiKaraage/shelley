@@ -5002,6 +5002,15 @@ svg {
   font-weight: 600;
 }
 
+.context-usage-label-cost {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  transition: color 0.3s ease;
+}
+
 /* Inline status slot in message controls — hidden on desktop, shown on mobile */
 .message-controls-status-slot {
   display: none;
