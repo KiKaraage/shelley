@@ -77,6 +77,7 @@
       <span :class="['context-usage-label-tokens', 'status-readout-affordance', usageLevelClass]">{{
         formatTokenCount(contextWindowSize)
       }}</span>
+      <span v-if="(props.estimatedCost ?? 0) > 0" class="context-usage-label-cost">${{ (props.estimatedCost ?? 0).toFixed(2) }}</span>
     </button>
   </div>
 </template>
@@ -103,6 +104,7 @@ const props = defineProps<{
    *  fills in on the next. */
   onUsageNeeded?: () => void;
   agentWorking?: boolean;
+  estimatedCost?: number;
 }>();
 
 const distilling = ref(false);
