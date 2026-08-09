@@ -316,6 +316,26 @@ func (s *Server) handleUpdateModel(w http.ResponseWriter, r *http.Request, model
 		return
 	}
 
+	// Fall back to existing values for all fields not provided.
+	if req.DisplayName == "" {
+		req.DisplayName = existing.DisplayName
+	}
+	if req.ProviderType == "" {
+		req.ProviderType = existing.ProviderType
+	}
+	if req.Endpoint == "" {
+		req.Endpoint = existing.Endpoint
+	}
+	if req.ModelName == "" {
+		req.ModelName = existing.ModelName
+	}
+	if req.Tags == "" {
+		req.Tags = existing.Tags
+	}
+	if req.ReasoningMap == "" {
+		req.ReasoningMap = existing.ReasoningMap
+	}
+
 	// Use existing API key if not provided
 	apiKey := req.APIKey
 	if apiKey == "" {
@@ -324,7 +344,7 @@ func (s *Server) handleUpdateModel(w http.ResponseWriter, r *http.Request, model
 
 	// Default max tokens
 	if req.MaxTokens <= 0 {
-		req.MaxTokens = 200000
+		req.MaxTokens = existing.MaxTokens
 	}
 
 	// Empty support settings preserve the existing values; otherwise validate.
@@ -679,7 +699,7 @@ func (s *Server) handleImportModels(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch /v1/models from the endpoint.
-	modelsURL := strings.TrimRight(req.Endpoint, "/") + "/v1/models"
+	modelsURL := strings.TrimRight(req.Endpoint, "/") + "/models"
 	fetchReq, err := http.NewRequestWithContext(r.Context(), "GET", modelsURL, nil)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
