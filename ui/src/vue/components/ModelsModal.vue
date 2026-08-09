@@ -76,26 +76,30 @@
         </template>
         <Column
           v-if="customModels.length > 0"
-          selection-mode="multiple"
-          header-style="width: 3rem"
-          body-style="width: 3rem; text-align: center"
-          :pt="{ headerCell: { style: 'padding:0' }, bodyCell: { style: 'padding:0' } }"
+          :pt="{
+            headerCell: { class: 'models-col-checkbox' },
+            bodyCell: { class: 'models-col-checkbox' },
+          }"
         >
           <template #header>
-            <Checkbox
-              :model-value="allCustomSelected"
-              :indeterminate="someCustomSelected && !allCustomSelected"
-              :binary="true"
-              @update:model-value="toggleSelectAll"
-            />
+            <div class="models-select-all">
+              <Checkbox
+                :model-value="allCustomSelected"
+                :indeterminate="someCustomSelected && !allCustomSelected"
+                :binary="true"
+                @update:model-value="toggleSelectAll"
+              />
+            </div>
           </template>
           <template #body="{ data }">
-            <Checkbox
-              v-if="data.model"
-              :model-value="selectedKeys.has(data.key)"
-              :binary="true"
-              @update:model-value="toggleSelect(data.key)"
-            />
+            <div class="models-select-one">
+              <Checkbox
+                v-if="data.model"
+                :model-value="selectedKeys.has(data.key)"
+                :binary="true"
+                @update:model-value="toggleSelect(data.key)"
+              />
+            </div>
           </template>
         </Column>
         <Column :header="t('columnName')" field="name">
@@ -381,7 +385,9 @@ const tableRows = computed<TableRow[]>(() => {
       });
     }
   }
-  for (const m of models.value) {
+  // Sort custom models: enabled first, then disabled.
+  const sortedCustom = [...models.value].sort((a, b) => (b.enabled ? 1 : 0) - (a.enabled ? 1 : 0));
+  for (const m of sortedCustom) {
     rows.push({
       key: `custom:${m.model_id}`,
       groupKey: "custom",
@@ -480,7 +486,11 @@ async function handleDelete(modelId: string) {
     await customModelsApi.deleteCustomModel(modelId);
     emit("modelsChanged");
   } catch (err) {
-    models.value.splice(idx, 0, removed);
+    // Re-find index in case the array shifted from a concurrent operation.
+    const currentIdx = models.value.findIndex((m) => m.model_id === modelId);
+    if (currentIdx === -1) models.value.push(removed);
+    else models.value.splice(currentIdx, 0, removed);
+    selectedKeys.add(`custom:${modelId}`);
     error.value = err instanceof Error ? err.message : "Failed to delete model";
   }
 }
@@ -553,7 +563,9 @@ async function bulkToggleEnabled(enabled: boolean) {
     }
     error.value = err instanceof Error ? err.message : "Failed to update models";
   } finally {
-    for (const m of models.value) m._pending = false;
+    for (const m of models.value) {
+      if (ids.includes(m.model_id)) m._pending = false;
+    }
     bulkPending.value = false;
   }
 }
@@ -564,22 +576,31 @@ async function bulkDelete() {
   const ids = models.value
     .filter((m) => selectedKeys.has(`custom:${m.model_id}`))
     .map((m) => m.model_id);
-  const removed = new Map<string, { model: TrackedModel; index: number }>();
+  // Snapshot models to restore on error.
+  const removed = new Map<string, TrackedModel>();
+  for (const id of ids) {
+    const m = models.value.find((m) => m.model_id === id);
+    if (m) removed.set(id, m);
+  }
+  // Optimistically remove them.
   for (const id of ids) {
     const idx = models.value.findIndex((m) => m.model_id === id);
-    if (idx !== -1) removed.set(id, { model: models.value[idx], index: idx });
+    if (idx !== -1) models.value.splice(idx, 1);
+    selectedKeys.delete(`custom:${id}`);
   }
-  // Remove in reverse index order so splice indices stay valid.
-  const sorted = [...removed.values()].sort((a, b) => b.index - a.index);
-  for (const { index } of sorted) models.value.splice(index, 1);
-  for (const id of ids) selectedKeys.delete(`custom:${id}`);
   try {
     error.value = null;
     await Promise.all(ids.map((id) => customModelsApi.deleteCustomModel(id)))
     emit("modelsChanged");
   } catch (err) {
-    const restored = [...removed.values()].sort((a, b) => a.index - b.index);
-    for (const { model, index } of restored) models.value.splice(index, 0, model);
+    // Restore removed models, re-finding current position to handle concurrent shifts.
+    for (const id of ids) {
+      const model = removed.get(id);
+      if (!model) continue;
+      const exists = models.value.some((m) => m.model_id === id);
+      if (!exists) models.value.push(model);
+      selectedKeys.add(`custom:${id}`);
+    }
     error.value = err instanceof Error ? err.message : "Failed to delete models";
   } finally {
     bulkPending.value = false;

@@ -7681,6 +7681,28 @@ svg {
 
 /* Checkpoint bar: sticky toolbar shown when custom models are selected via
    checkboxes. Sits at the bottom of the scrollable table area. */
+
+/* Checkbox column: center the header and body checkboxes. */
+th.models-col-checkbox,
+td.models-col-checkbox {
+  text-align: center;
+  width: 3rem;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+th.models-col-checkbox .p-datatable-column-header-content {
+  padding: 0;
+  justify-content: center;
+}
+
+.models-datatable .models-select-all,
+.models-datatable .models-select-one {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .models-checkpoint {
   display: flex;
   align-items: center;
