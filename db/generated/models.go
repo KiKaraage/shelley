@@ -70,6 +70,10 @@ type Model struct {
 	ReasoningMap     string    `json:"reasoning_map"`
 	Enabled          int64     `json:"enabled"`
 	ContextWindow    int64     `json:"context_window"`
+	InputPrice       float64   `json:"input_price"`
+	OutputPrice      float64   `json:"output_price"`
+	CacheReadPrice   float64   `json:"cache_read_price"`
+	CacheWritePrice  float64   `json:"cache_write_price"`
 }
 
 type NotificationChannel struct {

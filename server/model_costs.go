@@ -1,11 +1,36 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	"shelley.exe.dev/models/modelsdev"
 )
+
+// resolveCost returns pricing (USD per million tokens) for (endpoint, model).
+// It checks the DB's custom models first (imported from /v1/models), then
+// falls back to the models.dev snapshot.
+func (s *Server) resolveCost(ctx context.Context, endpoint, model string) (modelsdev.Cost, bool) {
+	if model == "" {
+		return modelsdev.Cost{}, false
+	}
+	// Check DB-stored pricing (from /v1/models import).
+	if dbModels, err := s.db.GetEnabledModels(ctx); err == nil {
+		for _, m := range dbModels {
+			if m.Endpoint == endpoint && m.ModelName == model && m.InputPrice > 0 {
+				return modelsdev.Cost{
+					Input:      m.InputPrice,
+					Output:     m.OutputPrice,
+					CacheRead:  m.CacheReadPrice,
+					CacheWrite: m.CacheWritePrice,
+				}, true
+			}
+		}
+	}
+	// Fall back to models.dev snapshot.
+	return modelsdev.LookupCost(endpoint, model)
+}
 
 // handleModelCosts resolves pricing (USD per million tokens) for a batch of
 // (model, url) pairs seen in a conversation's usage data. Models without
@@ -26,7 +51,7 @@ func (s *Server) handleModelCosts(w http.ResponseWriter, r *http.Request) {
 		if m.Model == "" {
 			continue
 		}
-		if c, found := modelsdev.LookupCost(m.URL, m.Model); found {
+		if c, found := s.resolveCost(r.Context(), m.URL, m.Model); found {
 			costs[m.Model] = &c
 		} else {
 			costs[m.Model] = nil
@@ -62,7 +87,7 @@ func (s *Server) handleSubagentUsage(w http.ResponseWriter, r *http.Request, con
 	fold := func(model, url string, llmCalls, in, cacheWrite, cacheRead, out int64, costUsd float64) {
 		resp.LLMCalls += llmCalls
 		resp.ReportedUsd += costUsd
-		if c, found := modelsdev.LookupCost(url, model); found {
+		if c, found := s.resolveCost(r.Context(), url, model); found {
 			resp.EstimatedUsd += float64(in)*c.Input/1e6 +
 				float64(cacheWrite)*c.CacheWrite/1e6 +
 				float64(cacheRead)*c.CacheRead/1e6 +

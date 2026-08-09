@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -40,6 +41,11 @@ type ModelAPI struct {
 	SupportsImages bool `json:"supports_images"`
 	Enabled        bool `json:"enabled"`
 	ContextWindow  int64 `json:"context_window"`
+	// Pricing: USD per million tokens. Zero means unknown.
+	InputPrice     float64 `json:"input_price"`
+	OutputPrice    float64 `json:"output_price"`
+	CacheReadPrice float64 `json:"cache_read_price"`
+	CacheWritePrice float64 `json:"cache_write_price"`
 }
 
 // CreateModelRequest is the request body for creating a model.
@@ -74,6 +80,10 @@ type UpdateModelRequest struct {
 	ReasoningMap     string  `json:"reasoning_map"`
 	Enabled          *bool   `json:"enabled,omitempty"`
 	ContextWindow    *int64  `json:"context_window,omitempty"`
+	InputPrice       *float64 `json:"input_price,omitempty"`
+	OutputPrice      *float64 `json:"output_price,omitempty"`
+	CacheReadPrice   *float64 `json:"cache_read_price,omitempty"`
+	CacheWritePrice  *float64 `json:"cache_write_price,omitempty"`
 }
 
 // validImageSupport returns the canonical value or an error.
@@ -143,6 +153,10 @@ func toModelAPI(m generated.Model) ModelAPI {
 		SupportsImages:    models.ResolveSupportsImages(m.Endpoint, m.ModelName, m.ImageSupport),
 		Enabled:           m.Enabled == 1,
 		ContextWindow:     m.ContextWindow,
+		InputPrice:        m.InputPrice,
+		OutputPrice:       m.OutputPrice,
+		CacheReadPrice:    m.CacheReadPrice,
+		CacheWritePrice:   m.CacheWritePrice,
 	}
 }
 
@@ -387,6 +401,22 @@ func (s *Server) handleUpdateModel(w http.ResponseWriter, r *http.Request, model
 		contextWindow = *req.ContextWindow
 	}
 
+	inputPrice := existing.InputPrice
+	if req.InputPrice != nil {
+		inputPrice = *req.InputPrice
+	}
+	outputPrice := existing.OutputPrice
+	if req.OutputPrice != nil {
+		outputPrice = *req.OutputPrice
+	}
+	cacheReadPrice := existing.CacheReadPrice
+	if req.CacheReadPrice != nil {
+		cacheReadPrice = *req.CacheReadPrice
+	}
+	cacheWritePrice := existing.CacheWritePrice
+	if req.CacheWritePrice != nil {
+		cacheWritePrice = *req.CacheWritePrice
+	}
 	model, err := s.db.UpdateModel(r.Context(), generated.UpdateModelParams{
 		DisplayName:      req.DisplayName,
 		ProviderType:     req.ProviderType,
@@ -401,6 +431,10 @@ func (s *Server) handleUpdateModel(w http.ResponseWriter, r *http.Request, model
 		ReasoningMap:     req.ReasoningMap,
 		Enabled:          enabled,
 		ContextWindow:    contextWindow,
+		InputPrice:       inputPrice,
+		OutputPrice:      outputPrice,
+		CacheReadPrice:   cacheReadPrice,
+		CacheWritePrice:  cacheWritePrice,
 		ModelID:          modelID,
 	})
 	if err != nil {
@@ -481,6 +515,10 @@ func (s *Server) handleDuplicateModel(w http.ResponseWriter, r *http.Request, mo
 		ReasoningMap:     source.ReasoningMap,
 		Enabled:          source.Enabled,
 		ContextWindow:    source.ContextWindow,
+		InputPrice:       source.InputPrice,
+		OutputPrice:      source.OutputPrice,
+		CacheReadPrice:   source.CacheReadPrice,
+		CacheWritePrice:  source.CacheWritePrice,
 	})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to duplicate model: %v", err), http.StatusInternalServerError)
@@ -669,10 +707,50 @@ type ImportModelsResponse struct {
 // oaiListModelsResponse is the shape of GET /v1/models for OpenAI-compatible APIs.
 type oaiListModelsResponse struct {
 	Data []struct {
-		ID string `json:"id"`
-		// Name is present in some extended endpoints (e.g. "DeepSeek: V4 Flash 0731").
+		ID   string `json:"id"`
 		Name string `json:"name"`
+		// Pricing is per-million-token pricing in USD. Prompt = input, Completion = output.
+		// When only cache_prompt is present it is used for both cache read and write.
+		Pricing *struct {
+			Prompt     string `json:"prompt"`
+			Completion string `json:"completion"`
+			CacheRead  string `json:"cache_prompt"`
+			CacheWrite string `json:"cache_write"`
+		} `json:"pricing"`
 	} `json:"data"`
+}
+
+// parseModelPricing extracts per-million-token USD pricing from a /v1/models
+// pricing object. The API reports prices as per-token strings; we convert to
+// per-million. When cache_prompt is set but cache_write is not, it is used for
+// both cache read and cache write pricing.
+func parseModelPricing(p *struct {
+	Prompt     string `json:"prompt"`
+	Completion string `json:"completion"`
+	CacheRead  string `json:"cache_prompt"`
+	CacheWrite string `json:"cache_write"`
+}) (input, output, cacheRead, cacheWrite float64) {
+	if p == nil {
+		return
+	}
+	parseFloat := func(s string) float64 {
+		if s == "" {
+			return 0
+		}
+		v, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return 0
+		}
+		return v * 1_000_000 // per-token -> per-million
+	}
+	input = parseFloat(p.Prompt)
+	output = parseFloat(p.Completion)
+	cacheRead = parseFloat(p.CacheRead)
+	cacheWrite = parseFloat(p.CacheWrite)
+	if cacheWrite == 0 && cacheRead > 0 {
+		cacheWrite = cacheRead
+	}
+	return
 }
 
 const maxImportModelsBytes = 4 << 20 // 4 MiB
@@ -762,6 +840,7 @@ func (s *Server) handleImportModels(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		inputPrice, outputPrice, cacheReadPrice, cacheWritePrice := parseModelPricing(m.Pricing)
 		created, err := s.db.CreateModel(r.Context(), generated.CreateModelParams{
 			ModelID:          modelID,
 			DisplayName:      displayName,
@@ -777,6 +856,10 @@ func (s *Server) handleImportModels(w http.ResponseWriter, r *http.Request) {
 			ReasoningMap:     "",
 			Enabled:          1,
 			ContextWindow:    0, // auto-detect from model name
+			InputPrice:       inputPrice,
+			OutputPrice:      outputPrice,
+			CacheReadPrice:   cacheReadPrice,
+			CacheWritePrice:  cacheWritePrice,
 		})
 		if err != nil {
 			s.logger.Warn("Failed to create imported model", "model_name", m.ID, "error", err)
