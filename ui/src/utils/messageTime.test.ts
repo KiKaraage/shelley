@@ -37,16 +37,18 @@ try {
   const sameYear = new Date("2026-01-01T00:00:00Z");
   const otherYear = new Date("2025-01-01T00:00:00Z");
   const expectedTime = new originalDateTimeFormat([], {
-    hour: "numeric",
+    hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   }).format(date);
   const expectedAbsolute = new originalDateTimeFormat([], {
     year: "numeric",
     month: "short",
     day: "numeric",
-    hour: "numeric",
+    hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
+    hour12: false,
   }).format(date);
   const expectedSameYearDay = new originalDateTimeFormat([], {
     weekday: "short",

@@ -86,9 +86,9 @@ function header(conversation: Conversation | undefined, messages: Message[]): st
   const created = conversation?.created_at || messages[0]?.created_at;
   if (created) {
     const d = new Date(created);
-    if (!isNaN(d.getTime())) meta.push(`**Started:** ${d.toLocaleString()}`);
+    if (!isNaN(d.getTime())) meta.push(`**Started:** ${d.toLocaleString([], { hour12: false })}`);
   }
-  meta.push(`**Exported:** ${new Date().toLocaleString()}`);
+  meta.push(`**Exported:** ${new Date().toLocaleString([], { hour12: false })}`);
   if (meta.length) {
     lines.push(meta.join("  \n"));
     lines.push("");

@@ -227,7 +227,7 @@
               </div>
               <div>
                 <strong>Date:</strong>
-                {{ new Date(selectedCommit.timestamp * 1000).toLocaleString() }}
+                {{ new Date(selectedCommit.timestamp * 1000).toLocaleString([], { hour12: false }) }}
               </div>
               <div class="git-graph-detail-sha-row">
                 <strong>SHA:</strong>
