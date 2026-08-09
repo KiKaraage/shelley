@@ -45,6 +45,7 @@
       :on-start-new-generation="onStartNewGeneration"
       :on-usage-needed="onUsageNeeded"
       :agent-working="agentWorking"
+      :estimated-cost="estimatedCost"
     />
 
     <template v-if="selectedModel">
@@ -114,6 +115,7 @@ const props = defineProps<{
   onSwitchConversationThinkingLevel: (level: ThinkingLevel) => void;
   onManageModels: () => void;
   onRefreshModels: () => void;
+  estimatedCost?: number;
 }>();
 
 const { t } = useI18n();

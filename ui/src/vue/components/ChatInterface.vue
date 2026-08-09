@@ -492,10 +492,12 @@ import {
 } from "../../utils/perf";
 import {
   aggregateOtherUsage,
+  buildTokenCostStack,
   type OtherUsageEntry,
   type OtherUsageRow,
   type UsageEntry,
 } from "../../utils/tokenCostGraph";
+import { modelCostsApi } from "../../services/api";
 import { coalesceMessages, type CoalescedItem } from "./coalesce";
 import type { RenderNode, RenderChunk, GenerationBlock } from "./renderNode";
 import type { EphemeralTerminal } from "./terminalTypes";
@@ -1236,6 +1238,26 @@ const usageData = computed<{ entries: UsageEntry[]; otherRows: OtherUsageRow[] }
 });
 const usageEntries = computed<UsageEntry[]>(() => usageData.value.entries);
 const otherUsageRows = computed<OtherUsageRow[]>(() => usageData.value.otherRows);
+
+// Estimated cost from pricing lookup. Populated when usageWanted flips
+// and pricing data arrives. Shown on the status bar label.
+const estimatedCost = ref(0);
+watch(usageEntries, async (entries) => {
+  if (entries.length === 0) { estimatedCost.value = 0; return; }
+  const models = new Map<string, string>();
+  for (const e of entries) {
+    if (e.model && !models.has(e.model)) models.set(e.model, e.url || "");
+  }
+  try {
+    const costs = await modelCostsApi.lookup(
+      Array.from(models).map(([model, url]) => ({ model, url })),
+    );
+    const stack = buildTokenCostStack(entries, costs);
+    estimatedCost.value = stack.weighted ? stack.maxY : 0;
+  } catch {
+    estimatedCost.value = 0;
+  }
+}, { immediate: false });
 
 watch(
   selectedModelInfo,
@@ -2739,6 +2761,7 @@ const statusContentProps = computed(() => {
     maxContextTokens: maxContextTokens.value,
     usageEntries: usageEntries.value,
     otherUsageRows: otherUsageRows.value,
+    estimatedCost: estimatedCost.value,
     hostname,
     models: models.value,
     selectedModel: selectedModel.value,

@@ -220,9 +220,7 @@ const props = defineProps<{
   conversationId?: string | null;
 }>();
 
-const emit = defineEmits<{
-  (e: 'update:estimatedCost', value: number): void;
-}>();
+
 
 const W = 280;
 const H = 150;
@@ -278,9 +276,7 @@ const stack = computed<TokenCostStack | null>(() =>
 );
 
 // Emit estimated cost to parent for the status bar label.
-watch(stack, (s) => {
-  emit('update:estimatedCost', s?.weighted ? s.maxY : 0);
-}, { immediate: true });
+
 
 // Subagent usage is aggregated server-side (a recursive query over descendant
 // conversations) and shown as a separate note line, not in the graph.
