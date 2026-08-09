@@ -87,6 +87,34 @@ type UpdateModelRequest struct {
 }
 
 // validImageSupport returns the canonical value or an error.
+
+// coalesceFloat64 returns *p if non-nil, otherwise fallback.
+func coalesceFloat64(p *float64, fallback float64) float64 {
+	if p != nil {
+		return *p
+	}
+	return fallback
+}
+
+// coalesceInt64 returns *p if non-nil, otherwise fallback.
+func coalesceInt64(p *int64, fallback int64) int64 {
+	if p != nil {
+		return *p
+	}
+	return fallback
+}
+
+// coalesceBoolToInt64 returns 1 if p is non-nil and true, 0 if non-nil and false, or fallback.
+func coalesceBoolToInt64(p *bool, fallback int64) int64 {
+	if p != nil {
+		if *p {
+			return 1
+		}
+		return 0
+	}
+	return fallback
+}
+
 func validSupportSetting(field, v string) (string, error) {
 	switch v {
 	case "", "auto":
@@ -233,9 +261,9 @@ func (s *Server) handleCreateModel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	enabled := int64(1)
-	if !req.Enabled {
-		enabled = 0
+	enabled := int64(0)
+	if req.Enabled {
+		enabled = 1
 	}
 	model, err := s.db.CreateModel(r.Context(), generated.CreateModelParams{
 		ModelID:          modelID,
@@ -388,35 +416,12 @@ func (s *Server) handleUpdateModel(w http.ResponseWriter, r *http.Request, model
 	if req.ReasoningEffort != nil {
 		reasoningEffort = *req.ReasoningEffort
 	}
-	enabled := existing.Enabled
-	if req.Enabled != nil {
-		if *req.Enabled {
-			enabled = 1
-		} else {
-			enabled = 0
-		}
-	}
-	contextWindow := existing.ContextWindow
-	if req.ContextWindow != nil {
-		contextWindow = *req.ContextWindow
-	}
-
-	inputPrice := existing.InputPrice
-	if req.InputPrice != nil {
-		inputPrice = *req.InputPrice
-	}
-	outputPrice := existing.OutputPrice
-	if req.OutputPrice != nil {
-		outputPrice = *req.OutputPrice
-	}
-	cacheReadPrice := existing.CacheReadPrice
-	if req.CacheReadPrice != nil {
-		cacheReadPrice = *req.CacheReadPrice
-	}
-	cacheWritePrice := existing.CacheWritePrice
-	if req.CacheWritePrice != nil {
-		cacheWritePrice = *req.CacheWritePrice
-	}
+	enabled := coalesceBoolToInt64(req.Enabled, existing.Enabled)
+	contextWindow := coalesceInt64(req.ContextWindow, existing.ContextWindow)
+	inputPrice := coalesceFloat64(req.InputPrice, existing.InputPrice)
+	outputPrice := coalesceFloat64(req.OutputPrice, existing.OutputPrice)
+	cacheReadPrice := coalesceFloat64(req.CacheReadPrice, existing.CacheReadPrice)
+	cacheWritePrice := coalesceFloat64(req.CacheWritePrice, existing.CacheWritePrice)
 	model, err := s.db.UpdateModel(r.Context(), generated.UpdateModelParams{
 		DisplayName:      req.DisplayName,
 		ProviderType:     req.ProviderType,
@@ -704,34 +709,31 @@ type ImportModelsResponse struct {
 	Models   []ModelAPI   `json:"models"`
 }
 
-// oaiListModelsResponse is the shape of GET /v1/models for OpenAI-compatible APIs.
-type oaiListModelsResponse struct {
-	Data []struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-		// Pricing is per-million-token pricing in USD. Prompt = input, Completion = output.
-		// When only cache_prompt is present it is used for both cache read and write.
-		Pricing *struct {
-			Prompt     string `json:"prompt"`
-			Completion string `json:"completion"`
-			CacheRead  string `json:"cache_prompt"`
-			CacheWrite string `json:"cache_write"`
-		} `json:"pricing"`
-		ContextLength        int64 `json:"context_length"`
-		MaxCompletionTokens  int64 `json:"max_completion_tokens"`
-	} `json:"data"`
-}
-
-// parseModelPricing extracts per-million-token USD pricing from a /v1/models
-// pricing object. The API reports prices as per-token strings; we convert to
-// per-million. When cache_prompt is set but cache_write is not, it is used for
-// both cache read and cache write pricing.
-func parseModelPricing(p *struct {
+// importedModelPricing is the pricing block from GET /v1/models responses.
+// Prices are per-million-token USD as strings. When cache_prompt is set but
+// cache_write is not, it is used for both cache read and cache write.
+type importedModelPricing struct {
 	Prompt     string `json:"prompt"`
 	Completion string `json:"completion"`
 	CacheRead  string `json:"cache_prompt"`
 	CacheWrite string `json:"cache_write"`
-}) (input, output, cacheRead, cacheWrite float64) {
+}
+
+// oaiListModelsResponse is the shape of GET /v1/models for OpenAI-compatible APIs.
+type oaiListModelsResponse struct {
+	Data []struct {
+		ID                  string                `json:"id"`
+		Name                string                `json:"name"`
+		Pricing             *importedModelPricing `json:"pricing"`
+		ContextLength       int64                 `json:"context_length"`
+		MaxCompletionTokens int64                 `json:"max_completion_tokens"`
+	} `json:"data"`
+}
+
+// parseModelPricing extracts per-million-token USD pricing from the imported
+// pricing struct. Prices are already per-million; we just parse the strings.
+// When cache_prompt is set but cache_write is not, it is used for both.
+func parseModelPricing(p *importedModelPricing) (input, output, cacheRead, cacheWrite float64) {
 	if p == nil {
 		return
 	}

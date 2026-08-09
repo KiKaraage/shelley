@@ -94,7 +94,7 @@ Base: 1d4cbe7
 Files: db/schema/040-model-pricing.sql, db/query/models.sql, db/generated/models.sql.go, db/generated/models.go, server/custom_models.go, server/model_costs.go
 Changes: Import pricing from /v1/models into the DB:
   - New migration adds `input_price`, `output_price`, `cache_read_price`, `cache_write_price` columns to `models` (all REAL, default 0).
-  - Import (`POST /api/custom-models/import`) now parses the `pricing` field from the `/v1/models` response and stores per-million-token prices. Per-token strings are converted (×1M). When only `cache_prompt` is set (no `cache_write`), it is used for both cache read and cache write.
+  - Import (`POST /api/custom-models/import`) now parses the `pricing` field from the `/v1/models` response and stores per-million-token prices. When only `cache_prompt` is set (no `cache_write`), it is used for both cache read and cache write.
   - `POST /api/model-costs` resolves pricing by checking DB-stored custom model prices first, then falling back to the models.dev snapshot.
   - `PUT /api/custom-models/{id}` supports optional `input_price`, `output_price`, `cache_read_price`, `cache_write_price` fields (pointer types — omit to preserve existing).
   - Duplicate model preserves pricing from source.
