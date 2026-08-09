@@ -5,7 +5,7 @@ import type { CoalescedItem } from "./coalesce";
 export type RenderNode =
   | { kind: "day-separator"; key: string; label: string }
   | { kind: "timestamp"; key: string; createdAt: string }
-  | { kind: "token-marker"; key: string; label: string; ctx: number }
+  | { kind: "token-marker"; key: string; label: string; ctx: number; cost?: number }
   | { kind: "message"; key: string; item: CoalescedItem }
   | { kind: "tool-pills"; key: string; items: CoalescedItem[] }
   | { kind: "tool-call"; key: string; item: CoalescedItem }

@@ -28,6 +28,10 @@
           {{ usage.cache_creation_input_tokens.toLocaleString() }}
         </div>
       </template>
+      <template v-if="cacheHitRate !== null">
+        <div class="usage-detail-label">Cache Hit Rate:</div>
+        <div class="usage-detail-value">{{ cacheHitRate }}%</div>
+      </template>
       <div class="usage-detail-label">Output Tokens:</div>
       <div class="usage-detail-value">{{ usage.output_tokens.toLocaleString() }}</div>
       <template v-if="usage.cost_usd > 0">
@@ -47,14 +51,27 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import type { Usage } from "../../types";
 import Modal from "./Modal.vue";
 
-defineProps<{
+const { usage } = defineProps<{
   usage: Usage;
   durationMs: number | null;
 }>();
 const emit = defineEmits<{ (e: "close"): void }>();
+
+// cache hit rate = (cache_read + cache_write) / (cache_read + cache_write + input + output) * 100%
+const cacheHitRate = computed(() => {
+  const cr = usage.cache_read_input_tokens || 0;
+  const cw = usage.cache_creation_input_tokens || 0;
+  const inp = usage.input_tokens || 0;
+  const out = usage.output_tokens || 0;
+  const total = cr + cw + inp + out;
+  if (total === 0) return null;
+  const rate = ((cr + cw) / total) * 100;
+  return rate % 1 === 0 ? rate.toFixed(0) : rate.toFixed(1);
+});
 
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`;

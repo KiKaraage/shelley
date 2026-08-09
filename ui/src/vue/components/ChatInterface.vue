@@ -1429,7 +1429,7 @@ function buildRenderModel(): GenerationBlock[] {
   const TOKEN_MARKER_STEP = 10_000;
   const tokenState = { lastBucket: 0 };
 
-  const contextSizeOf = (item: CoalescedItem): number | null => {
+  const parseItemUsage = (item: CoalescedItem): { ctx: number; cost: number } | null => {
     if (item.type !== "message" || item.message?.type !== "agent") return null;
     const raw = item.message?.usage_data;
     if (!raw) return null;
@@ -1440,20 +1440,20 @@ function buildRenderModel(): GenerationBlock[] {
         (usage?.cache_creation_input_tokens ?? 0) +
         (usage?.cache_read_input_tokens ?? 0) +
         (usage?.output_tokens ?? 0);
-      return ctx > 0 ? ctx : null;
+      return ctx > 0 ? { ctx, cost: usage?.cost_usd ?? 0 } : null;
     } catch {
       return null;
     }
   };
 
   const maybeTokenMarker = (item: CoalescedItem, keyPrefix: string): RenderNode | null => {
-    const ctx = contextSizeOf(item);
-    if (ctx === null) return null;
-    const bucket = Math.floor(ctx / TOKEN_MARKER_STEP);
+    const parsed = parseItemUsage(item);
+    if (parsed === null) return null;
+    const bucket = Math.floor(parsed.ctx / TOKEN_MARKER_STEP);
     if (bucket <= tokenState.lastBucket) return null;
     tokenState.lastBucket = bucket;
-    const label = `${Math.round(ctx / 1000)}k tokens`;
-    return { kind: "token-marker", key: `tok-${keyPrefix}`, label, ctx };
+    const label = `${Math.round(parsed.ctx / 1000)}k tokens`;
+    return { kind: "token-marker", key: `tok-${keyPrefix}`, label, ctx: parsed.ctx, cost: parsed.cost };
   };
 
   const maybeTimestamp = (iso: string | null, keyPrefix: string): RenderNode[] => {
