@@ -36,7 +36,7 @@ build-custom: ui templates
 	}; \
 	SHA=$$(git rev-parse --short HEAD); \
 	go build -ldflags "\
-	  -X shelley.exe.dev/version.Version=$${TAG#v}-custom.$$SHA \
+	  -X shelley.exe.dev/version.Version=$${TAG#v}-ki.$$SHA \
 	  -X shelley.exe.dev/version.Tag=$$TAG \
 	  -X shelley.exe.dev/version.Customized=true" \
 	  -o bin/shelley ./cmd/shelley; \
