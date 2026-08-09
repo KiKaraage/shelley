@@ -10,26 +10,30 @@ import (
 )
 
 const createModel = `-- name: CreateModel :one
-INSERT INTO models (model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, created_at, updated_at, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window
+INSERT INTO models (model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window, input_price, output_price, cache_read_price, cache_write_price)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, created_at, updated_at, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window, input_price, output_price, cache_read_price, cache_write_price
 `
 
 type CreateModelParams struct {
-	ModelID          string `json:"model_id"`
-	DisplayName      string `json:"display_name"`
-	ProviderType     string `json:"provider_type"`
-	Endpoint         string `json:"endpoint"`
-	ApiKey           string `json:"api_key"`
-	ModelName        string `json:"model_name"`
-	MaxTokens        int64  `json:"max_tokens"`
-	Tags             string `json:"tags"`
-	ReasoningEffort  string `json:"reasoning_effort"`
-	ImageSupport     string `json:"image_support"`
-	ReasoningSupport string `json:"reasoning_support"`
-	ReasoningMap     string `json:"reasoning_map"`
-	Enabled          int64  `json:"enabled"`
-	ContextWindow    int64  `json:"context_window"`
+	ModelID          string  `json:"model_id"`
+	DisplayName      string  `json:"display_name"`
+	ProviderType     string  `json:"provider_type"`
+	Endpoint         string  `json:"endpoint"`
+	ApiKey           string  `json:"api_key"`
+	ModelName        string  `json:"model_name"`
+	MaxTokens        int64   `json:"max_tokens"`
+	Tags             string  `json:"tags"`
+	ReasoningEffort  string  `json:"reasoning_effort"`
+	ImageSupport     string  `json:"image_support"`
+	ReasoningSupport string  `json:"reasoning_support"`
+	ReasoningMap     string  `json:"reasoning_map"`
+	Enabled          int64   `json:"enabled"`
+	ContextWindow    int64   `json:"context_window"`
+	InputPrice       float64 `json:"input_price"`
+	OutputPrice      float64 `json:"output_price"`
+	CacheReadPrice   float64 `json:"cache_read_price"`
+	CacheWritePrice  float64 `json:"cache_write_price"`
 }
 
 func (q *Queries) CreateModel(ctx context.Context, arg CreateModelParams) (Model, error) {
@@ -48,6 +52,10 @@ func (q *Queries) CreateModel(ctx context.Context, arg CreateModelParams) (Model
 		arg.ReasoningMap,
 		arg.Enabled,
 		arg.ContextWindow,
+		arg.InputPrice,
+		arg.OutputPrice,
+		arg.CacheReadPrice,
+		arg.CacheWritePrice,
 	)
 	var i Model
 	err := row.Scan(
@@ -67,6 +75,10 @@ func (q *Queries) CreateModel(ctx context.Context, arg CreateModelParams) (Model
 		&i.ReasoningMap,
 		&i.Enabled,
 		&i.ContextWindow,
+		&i.InputPrice,
+		&i.OutputPrice,
+		&i.CacheReadPrice,
+		&i.CacheWritePrice,
 	)
 	return i, err
 }
@@ -81,7 +93,7 @@ func (q *Queries) DeleteModel(ctx context.Context, modelID string) error {
 }
 
 const getEnabledModels = `-- name: GetEnabledModels :many
-SELECT model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, created_at, updated_at, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window FROM models WHERE enabled = 1 ORDER BY created_at ASC
+SELECT model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, created_at, updated_at, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window, input_price, output_price, cache_read_price, cache_write_price FROM models WHERE enabled = 1 ORDER BY created_at ASC
 `
 
 func (q *Queries) GetEnabledModels(ctx context.Context) ([]Model, error) {
@@ -110,6 +122,10 @@ func (q *Queries) GetEnabledModels(ctx context.Context) ([]Model, error) {
 			&i.ReasoningMap,
 			&i.Enabled,
 			&i.ContextWindow,
+			&i.InputPrice,
+			&i.OutputPrice,
+			&i.CacheReadPrice,
+			&i.CacheWritePrice,
 		); err != nil {
 			return nil, err
 		}
@@ -125,7 +141,7 @@ func (q *Queries) GetEnabledModels(ctx context.Context) ([]Model, error) {
 }
 
 const getModel = `-- name: GetModel :one
-SELECT model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, created_at, updated_at, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window FROM models WHERE model_id = ?
+SELECT model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, created_at, updated_at, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window, input_price, output_price, cache_read_price, cache_write_price FROM models WHERE model_id = ?
 `
 
 func (q *Queries) GetModel(ctx context.Context, modelID string) (Model, error) {
@@ -148,12 +164,16 @@ func (q *Queries) GetModel(ctx context.Context, modelID string) (Model, error) {
 		&i.ReasoningMap,
 		&i.Enabled,
 		&i.ContextWindow,
+		&i.InputPrice,
+		&i.OutputPrice,
+		&i.CacheReadPrice,
+		&i.CacheWritePrice,
 	)
 	return i, err
 }
 
 const getModels = `-- name: GetModels :many
-SELECT model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, created_at, updated_at, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window FROM models ORDER BY created_at ASC
+SELECT model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, created_at, updated_at, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window, input_price, output_price, cache_read_price, cache_write_price FROM models ORDER BY created_at ASC
 `
 
 func (q *Queries) GetModels(ctx context.Context) ([]Model, error) {
@@ -182,6 +202,10 @@ func (q *Queries) GetModels(ctx context.Context) ([]Model, error) {
 			&i.ReasoningMap,
 			&i.Enabled,
 			&i.ContextWindow,
+			&i.InputPrice,
+			&i.OutputPrice,
+			&i.CacheReadPrice,
+			&i.CacheWritePrice,
 		); err != nil {
 			return nil, err
 		}
@@ -211,26 +235,34 @@ SET display_name = ?,
     reasoning_map = ?,
     enabled = ?,
     context_window = ?,
+    input_price = ?,
+    output_price = ?,
+    cache_read_price = ?,
+    cache_write_price = ?,
     updated_at = CURRENT_TIMESTAMP
 WHERE model_id = ?
-RETURNING model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, created_at, updated_at, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window
+RETURNING model_id, display_name, provider_type, endpoint, api_key, model_name, max_tokens, tags, created_at, updated_at, reasoning_effort, image_support, reasoning_support, reasoning_map, enabled, context_window, input_price, output_price, cache_read_price, cache_write_price
 `
 
 type UpdateModelParams struct {
-	DisplayName      string `json:"display_name"`
-	ProviderType     string `json:"provider_type"`
-	Endpoint         string `json:"endpoint"`
-	ApiKey           string `json:"api_key"`
-	ModelName        string `json:"model_name"`
-	MaxTokens        int64  `json:"max_tokens"`
-	Tags             string `json:"tags"`
-	ReasoningEffort  string `json:"reasoning_effort"`
-	ImageSupport     string `json:"image_support"`
-	ReasoningSupport string `json:"reasoning_support"`
-	ReasoningMap     string `json:"reasoning_map"`
-	Enabled          int64  `json:"enabled"`
-	ContextWindow    int64  `json:"context_window"`
-	ModelID          string `json:"model_id"`
+	DisplayName      string  `json:"display_name"`
+	ProviderType     string  `json:"provider_type"`
+	Endpoint         string  `json:"endpoint"`
+	ApiKey           string  `json:"api_key"`
+	ModelName        string  `json:"model_name"`
+	MaxTokens        int64   `json:"max_tokens"`
+	Tags             string  `json:"tags"`
+	ReasoningEffort  string  `json:"reasoning_effort"`
+	ImageSupport     string  `json:"image_support"`
+	ReasoningSupport string  `json:"reasoning_support"`
+	ReasoningMap     string  `json:"reasoning_map"`
+	Enabled          int64   `json:"enabled"`
+	ContextWindow    int64   `json:"context_window"`
+	InputPrice       float64 `json:"input_price"`
+	OutputPrice      float64 `json:"output_price"`
+	CacheReadPrice   float64 `json:"cache_read_price"`
+	CacheWritePrice  float64 `json:"cache_write_price"`
+	ModelID          string  `json:"model_id"`
 }
 
 func (q *Queries) UpdateModel(ctx context.Context, arg UpdateModelParams) (Model, error) {
@@ -248,6 +280,10 @@ func (q *Queries) UpdateModel(ctx context.Context, arg UpdateModelParams) (Model
 		arg.ReasoningMap,
 		arg.Enabled,
 		arg.ContextWindow,
+		arg.InputPrice,
+		arg.OutputPrice,
+		arg.CacheReadPrice,
+		arg.CacheWritePrice,
 		arg.ModelID,
 	)
 	var i Model
@@ -268,6 +304,10 @@ func (q *Queries) UpdateModel(ctx context.Context, arg UpdateModelParams) (Model
 		&i.ReasoningMap,
 		&i.Enabled,
 		&i.ContextWindow,
+		&i.InputPrice,
+		&i.OutputPrice,
+		&i.CacheReadPrice,
+		&i.CacheWritePrice,
 	)
 	return i, err
 }
