@@ -169,9 +169,10 @@ export const en: TranslationKeys = {
   nameShownInSelector: "Name shown in the model selector",
   apiKey: "API Key",
   enterApiKey: "Enter API key",
-  maxContextTokens: "Max Context Tokens",
+  maxOutputTokens: "Max Outputs",
   contextWindow: "Context Window",
   contextWindowHint: "Total context window size (0 = auto-detect from model name).",
+  maxOutputTokensHint: "Maximum output tokens per response (0 = 200k default).",
   imageSupport: "Image input support",
   imageSupportHelp:
     "Auto detects this automatically. Pick Supported or Not supported to set it yourself.",

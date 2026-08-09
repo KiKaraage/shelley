@@ -169,9 +169,10 @@ export interface TranslationKeys {
   nameShownInSelector: string;
   apiKey: string;
   enterApiKey: string;
-  maxContextTokens: string;
+  maxOutputTokens: string;
   contextWindow: string;
   contextWindowHint: string;
+  maxOutputTokensHint: string;
   imageSupport: string;
   imageSupportHelp: string;
   imageSupportAuto: string;

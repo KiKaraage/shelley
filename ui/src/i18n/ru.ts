@@ -169,9 +169,10 @@ export const ru: TranslationKeys = {
   nameShownInSelector: "Имя, отображаемое в селекторе моделей",
   apiKey: "API-ключ",
   enterApiKey: "Введите API-ключ",
-  maxContextTokens: "Макс. токенов контекста",
+  maxOutputTokens: "Макс. выходных токенов",
   contextWindow: "Окно контекста",
   contextWindowHint: "Общий размер окна контекста (0 = автоопределение).",
+  maxOutputTokensHint: "Макс. выходных токенов на ответ (0 = 200k по умолчанию).",
   imageSupport: "Image input support",
   imageSupportHelp:
     "Auto определяет это автоматически. Выберите «Поддерживается» или «Не поддерживается», чтобы задать вручную.",
