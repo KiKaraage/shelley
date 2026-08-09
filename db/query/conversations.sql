@@ -459,3 +459,6 @@ UPDATE conversations
 SET tags = ?
 WHERE conversation_id = ?
 RETURNING *;
+
+-- name: SetGistID :exec
+UPDATE conversations SET gist_id = sqlc.arg('gist_id') WHERE conversation_id = sqlc.arg('conversation_id');

@@ -32,6 +32,7 @@ type Conversation struct {
 	IsDraft              bool      `json:"is_draft"`
 	Draft                string    `json:"draft"`
 	QueuedMessages       string    `json:"queued_messages"`
+	GistID               *string   `json:"gist_id"`
 }
 
 type Message struct {

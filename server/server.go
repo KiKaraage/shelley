@@ -1434,6 +1434,7 @@ func (s *Server) notifySubscribersNewMessage(ctx context.Context, conversationID
 	// we're idle.
 	if isAgentEndOfTurn(newMsg) {
 		go manager.drainPendingMessages(s)
+		go s.UpdateGistForCompletion(ctx, conversationID)
 	}
 
 	// Publish only the new message
@@ -1486,6 +1487,7 @@ func (s *Server) notifySubscribersNewMessages(ctx context.Context, conversationI
 	for i := range newMsgs {
 		if isAgentEndOfTurn(&newMsgs[i]) {
 			go manager.drainPendingMessages(s)
+			go s.UpdateGistForCompletion(ctx, conversationID)
 			break
 		}
 	}
