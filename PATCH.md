@@ -99,3 +99,15 @@ Changes: Import pricing from /v1/models into the DB:
   - `PUT /api/custom-models/{id}` supports optional `input_price`, `output_price`, `cache_read_price`, `cache_write_price` fields (pointer types — omit to preserve existing).
   - Duplicate model preserves pricing from source.
 Watchouts: Existing models in the DB will have 0 pricing — re-import from the provider to populate. The embedded models.dev snapshot also covers crof.ai models as a fallback.
+
+## PATCH-009
+Status: active
+Base: 1d4cbe7
+Files: ui/src/vue/components/ModelsModal.vue, ui/src/styles.css, ui/src/i18n/en.ts (and other locale files), ui/src/i18n/types.ts
+Changes:
+  - **Optimistic toggle/delete**: `handleToggleEnabled` and `handleDelete` now update local state immediately without a full `loadModels()` round-trip. Server errors roll back only the affected row. No more blocking wait between toggles.
+  - **Checkpoint selection bar**: custom model rows get checkboxes; selecting one or more shows a sticky bar at the bottom with bulk Disable/Enable/Delete actions. All bulk actions are also optimistic with rollback.
+  - **Sort enabled first**: custom models sort enabled before disabled in the table.
+  - **Checkbox alignment**: header "select all" checkbox visually aligned with per-row checkboxes via PrimeVue `pt` pass-through + scoped CSS.
+  - Added `disable`/`enable` i18n keys across all 9 locale files.
+Watchouts: `bulkToggleEnabled` only clears `_pending` on the affected models (not all) to avoid interfering with concurrent individual toggles. `handleDelete` re-finds the index on rollback to handle concurrent array shifts. `bulkDelete` and `handleDelete` restore `selectedKeys` on error.
