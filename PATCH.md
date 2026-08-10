@@ -152,3 +152,10 @@ Changes: Export Shelley session as a self-contained HTML file to a GitHub secret
   - **URL format**: `https://gisthost.github.io/?{gist-id}` — renders the HTML directly.
   - **Tests**: `gist_test.go` (slug validation, error classification), `gist_export_html_test.go` (13 edge cases: nil fields, malformed JSON, tool calls with nil/string input, tool result errors, image-only results, etc.), `api_gist.test.ts` (plain-text error body handling).
 Watchouts: Requires `gh` CLI installed and authenticated. The `init()` staleness check in `ui/embedfs.go` calls `os.Exit(1)` when build is stale — rebuild UI before testing. `html/template` was replaced with `text/template` for the embedded HTML to avoid escaping content inside `<script>` tags.
+
+## PATCH-015
+Status: active
+Base: 1d4cbe7
+Files: ui/src/vue/components/ContextUsageBar.vue
+Changes: Made the context warning icon (⚠️) threshold relative to the model's context window instead of a hardcoded 100k tokens. When `maxContextTokens` is known, the warning now triggers at 70% usage (matching the existing label color thresholds). Falls back to the absolute 100k threshold only when the model has no declared context window.
+Watchouts: The `percentage` computed prop is already defined above the warning check so it can be reused directly. The auto-open popup feature (`hasAutoOpened` / localStorage gate) still uses the same condition.
