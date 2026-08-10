@@ -10332,7 +10332,7 @@ kbd {
 .drawer-working-indicator {
   width: 8px;
   height: 8px;
-  border: none;
+  border: 1.5px solid white;
   background-color: var(--green-500, #22c55e);
 }
 
