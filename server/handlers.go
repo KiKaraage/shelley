@@ -971,19 +971,18 @@ func (s *Server) conversationMux() *http.ServeMux {
 	mux.HandleFunc("POST /{id}/fork", func(w http.ResponseWriter, r *http.Request) {
 		s.handleForkConversation(w, r, r.PathValue("id"))
 	})
-  mux.HandleFunc("POST /{id}/cwd", func(w http.ResponseWriter, r *http.Request) {
-    s.handleSetConversationCwd(w, r, r.PathValue("id"))
-  })
-  mux.HandleFunc("GET /{id}/export-gist", func(w http.ResponseWriter, r *http.Request) {
-    s.handleGetGistStatus(w, r, r.PathValue("id"))
-  })
-  mux.HandleFunc("POST /{id}/export-gist", func(w http.ResponseWriter, r *http.Request) {
-    s.handleExportGist(w, r, r.PathValue("id"))
-  })
-  mux.HandleFunc("PATCH /{id}/export-gist", func(w http.ResponseWriter, r *http.Request) {
-    s.handleUpdateGist(w, r, r.PathValue("id"))
-  })
-})
+	mux.HandleFunc("POST /{id}/cwd", func(w http.ResponseWriter, r *http.Request) {
+		s.handleSetConversationCwd(w, r, r.PathValue("id"))
+	})
+	mux.HandleFunc("GET /{id}/export-gist", func(w http.ResponseWriter, r *http.Request) {
+		s.handleGetGistStatus(w, r, r.PathValue("id"))
+	})
+	mux.HandleFunc("POST /{id}/export-gist", func(w http.ResponseWriter, r *http.Request) {
+		s.handleExportGist(w, r, r.PathValue("id"))
+	})
+	mux.HandleFunc("PATCH /{id}/export-gist", func(w http.ResponseWriter, r *http.Request) {
+		s.handleUpdateGist(w, r, r.PathValue("id"))
+	})
 	return mux
 }
 
@@ -3598,9 +3597,9 @@ func (s *Server) handleSetSetting(w http.ResponseWriter, r *http.Request) {
 
 	// Only allow known setting keys
 	allowedKeys := map[string]bool{
-		"auto_upgrade":          true,
-		exeNotifySettingKey:     true,
-		"shelley.attribution":   true,
+		"auto_upgrade":        true,
+		exeNotifySettingKey:   true,
+		"shelley.attribution": true,
 	}
 	if !allowedKeys[req.Key] {
 		http.Error(w, fmt.Sprintf("Invalid setting key: %s", req.Key), http.StatusBadRequest)
