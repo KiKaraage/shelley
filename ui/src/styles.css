@@ -661,57 +661,48 @@ body {
 
 /* Settled preview: compact one-line rows below the active list */
 /* Settled preview: compact one-line rows in the main view */
-.settled-preview {
-  border-top: 1px solid var(--p-surface-border);
-  padding: 0.25rem 0 0;
-}
-.settled-preview-row {
-  display: flex;
-  align-items: center;
-  padding: 0.25rem 1rem;
-  cursor: pointer;
-  font-size: 0.8rem;
-  color: var(--p-text-color);
+/* Uses .conversation-item base class; overrides padding to match the
+   smaller font + tighter row feel. The trailing area (time/actions)
+   overlays in-place on hover. */
+.conversation-item-settled {
+  padding: 0.35rem 0.75rem;
   opacity: 0.6;
-  transition: opacity 0.15s;
 }
-.settled-preview-row:hover {
+.conversation-item-settled:hover {
   opacity: 0.85;
 }
-.settled-preview-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-  min-width: 0;
+.settled-trailing {
+  position: relative;
+  flex-shrink: 0;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
 }
-.settled-preview-time {
+.settled-trailing-time {
   font-size: 0.7rem;
   opacity: 0.5;
   white-space: nowrap;
-  flex-shrink: 0;
-  margin-left: 0.5rem;
   transition: opacity 0.15s;
 }
-.settled-preview-hover-actions {
-  flex-shrink: 0;
-  margin-left: 0.5rem;
+.settled-trailing-actions {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 0.15rem;
   opacity: 0;
   transition: opacity 0.15s;
+  pointer-events: none;
 }
-.settled-preview-row:hover .settled-preview-time {
+.conversation-item-settled:hover .settled-trailing-time {
   opacity: 0;
 }
-.settled-preview-row:hover .settled-preview-hover-actions {
+.conversation-item-settled:hover .settled-trailing-actions {
   opacity: 1;
-}
-.settled-delete-confirm {
-  display: flex;
-  align-items: center;
-  gap: 0.15rem;
+  pointer-events: auto;
 }
 
 /* Backdrop */
