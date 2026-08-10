@@ -10360,6 +10360,22 @@ kbd {
   margin-left: auto;
 }
 
+.drawer-meta-sep {
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.drawer-row-actions {
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.conversation-item:hover > .drawer-conversation-item-flex-container .drawer-meta-row .drawer-row-actions {
+  opacity: 1;
+}
+
 .drawer-actions-row-offset {
   display: flex;
   gap: 0.25rem;

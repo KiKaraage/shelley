@@ -13,15 +13,87 @@
     @auxclick="ctx.handleAuxClick($event, conversation)"
   >
     <div class="drawer-conversation-item-flex-container">
+      <!-- Row 1: [cwd · repo] (left) + hover action buttons (right) -->
+      <div class="drawer-conversation-header-row drawer-meta-row">
+        <span
+          v-if="conversation.cwd && ctx.groupBy.value !== 'cwd'"
+          class="conversation-cwd"
+          :title="conversation.cwd"
+        >
+          {{ ctx.formatCwdForDisplay(conversation.cwd) }}
+        </span>
+        <template v-if="conversation.cwd && ctx.groupBy.value !== 'cwd' && gitRepoName">
+          <span class="drawer-meta-sep">·</span>
+          <span class="conversation-cwd" :title="convState.git_worktree_root || convState.git_repo_root">
+            {{ gitRepoName }}
+          </span>
+        </template>
+        <div class="drawer-actions-row drawer-row-actions">
+          <template v-if="isDraft">
+            <DeleteButton :conversation-id="conversation.conversation_id" />
+          </template>
+          <template v-else-if="!itemArchived">
+            <Button
+              class="btn-icon-sm"
+              text
+              severity="secondary"
+              size="small"
+              v-tooltip.top="ctx.t('rename')"
+              :aria-label="ctx.t('rename')"
+              @click="ctx.handleStartRename($event, conversation)"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="drawer-icon-size">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  :stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+            </Button>
+            <Button
+              class="btn-icon-sm"
+              text
+              severity="secondary"
+              size="small"
+              v-tooltip.top="ctx.t('editTags')"
+              :aria-label="ctx.t('editTags')"
+              @click="ctx.handleOpenTagEditor($event, conversation.conversation_id)"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="drawer-icon-size">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  :stroke-width="2"
+                  d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"
+                />
+              </svg>
+            </Button>
+            <Button
+              class="btn-icon-sm"
+              text
+              severity="secondary"
+              size="small"
+              v-tooltip.top="ctx.t('archive')"
+              :aria-label="ctx.t('archive')"
+              @click="ctx.handleArchive($event, conversation.conversation_id)"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="drawer-icon-size">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  :stroke-width="2"
+                  d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                />
+              </svg>
+            </Button>
+          </template>
+        </div>
+      </div>
+
+      <!-- Row 2: title (left) + working indicator + badge (right) -->
       <div class="drawer-conversation-header-row">
         <div class="drawer-conversation-item-flex-container">
-          <span
-            v-if="conversation.cwd && ctx.groupBy.value !== 'cwd'"
-            class="conversation-cwd"
-            :title="conversation.cwd"
-          >
-            {{ ctx.formatCwdForDisplay(conversation.cwd) }}
-          </span>
           <input
             v-if="ctx.editingId.value === conversation.conversation_id"
             ref="renameInput"
@@ -171,7 +243,7 @@
         </form>
       </div>
 
-      <!-- Preview + timestamp on one line -->
+      <!-- Row 3: timestamp + preview -->
       <div class="conversation-meta">
         <span class="conversation-date">{{ ctx.formatDate(conversation.updated_at) }}</span>
         <span
@@ -217,95 +289,6 @@
             />
           </svg>
           {{ terminalCount }}
-        </span>
-      </div>
-
-      <div class="conversation-meta">
-        <div v-if="isDraft" class="conversation-actions drawer-actions-row">
-          <DeleteButton :conversation-id="conversation.conversation_id" />
-        </div>
-        <div v-if="!isDraft && !itemArchived" class="conversation-actions drawer-actions-row">
-          <Button
-            class="btn-icon-sm"
-            text
-            severity="secondary"
-            size="small"
-            v-tooltip.top="ctx.t('rename')"
-            :aria-label="ctx.t('rename')"
-            @click="ctx.handleStartRename($event, conversation)"
-          >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="drawer-icon-size">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                :stroke-width="2"
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-          </Button>
-          <Button
-            class="btn-icon-sm"
-            text
-            severity="secondary"
-            size="small"
-            v-tooltip.top="ctx.t('editTags')"
-            :aria-label="ctx.t('editTags')"
-            @click="ctx.handleOpenTagEditor($event, conversation.conversation_id)"
-          >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="drawer-icon-size">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                :stroke-width="2"
-                d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"
-              />
-            </svg>
-          </Button>
-          <Button
-            class="btn-icon-sm"
-            text
-            severity="secondary"
-            size="small"
-            v-tooltip.top="ctx.t('archive')"
-            :aria-label="ctx.t('archive')"
-            @click="ctx.handleArchive($event, conversation.conversation_id)"
-          >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="drawer-icon-size">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                :stroke-width="2"
-                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-              />
-            </svg>
-          </Button>
-        </div>
-      </div>
-
-      <div
-        v-if="convState.git_commit"
-        :class="`conversation-git drawer-git-info ${isActive ? 'drawer-git-info-active' : ''}`"
-        style="visibility: hidden"
-      >
-        <span
-          v-tooltip.top="`Click to copy ${convState.git_commit}`"
-          :class="`drawer-git-hash ${ctx.copiedConvId.value === conversation.conversation_id ? 'drawer-git-hash-copied' : ''}`"
-          @click="
-            ctx.handleCopyGitHash($event, convState.git_commit!, conversation.conversation_id)
-          "
-        >
-          {{
-            ctx.copiedConvId.value === conversation.conversation_id
-              ? "copied!".padEnd(convState.git_commit!.length, "\u00a0")
-              : convState.git_commit
-          }}
-        </span>
-        <span
-          v-if="convState.git_subject"
-          :title="convState.git_subject"
-          class="drawer-git-subject"
-        >
-          {{ convState.git_subject }}
         </span>
       </div>
     </div>
@@ -393,6 +376,10 @@ const tagInput = ref<HTMLInputElement | null>(null);
 
 const convState = computed(() => props.conversation as ConversationWithState);
 const isDraft = computed(() => !!props.conversation.is_draft);
+const gitRepoName = computed(() => {
+  const root = convState.value.git_worktree_root || convState.value.git_repo_root;
+  return root ? root.split("/").pop() || null : null;
+});
 const isActive = computed(
   () => props.conversation.conversation_id === ctx.currentConversationId.value,
 );
