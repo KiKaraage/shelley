@@ -331,12 +331,16 @@
         />
       </div>
 
-      <!-- Settled preview (one-line rows, main view only) -->
-      <template v-if="settledPreview.length > 0 && !isSearching">
+      <!-- Separator + Settled preview (one-line rows, main view only) -->
+      <template v-if="settledPreview.length > 0 && !isSearching && displayedConversations.length > 0">
+        <div class="conversation-list-separator" />
+      </template>
+      <div v-if="settledPreview.length > 0 && !isSearching" class="conversation-list">
         <div
           v-for="conv in settledPreview"
           :key="conv.conversation_id"
           class="conversation-item conversation-item-settled"
+          :class="{ active: currentConversationId === conv.conversation_id }"
           @click="openSettledThread(conv)"
         >
           <div class="conversation-title">
@@ -348,6 +352,7 @@
             </span>
             <span class="settled-trailing-actions">
               <Button
+                class="btn-icon-sm"
                 text
                 severity="secondary"
                 size="small"
@@ -360,6 +365,7 @@
               </Button>
               <Button
                 v-if="pendingDeleteId !== conv.conversation_id"
+                class="btn-icon-sm"
                 text
                 severity="secondary"
                 size="small"
@@ -371,17 +377,17 @@
                 </svg>
               </Button>
               <template v-else>
-                <Button text severity="danger" size="small" :aria-label="t('confirmDeleteShort')" @click.stop="handleConfirmDelete($event, conv.conversation_id)">
+                <Button class="btn-icon-sm" text severity="danger" size="small" :aria-label="t('confirmDeleteShort')" @click.stop="handleConfirmDelete($event, conv.conversation_id)">
                   {{ t("confirmDeleteShort") }}
                 </Button>
-                <Button text severity="secondary" size="small" @click.stop="handleCancelDelete($event)">
+                <Button class="btn-icon-sm" text severity="secondary" size="small" @click.stop="handleCancelDelete($event)">
                   {{ t("cancel") }}
                 </Button>
               </template>
             </span>
           </span>
         </div>
-      </template>
+      </div>
     </div>
 
     <!-- Full archived view (ConversationRow-based, same layout as main) -->
