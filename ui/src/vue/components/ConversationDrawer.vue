@@ -279,56 +279,56 @@
       </div>
 
       <!-- Settled preview (one-line rows, main view only) -->
-      <div v-if="settledPreview.length > 0 && !isSearching" class="settled-preview">
+      <template v-if="settledPreview.length > 0 && !isSearching">
         <div
           v-for="conv in settledPreview"
           :key="conv.conversation_id"
-          class="settled-preview-row"
+          class="conversation-item conversation-item-settled"
           @click="openSettledThread(conv)"
         >
-          <span class="settled-preview-name" :title="conv.slug || conv.conversation_id">
+          <div class="conversation-title">
             {{ conv.slug || "Untitled" }}
-          </span>
-          <span class="settled-preview-time">
-            {{ formatDate(conv.updated_at || conv.created_at) }}
-          </span>
-          <span class="settled-preview-hover-actions">
-            <Button
-              text
-              severity="secondary"
-              size="small"
-              :aria-label="t('restore')"
-              @click.stop="handleUnarchive($event, conv.conversation_id)"
-            >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
-                <path stroke-linecap="round" stroke-linejoin="round" :stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </Button>
-            <Button
-              v-if="pendingDeleteId !== conv.conversation_id"
-              text
-              severity="secondary"
-              size="small"
-              :aria-label="t('delete_')"
-              @click.stop="handleDeleteClick($event, conv.conversation_id)"
-            >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
-                <path stroke-linecap="round" stroke-linejoin="round" :stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </Button>
-            <template v-else>
-              <span class="settled-delete-confirm">
+          </div>
+          <span class="settled-trailing">
+            <span class="settled-trailing-time">
+              {{ formatDate(conv.updated_at || conv.created_at) }}
+            </span>
+            <span class="settled-trailing-actions">
+              <Button
+                text
+                severity="secondary"
+                size="small"
+                :aria-label="t('restore')"
+                @click.stop="handleUnarchive($event, conv.conversation_id)"
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="drawer-icon-size">
+                  <path stroke-linecap="round" stroke-linejoin="round" :stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </Button>
+              <Button
+                v-if="pendingDeleteId !== conv.conversation_id"
+                text
+                severity="secondary"
+                size="small"
+                :aria-label="t('delete_')"
+                @click.stop="handleDeleteClick($event, conv.conversation_id)"
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="drawer-icon-size">
+                  <path stroke-linecap="round" stroke-linejoin="round" :stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </Button>
+              <template v-else>
                 <Button text severity="danger" size="small" :aria-label="t('confirmDeleteShort')" @click.stop="handleConfirmDelete($event, conv.conversation_id)">
                   {{ t("confirmDeleteShort") }}
                 </Button>
                 <Button text severity="secondary" size="small" @click.stop="handleCancelDelete($event)">
                   {{ t("cancel") }}
                 </Button>
-              </span>
-            </template>
+              </template>
+            </span>
           </span>
         </div>
-      </div>
+      </template>
     </div>
 
     <!-- Full archived view (ConversationRow-based, same layout as main) -->
