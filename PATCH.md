@@ -154,7 +154,7 @@ Changes: Export Shelley session as a self-contained HTML file to a GitHub secret
 Watchouts: Requires `gh` CLI installed and authenticated. The `init()` staleness check in `ui/embedfs.go` calls `os.Exit(1)` when build is stale — rebuild UI before testing. `html/template` was replaced with `text/template` for the embedded HTML to avoid escaping content inside `<script>` tags.
 
 ## PATCH-015
-Status: active
+Status: superseded (upstream 48bfcc3 removed the ⚠️ icon and replaced the warning with color-coded token counts)
 Base: 1d4cbe7
 Files: ui/src/vue/components/ContextUsageBar.vue
 Changes: Made the context warning icon (⚠️) threshold relative to the model's context window instead of a hardcoded 100k tokens. When `maxContextTokens` is known, the warning now triggers at 70% usage (matching the existing label color thresholds). Falls back to the absolute 100k threshold only when the model has no declared context window.

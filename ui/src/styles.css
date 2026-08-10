@@ -12371,23 +12371,6 @@ kbd {
 }
 
 /* A row holding multiple controls side by side (e.g. theme + notifications). */
-.overflow-menu-row {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-}
-.overflow-menu-row .overflow-menu-control {
-  padding: 0.25rem 0;
-  min-width: 0;
-}
-/* Theme has 3 options, notifications 2 — give theme 60%, notif 40%. */
-.overflow-menu-row .overflow-menu-control-theme {
-  flex: 3;
-}
-.overflow-menu-row .overflow-menu-control-notif {
-  flex: 2;
-}
 .overflow-menu-control .md-toggle-label {
   display: flex;
   justify-content: space-between;
