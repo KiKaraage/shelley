@@ -100,8 +100,10 @@ footer { text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 
       var llm = parseLLM(m);
       if (llm && llm.Content) {
         for (var j = 0; j < llm.Content.length; j++) {
-          var c = llm.Content[j];
-          renderContent(bubble, c);
+          try {
+            var c = llm.Content[j];
+            if (c) renderContent(bubble, c);
+          } catch(e) { /* skip broken content block */ }
         }
       }
     }
@@ -124,9 +126,21 @@ footer { text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 
       var name = c.ToolName || "tool";
       var input = "";
       if (c.ToolInput != null) {
-        input = typeof c.ToolInput === "string" ? c.ToolInput : JSON.stringify(c.ToolInput, null, 2);
+        try {
+          input = typeof c.ToolInput === "string" ? c.ToolInput : JSON.stringify(c.ToolInput, null, 2);
+        } catch(e2) { input = String(c.ToolInput); }
       }
       bubble.innerHTML += "<div class=\"tool-call\"><span class=\"tool-name\">\ud83d\udee0\ufe0f " + escHtml(name) + "</span><details><summary>Show input</summary><pre><code>" + escHtml(input) + "</code></pre></details></div>";
+    } else if (c.Type === 6 && c.ToolResult) {
+      var rText = "";
+      for (var ri = 0; ri < c.ToolResult.length; ri++) {
+        var r = c.ToolResult[ri];
+        if (r && r.Text) rText += r.Text;
+      }
+      if (rText) {
+        var label = c.ToolError ? "Result (error)" : "Result";
+        bubble.innerHTML += "<details><summary>" + escHtml(label) + "</summary><pre><code>" + escHtml(rText) + "</code></pre></details>";
+      }
     }
   }
 
