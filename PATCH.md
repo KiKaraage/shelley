@@ -176,5 +176,5 @@ Watchouts: Non-English locale files retain their original archive/restore transl
 ## PATCH-017
 Status: active
 Base: 1d4cbe7
-Files: ui/src/vue/components/ConversationDrawer.vue, ui/src/styles.css
-Changes: Moved the collapse (<<) and close (x) buttons from the right side of the drawer header to the left edge, before the title. Renamed the drawer title from "Conversations" to "Shelley" (archived view still shows the "archived" translation). Drawer header side padding reduced from 1rem to 0.5rem to match `.conversation-list`. Both `.working-indicator` and `.drawer-working-indicator` now have a solid green background (`--green-500, #22c55e`) with no border.
+Files: ui/src/vue/components/ConversationDrawer.vue, ui/src/vue/components/ConversationDrawerRow.vue, ui/src/styles.css
+Changes: Moved the collapse (<<) and close (x) buttons from the right side of the drawer header to the left edge, before the title. Renamed the drawer title from "Conversations" to "Shelley" (archived view still shows the "archived" translation). Drawer header side padding reduced to match `.conversation-list`. Both `.working-indicator` and `.drawer-working-indicator` now have a solid green background (`--green-500, #22c55e`) with no border. Tightened conversation item padding and gaps. Moved folder name before thread title in the header row. Moved timestamp before preview (same line, date then snippet with ellipsis). Git commit line hidden via `visibility: hidden`. Subagent count badge moved into the header row beside the working indicator.

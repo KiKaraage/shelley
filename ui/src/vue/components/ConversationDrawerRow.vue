@@ -46,6 +46,34 @@
           class="working-indicator drawer-working-indicator"
           :title="ctx.t('agentIsWorking')"
         />
+        <span
+          v-if="!isDraft && !itemArchived && hasSubagents"
+          class="subagent-count-badge"
+          v-tooltip.top="subagentBadgeTooltip"
+          :aria-label="isExpanded ? ctx.t('collapseSubagents') : ctx.t('expandSubagents')"
+          @click="ctx.toggleSubagents($event, conversation.conversation_id)"
+        >
+          <span
+            v-if="runningSubagentCount > 0"
+            class="working-indicator"
+            data-testid="subagent-badge-running"
+            aria-hidden="true"
+          />
+          <span class="drawer-subagent-count-badge-text">{{ subagentBadgeText }}</span>
+          <svg
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            :class="`drawer-subagent-chevron ${isExpanded ? 'drawer-subagent-chevron-expanded' : 'drawer-subagent-chevron-collapsed'}`"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              :stroke-width="2"
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </span>
       </div>
 
       <!-- Tags / tag editor -->
@@ -116,34 +144,6 @@
       </div>
 
       <div class="conversation-meta">
-        <span
-          v-if="!isDraft && !itemArchived && hasSubagents"
-          class="subagent-count-badge"
-          v-tooltip.top="subagentBadgeTooltip"
-          :aria-label="isExpanded ? ctx.t('collapseSubagents') : ctx.t('expandSubagents')"
-          @click="ctx.toggleSubagents($event, conversation.conversation_id)"
-        >
-          <span
-            v-if="runningSubagentCount > 0"
-            class="working-indicator"
-            data-testid="subagent-badge-running"
-            aria-hidden="true"
-          />
-          <span class="drawer-subagent-count-badge-text">{{ subagentBadgeText }}</span>
-          <svg
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            :class="`drawer-subagent-chevron ${isExpanded ? 'drawer-subagent-chevron-expanded' : 'drawer-subagent-chevron-collapsed'}`"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              :stroke-width="2"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </span>
         <div v-if="isDraft" class="conversation-actions drawer-actions-row">
           <DeleteButton :conversation-id="conversation.conversation_id" />
         </div>
