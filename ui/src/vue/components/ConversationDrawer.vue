@@ -207,8 +207,8 @@
       </button>
     </div>
 
-    <!-- Conversations list -->
-    <div class="drawer-body scrollable">
+    <!-- Conversations list (active only) -->
+    <div v-if="!showArchived" class="drawer-body scrollable">
       <div
         v-if="isSearching && searching && searchResults === null"
         class="text-secondary drawer-empty-state"
@@ -216,7 +216,7 @@
         <p>{{ t("searching") }}</p>
       </div>
       <div
-        v-else-if="loadingArchived && showArchived && !isSearching"
+        v-else-if="loadingArchived && !isSearching"
         class="text-secondary drawer-empty-state"
       >
         <p>{{ t("loading") }}</p>
@@ -229,9 +229,7 @@
           {{
             isSearching
               ? t("noSearchResults")
-              : showArchived
-                ? t("noArchivedConversations")
-                : t("noConversationsYet")
+              : t("noConversationsYet")
           }}
         </p>
         <p v-if="!showArchived && !isSearching" class="text-sm drawer-empty-state-hint">
@@ -279,9 +277,84 @@
           :conversation="conv"
         />
       </div>
+
+      <!-- Settled preview (one-line rows, main view only) -->
+      <div v-if="settledPreview.length > 0 && !isSearching" class="settled-preview">
+        <div
+          v-for="conv in settledPreview"
+          :key="conv.conversation_id"
+          class="settled-preview-row"
+          @click="openSettledThread(conv)"
+        >
+          <span class="settled-preview-name" :title="conv.slug || conv.conversation_id">
+            {{ conv.slug || "Untitled" }}
+          </span>
+          <span class="settled-preview-time">
+            {{ formatDate(conv.updated_at || conv.created_at) }}
+          </span>
+          <span class="settled-preview-hover-actions">
+            <Button
+              text
+              severity="secondary"
+              size="small"
+              :aria-label="t('restore')"
+              @click.stop="handleUnarchive($event, conv.conversation_id)"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
+                <path stroke-linecap="round" stroke-linejoin="round" :stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </Button>
+            <Button
+              v-if="pendingDeleteId !== conv.conversation_id"
+              text
+              severity="secondary"
+              size="small"
+              :aria-label="t('delete_')"
+              @click.stop="handleDeleteClick($event, conv.conversation_id)"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
+                <path stroke-linecap="round" stroke-linejoin="round" :stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </Button>
+            <template v-else>
+              <span class="settled-delete-confirm">
+                <Button text severity="danger" size="small" :aria-label="t('confirmDeleteShort')" @click.stop="handleConfirmDelete($event, conv.conversation_id)">
+                  {{ t("confirmDeleteShort") }}
+                </Button>
+                <Button text severity="secondary" size="small" @click.stop="handleCancelDelete($event)">
+                  {{ t("cancel") }}
+                </Button>
+              </span>
+            </template>
+          </span>
+        </div>
+      </div>
     </div>
 
-    <!-- Footer with archived toggle -->
+    <!-- Full archived view (ConversationRow-based, same layout as main) -->
+    <div v-if="showArchived" class="drawer-body scrollable">
+      <div
+        v-if="loadingArchived"
+        class="text-secondary drawer-empty-state"
+      >
+        <p>{{ t("loading") }}</p>
+      </div>
+      <div
+        v-else-if="stableArchivedConversations.length === 0"
+        class="text-secondary drawer-empty-state"
+      >
+        <p>{{ t("noArchivedConversations") }}</p>
+      </div>
+      <div v-else class="conversation-list">
+        <ConversationRow
+          v-for="conv in stableArchivedConversations"
+          :key="conv.conversation_id"
+          :conversation="conv"
+        />
+      </div>
+    </div>
+
+    <!-- Footer toggle -->
     <div class="drawer-footer">
       <Button
         class="drawer-footer-button"
@@ -461,11 +534,13 @@ watch(tagEditorId, (id) => {
   else document.removeEventListener("mousedown", onTagEditorOutside);
 });
 
-// Load archived when the archived view is first opened.
+// Eagerly load archived conversations on mount for the settled preview,
+// and refresh when switching back from the full settled view.
 watch(showArchived, (sa) => {
-  if (sa && archivedConversations.value.length === 0) {
+  if (!sa && archivedConversations.value.length === 0) {
     void loadArchivedConversations();
   }
+  if (sa) void loadArchivedConversations();
 });
 
 // Debounced FTS search across active + archived conversations.
@@ -602,6 +677,13 @@ const formatCwdForDisplay = (p: string | null | undefined): string | null => {
   return p.split("/").pop() ?? p;
 };
 
+// --- Settled thread interaction ---
+// Clicking a settled thread opens it in the main view.
+// When a new message is sent, ChatInterface auto-unarchives it.
+function openSettledThread(conv: Conversation) {
+  emit("select-conversation", conv);
+}
+
 // --- Archive / unarchive / delete ---
 async function handleArchive(e: MouseEvent, conversationId: string) {
   e.stopPropagation();
@@ -609,7 +691,7 @@ async function handleArchive(e: MouseEvent, conversationId: string) {
   try {
     await api.archiveConversation(conversationId);
     emit("archived", conversationId, nextConversation);
-    if (showArchived.value) void loadArchivedConversations();
+    void loadArchivedConversations();
   } catch (err) {
     console.error("Failed to archive conversation:", err);
   }
@@ -847,11 +929,15 @@ const stableArchivedConversations = computed(() => {
   return items;
 });
 
+// Show the 25 most recent settled conversations as a preview below the active list.
+const SETTLED_PREVIEW_LIMIT = 25;
+const settledPreview = computed(() => stableArchivedConversations.value.slice(0, SETTLED_PREVIEW_LIMIT));
+
 const isSearching = computed(() => searchQuery.value.trim().length > 0);
 
 const displayedConversations = computed<(Conversation | ConversationWithState)[]>(() => {
   if (isSearching.value) return searchResults.value ?? [];
-  return showArchived.value ? stableArchivedConversations.value : topLevelConversations.value;
+  return topLevelConversations.value;
 });
 
 interface Group {
@@ -926,7 +1012,9 @@ onUnmounted(() => {
   document.removeEventListener("mousedown", onPendingDeleteOutside);
   document.removeEventListener("mousedown", onTagEditorOutside);
 });
-onMounted(() => {});
+onMounted(() => {
+  void loadArchivedConversations();
+});
 
 // Share all row-relevant state + handlers with ConversationDrawerRow via inject.
 provide(DrawerCtxKey, {

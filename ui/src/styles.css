@@ -659,6 +659,61 @@ body {
   padding: 1rem;
 }
 
+/* Settled preview: compact one-line rows below the active list */
+/* Settled preview: compact one-line rows in the main view */
+.settled-preview {
+  border-top: 1px solid var(--p-surface-border);
+  padding: 0.25rem 0 0;
+}
+.settled-preview-row {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 1rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--p-text-color);
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.settled-preview-row:hover {
+  opacity: 0.85;
+}
+.settled-preview-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.settled-preview-time {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  transition: opacity 0.15s;
+}
+.settled-preview-hover-actions {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.settled-preview-row:hover .settled-preview-time {
+  opacity: 0;
+}
+.settled-preview-row:hover .settled-preview-hover-actions {
+  opacity: 1;
+}
+.settled-delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
 /* Backdrop */
 .backdrop {
   position: fixed;
