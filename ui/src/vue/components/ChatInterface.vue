@@ -69,15 +69,12 @@
           "
           :can-export="!!(conversationId && messages.length > 0)"
           :has-update="hasUpdate"
-<<<<<<< HEAD
           @open-command-palette="props.onOpenCommandPalette?.()"
           @open-diffs="showDiffViewer = true"
           @open-git-graph="showGitGraph = true"
           @open-terminal="openInAppTerminal"
-=======
           :gist-id="gistId"
           :gist-url="gistUrl"
->>>>>>> b075ca3 (feat: export Shelley session as HTML to GitHub Gist)
           @open-external-link="openExternalLink"
           @archive="archiveFromMenu"
           @export="openExport"
@@ -479,11 +476,8 @@ import MessageRenderNode from "./MessageRenderNode.vue";
 import QueuedGhostMessage from "./QueuedGhostMessage.vue";
 import ChatStatusContent from "./ChatStatusContent.vue";
 import MarkdownContent from "./MarkdownContent.vue";
-<<<<<<< HEAD
 import ThinkingContent from "./tools/ThinkingContent.vue";
-=======
 import { gistApi, type GistStatus } from "../../services/api_gist";
->>>>>>> b075ca3 (feat: export Shelley session as HTML to GitHub Gist)
 
 // Props mirror ChatInterfaceProps in the React source. Callbacks that
 // ChatInterface awaits or simply invokes are passed as function props
@@ -2280,6 +2274,15 @@ async function sendMessage(message: string) {
     if (!effectiveId && props.onFirstMessage) {
       await sendFirstMessage(message.trim());
     } else if (effectiveId) {
+      // Auto-unarchive settled threads when the user sends a new message.
+      if (props.currentConversation?.archived) {
+        try {
+          const unarchived = await api.unarchiveConversation(effectiveId);
+          props.onConversationUnarchived?.(unarchived);
+        } catch (err) {
+          console.error("Failed to auto-unarchive conversation:", err);
+        }
+      }
       // When this send promotes an autosaved draft, carry the composer's
       // conversation_options (thinking level, tool overrides).
       // The draft was created without them, and PromoteDraft only preserves
