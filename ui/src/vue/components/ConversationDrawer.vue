@@ -695,9 +695,9 @@ async function handleArchive(e: MouseEvent, conversationId: string) {
   e.stopPropagation();
   const nextConversation = neighborAfterRemoval(flatVisualOrder, conversationId);
   try {
-    await api.archiveConversation(conversationId);
+    const settled = await api.archiveConversation(conversationId);
+    archivedConversations.value = [settled, ...archivedConversations.value];
     emit("archived", conversationId, nextConversation);
-    void loadArchivedConversations();
   } catch (err) {
     console.error("Failed to archive conversation:", err);
   }
