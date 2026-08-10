@@ -65,7 +65,7 @@
       <div v-if="isComplete" class="bash-tool-section">
         <div class="bash-tool-label bash-tool-label-row">
           <span class="bash-tool-output-title">
-            Output{{ hasError ? " (Error)" : "" }}:
+            {{ output ? (hasError ? 'Output (Error)' : 'Output') : 'Clean exit' }}
             <span v-if="executionTime" class="bash-tool-time">{{ executionTime }}</span>
           </span>
           <span class="bash-tool-copy-actions">
@@ -78,8 +78,9 @@
           </span>
         </div>
         <AnsiText
+          v-if="output"
           :class-name="`bash-tool-code ${hasError ? 'error' : ''}`"
-          :text="output || '(no output)'"
+          :text="output"
         />
       </div>
     </div>
