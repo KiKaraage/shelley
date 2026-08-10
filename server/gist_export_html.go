@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"strings"
+	"text/template"
 	"time"
 
 	"shelley.exe.dev/db/generated"
@@ -74,9 +74,7 @@ func exportGistHTML(conv *generated.Conversation, messages []generated.Message) 
 	}
 	encoded := base64.StdEncoding.EncodeToString(jsonData)
 
-	tmpl, err := template.New("gist").Funcs(template.FuncMap{
-		"safe": func(s string) template.HTML { return template.HTML(s) },
-	}).Parse(gistHTMLTemplate)
+	tmpl, err := template.New("gist").Parse(gistHTMLTemplate)
 	if err != nil {
 		return "", fmt.Errorf("parse gist template: %w", err)
 	}
