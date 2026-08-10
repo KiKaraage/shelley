@@ -131,3 +131,24 @@ Status: active
 Base: 1d4cbe7
 Files: ui/src/styles.css
 Changes: Switched several UI elements from monospace (`var(--font-mono)`) to sans-serif (`var(--font-sans)`): `.app-bar-title`, `.conversation-cwd` (also added `font-weight: bold`), `.model-bar-name`, `.system-prompt-label`, `.system-prompt-tools-label`, `.system-prompt-tool-name`, `.bash-tool-copy-btn`, `.status-message`, `.status-readout`, and `.animated-working`.
+
+## PATCH-013
+Status: active
+Base: a8e2ee0
+Files: BashTool.vue
+Changes: When a bash tool call produces empty output, the output block is hidden and the label reads "Clean exit" instead of "Output:". When there is output, it still shows "Output" (or "Output (Error)") as before.
+
+
+## PATCH-014
+Status: active
+Base: 1d4cbe7
+Files: db/schema/041-gist-id.sql, db/query/conversations.sql, db/generated/conversations.sql.go, db/generated/models.go, server/gist.go, server/gist_export_html.go, server/gist_handlers.go, server/embed/gist.html.tmpl, server/handlers.go, server/server.go, ui/src/services/api_gist.ts, ui/src/vue/components/ChatOverflowMenu.vue, ui/src/vue/components/ChatInterface.vue, ui/src/styles.css, ui/src/i18n/en.ts (and other locale files), ui/src/i18n/types.ts
+Changes: Export Shelley session as a self-contained HTML file to a GitHub secret gist via the `gh` CLI.
+  - **DB**: new `gist_id TEXT` column on `conversations` (migration 041).
+  - **Backend**: `server/gist.go` — `gh gist create/edit` wrapper, slug validation (rejects `Untitled`, `Draft`, `Shelley`, empty), temp file management, error classification (`gh_not_auth`). `server/gist_export_html.go` — `exportGistHTML()` builds self-contained HTML with base64-encoded JSON data blob + embedded JS markdown renderer. `server/gist_handlers.go` — `GET/POST/PATCH /api/conversation/{id}/export-gist`. `server/server.go` — auto-update hook on both single-message and batch `isAgentEndOfTurn` paths.
+  - **Frontend**: overflow menu item ("Export to Gist" / "Update Gist"), gist state tracking in ChatInterface, toast feedback, i18n in all 9 locales.
+  - **HTML template**: `server/embed/gist.html.tmpl` — self-contained HTML with vanilla JS renderer. Bubbles reserved for user prompts and assistant text only. Thinking blocks, tool calls, and tool results render as standalone collapsible blocks between bubbles (not inside them).
+  - **Auto-update**: after every agent end-of-turn (not during streaming/thinking/user cancel), gist is silently updated if one exists. Errors go to console only.
+  - **URL format**: `https://gisthost.github.io/?{gist-id}` — renders the HTML directly.
+  - **Tests**: `gist_test.go` (slug validation, error classification), `gist_export_html_test.go` (13 edge cases: nil fields, malformed JSON, tool calls with nil/string input, tool result errors, image-only results, etc.), `api_gist.test.ts` (plain-text error body handling).
+Watchouts: Requires `gh` CLI installed and authenticated. The `init()` staleness check in `ui/embedfs.go` calls `os.Exit(1)` when build is stale — rebuild UI before testing. `html/template` was replaced with `text/template` for the embedded HTML to avoid escaping content inside `<script>` tags.

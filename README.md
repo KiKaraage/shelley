@@ -16,6 +16,8 @@ Here's some patches I've made on top of Shelley:
 | [PATCH-010](PATCH.md#patch-010) | active | Use 24h for all time display |
 | [PATCH-011](PATCH.md#patch-011) | active | Show repo basename in conversation drawer CWD |
 | [PATCH-012](PATCH.md#patch-012) | active | Switched 10 UI selectors from monospace to sans-serif font |
+| [PATCH-013](PATCH.md#patch-013) | active | Hid bash tool output block when output is empty |
+| [PATCH-014](PATCH.md#patch-014) | active | Export session as self-contained HTML to GitHub Gist |
 
 ---
 

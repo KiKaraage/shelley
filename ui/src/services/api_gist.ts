@@ -3,7 +3,7 @@ export interface GistStatus {
   gist_url: string | null;
 }
 
-async function parseResponse(r: Response): Promise<any> {
+async function parseResponse(r: Response): Promise<Record<string, unknown>> {
   const text = await r.text();
   try { return JSON.parse(text); } catch { return { error: text }; }
 }

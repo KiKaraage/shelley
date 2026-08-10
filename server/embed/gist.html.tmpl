@@ -12,14 +12,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .header h1 { font-size: 1.5rem; color: #2d3748; }
 .header .meta { font-size: 0.85rem; color: #718096; margin-top: 0.5rem; }
 .header .meta span { margin: 0 0.5rem; }
-.message { margin-bottom: 1rem; display: flex; flex-direction: column; }
-.message-user .bubble { background: #e8f4fd; border-radius: 1rem 1rem 0 1rem; max-width: 80%; margin-left: auto; }
-.message-agent .bubble { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem 1rem 1rem 0; }
-.message-system .bubble { background: #f0f0f0; border-radius: 0.5rem; font-size: 0.85rem; color: #718096; text-align: center; }
-.message-error .bubble, .message-warning .bubble { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 0.5rem; color: #c53030; }
-.bubble { padding: 0.75rem 1rem; overflow-wrap: break-word; word-wrap: break-word; }
+.bubble { padding: 0.75rem 1rem; border-radius: 1rem; overflow-wrap: break-word; word-wrap: break-word; font-size: 0.9375rem; }
+.bubble-user { background: #e8f4fd; border-radius: 1rem 1rem 0 1rem; max-width: 80%; margin-left: auto; }
+.bubble-agent { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem 1rem 1rem 0; }
+.bubble-error { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 0.5rem; color: #c53030; }
+.bubble-warning { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 0.5rem; color: #c53030; }
 .role { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #a0aec0; margin-bottom: 0.25rem; padding-left: 0.5rem; }
-.message-user .role { text-align: right; padding-right: 0.5rem; padding-left: 0; }
+.bubble-user .role { text-align: right; padding-right: 0.5rem; padding-left: 0; }
+.standalone-block { margin: 0.5rem 0; padding: 0 0.5rem; }
 .bubble p { margin: 0.5rem 0; }
 .bubble p:first-child { margin-top: 0; }
 .bubble p:last-child { margin-bottom: 0; }
@@ -41,12 +41,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .bubble strong { font-weight: 600; }
 .bubble em { font-style: italic; }
 .bubble hr { border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0; }
-details { margin: 0.5rem 0; }
+details { margin: 0.35rem 0; }
 summary { cursor: pointer; font-size: 0.85rem; color: #4a5568; padding: 0.25rem 0; user-select: none; }
 summary:hover { color: #2d3748; }
-.tool-call { border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem 0.75rem; margin: 0.5rem 0; background: #fafbfc; }
+.tool-call { border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem 0.75rem; margin: 0.35rem 0; background: #fafbfc; }
 .tool-call .tool-name { font-weight: 600; font-size: 0.85rem; color: #2d3748; }
-.tool-call pre { margin: 0.5rem 0 0; }
+.tool-result { border-left: 3px solid #e2e8f0; padding-left: 0.75rem; margin: 0.35rem 0; }
+.tool-result pre { background: #f7fafc; border: 1px solid #e2e8f0; }
 footer { text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e0e0e0; font-size: 0.8rem; color: #a0aec0; }
 </style>
 </head>
@@ -61,7 +62,8 @@ footer { text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 
 (function() {
   "use strict";
   var raw = document.getElementById("session-data").textContent;
-  var data = JSON.parse(atob(raw));
+  var bytes = Uint8Array.from(atob(raw), function(c) { return c.charCodeAt(0); });
+  var data = JSON.parse(new TextDecoder().decode(bytes));
 
   var hdr = document.getElementById("header");
   var h = "<h1>" + escHtml(data.conversation.slug || "Session") + "</h1>";
@@ -80,64 +82,153 @@ footer { text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 
   for (var i = 0; i < data.messages.length; i++) {
     var m = data.messages[i];
     if (m.type === "system") continue;
-    var div = document.createElement("div");
-    div.className = "message message-" + m.type;
-    var role = m.type === "agent" ? "Assistant" : m.type === "user" ? "User" : m.type;
-    if (m.type !== "error" && m.type !== "warning") {
-      div.innerHTML = '<div class="role">' + escHtml(role) + "</div>";
-    }
-    var bubble = document.createElement("div");
-    bubble.className = "bubble";
 
-    if (m.type === "error" || m.type === "warning") {
-      var text = extractText(m);
-      bubble.innerHTML = '<div class="role">\u26a0\ufe0f ' + escHtml(role) + "</div><p>" + escHtml(text) + "</p>";
-    } else {
-      var llm = parseLLM(m);
-      if (llm && llm.Content) {
-        for (var j = 0; j < llm.Content.length; j++) {
-          try {
-            var c = llm.Content[j];
-            if (c) renderContent(bubble, c);
-          } catch(e) { /* skip broken content block */ }
-        }
-      }
-    }
-
-    if (bubble.innerHTML.trim()) {
-      div.appendChild(bubble);
-      msgDiv.appendChild(div);
+    if (m.type === "user") {
+      renderUserMessage(msgDiv, m);
+    } else if (m.type === "agent") {
+      renderAgentMessage(msgDiv, m);
+    } else if (m.type === "error" || m.type === "warning") {
+      renderErrorMessage(msgDiv, m);
     }
   }
 
-  function renderContent(bubble, c) {
-    if (c.Type === TYPE_TEXT && c.Text && c.Text.trim()) {
-      bubble.innerHTML += renderMarkdown(c.Text.trim());
-    } else if (c.Type === TYPE_THINKING || c.Type === TYPE_REDACTED_THINKING) {
-      var th = (c.Thinking || c.Text || "").trim();
-      if (th) {
-        bubble.innerHTML += '<details><summary>\ud83d\udcad Thinking</summary>' + renderMarkdown(th) + "</details>";
-      }
-    } else if (c.Type === TYPE_TOOL_USE || c.Type === TYPE_SERVER_TOOL_USE) {
-      var name = c.ToolName || "tool";
-      var input = "";
-      if (c.ToolInput != null) {
+  function addRole(parent, label) {
+    var r = document.createElement("div");
+    r.className = "role";
+    r.textContent = label;
+    parent.appendChild(r);
+  }
+
+  function renderUserMessage(msgDiv, m) {
+    var div = document.createElement("div");
+    addRole(div, "User");
+    var bubble = document.createElement("div");
+    bubble.className = "bubble bubble-user";
+    var llm = parseLLM(m);
+    if (llm && llm.Content) {
+      for (var j = 0; j < llm.Content.length; j++) {
         try {
-          input = typeof c.ToolInput === "string" ? c.ToolInput : JSON.stringify(c.ToolInput, null, 2);
-        } catch(e2) { input = String(c.ToolInput); }
-      }
-      bubble.innerHTML += '<div class="tool-call"><span class="tool-name">\ud83d\udee0\ufe0f ' + escHtml(name) + '</span><details><summary>Show input</summary><pre><code>' + escHtml(input) + "</code></pre></details></div>";
-    } else if (c.Type === TYPE_TOOL_RESULT && c.ToolResult) {
-      var rText = "";
-      for (var ri = 0; ri < c.ToolResult.length; ri++) {
-        var r = c.ToolResult[ri];
-        if (r && r.Text) rText += r.Text;
-      }
-      if (rText) {
-        var label = c.ToolError ? "Result (error)" : "Result";
-        bubble.innerHTML += "<details><summary>" + escHtml(label) + "</summary><pre><code>" + escHtml(rText) + "</code></pre></details>";
+          var c = llm.Content[j];
+          if (!c) continue;
+          if (c.Type === TYPE_TEXT && c.Text && c.Text.trim()) {
+            bubble.innerHTML += renderMarkdown(c.Text.trim());
+          } else if (c.Type === TYPE_TOOL_RESULT) {
+            renderToolResult(div, c);
+          }
+        } catch(e) {}
       }
     }
+    if (bubble.innerHTML.trim()) div.appendChild(bubble);
+    msgDiv.appendChild(div);
+  }
+
+  function renderAgentMessage(msgDiv, m) {
+    var div = document.createElement("div");
+    var llm = parseLLM(m);
+    if (llm && llm.Content) {
+      var textParts = [];
+      for (var j = 0; j < llm.Content.length; j++) {
+        try {
+          var c = llm.Content[j];
+          if (!c) continue;
+          if (c.Type === TYPE_THINKING || c.Type === TYPE_REDACTED_THINKING) {
+            renderThinking(div, c);
+          } else if (c.Type === TYPE_TOOL_USE || c.Type === TYPE_SERVER_TOOL_USE) {
+            renderToolCall(div, c);
+          } else if (c.Type === TYPE_TOOL_RESULT) {
+            renderToolResult(div, c);
+          } else if (c.Type === TYPE_TEXT && c.Text && c.Text.trim()) {
+            textParts.push(c.Text.trim());
+          }
+        } catch(e) {}
+      }
+      if (textParts.length > 0) {
+        addRole(div, "Assistant");
+        var bubble = document.createElement("div");
+        bubble.className = "bubble bubble-agent";
+        bubble.innerHTML = textParts.map(function(t) { return renderMarkdown(t); }).join("\n");
+        div.appendChild(bubble);
+      }
+    }
+    if (div.childNodes.length > 0) msgDiv.appendChild(div);
+  }
+
+  function renderErrorMessage(msgDiv, m) {
+    var div = document.createElement("div");
+    var text = extractText(m);
+    var bubble = document.createElement("div");
+    bubble.className = "bubble bubble-" + m.type;
+    bubble.innerHTML = '<p>\u26a0\ufe0f ' + escHtml(text) + "</p>";
+    div.appendChild(bubble);
+    msgDiv.appendChild(div);
+  }
+
+  function renderThinking(parent, c) {
+    var th = (c.Thinking || c.Text || "").trim();
+    if (!th) return;
+    var block = document.createElement("div");
+    block.className = "standalone-block";
+    var det = document.createElement("details");
+    var sum = document.createElement("summary");
+    sum.textContent = "\ud83d\udcad Thinking";
+    det.appendChild(sum);
+    var content = document.createElement("div");
+    content.innerHTML = renderMarkdown(th);
+    det.appendChild(content);
+    block.appendChild(det);
+    parent.appendChild(block);
+  }
+
+  function renderToolCall(parent, c) {
+    var name = c.ToolName || "tool";
+    var input = "";
+    if (c.ToolInput != null) {
+      try {
+        input = typeof c.ToolInput === "string" ? c.ToolInput : JSON.stringify(c.ToolInput, null, 2);
+      } catch(e) { input = String(c.ToolInput); }
+    }
+    var block = document.createElement("div");
+    block.className = "standalone-block tool-call";
+    var header = document.createElement("span");
+    header.className = "tool-name";
+    header.textContent = "\ud83d\udee0\ufe0f " + name;
+    block.appendChild(header);
+    if (input) {
+      var det = document.createElement("details");
+      var sum = document.createElement("summary");
+      sum.textContent = "Show input";
+      det.appendChild(sum);
+      var pre = document.createElement("pre");
+      var code = document.createElement("code");
+      code.textContent = input;
+      pre.appendChild(code);
+      det.appendChild(pre);
+      block.appendChild(det);
+    }
+    parent.appendChild(block);
+  }
+
+  function renderToolResult(parent, c) {
+    if (!c.ToolResult) return;
+    var rText = "";
+    for (var ri = 0; ri < c.ToolResult.length; ri++) {
+      var r = c.ToolResult[ri];
+      if (r && r.Text) rText += r.Text;
+    }
+    if (!rText) return;
+    var block = document.createElement("div");
+    block.className = "standalone-block tool-result";
+    var det = document.createElement("details");
+    var sum = document.createElement("summary");
+    sum.textContent = c.ToolError ? "Result (error)" : "Result";
+    det.appendChild(sum);
+    var pre = document.createElement("pre");
+    var code = document.createElement("code");
+    code.textContent = rText;
+    pre.appendChild(code);
+    det.appendChild(pre);
+    block.appendChild(det);
+    parent.appendChild(block);
   }
 
   function extractText(m) {
@@ -160,12 +251,44 @@ footer { text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 
     catch(e) { return null; }
   }
 
+  function splitCells(line) {
+    var s = line.replace(/^\s*\|/, "").replace(/\|\s*$/, "");
+    return s.split("|").map(function(c) { return c.trim(); });
+  }
+
   function renderMarkdown(md) {
     var s = escHtml(md);
-    // Code blocks: use String.raw to avoid backtick issues
+    // Code blocks
     s = s.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
       return '<pre><code class="' + lang + '">' + code + "</code></pre>";
     });
+    // Tables: detect pipe-delimited blocks with a separator row
+    s = s.replace(/((?:^\|.+\|\n?)+)/gm, function(match) {
+      var rows = match.trim().split("\n");
+      if (rows.length < 2) return match;
+      var sepIdx = -1;
+      for (var si = 1; si < rows.length; si++) {
+        if (/^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(rows[si].trim())) {
+          sepIdx = si;
+          break;
+        }
+      }
+      if (sepIdx < 0) return match;
+      var headerCells = splitCells(rows[0]);
+      var bodyRows = rows.slice(sepIdx + 1);
+      var t = "<table><thead><tr>";
+      for (var hi = 0; hi < headerCells.length; hi++) t += "<th>" + headerCells[hi] + "</th>";
+      t += "</tr></thead><tbody>";
+      for (var bi = 0; bi < bodyRows.length; bi++) {
+        var cells = splitCells(bodyRows[bi]);
+        t += "<tr>";
+        for (var ci = 0; ci < cells.length; ci++) t += "<td>" + cells[ci] + "</td>";
+        t += "</tr>";
+      }
+      t += "</tbody></table>";
+      return t;
+    });
+    // Inline formatting
     s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
     s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
     s = s.replace(/__([^_]+)__/g, "<strong>$1</strong>");
