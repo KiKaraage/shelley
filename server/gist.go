@@ -36,14 +36,13 @@ func gistFilename(slug *string) string {
 	return "index.html"
 }
 
-// writeGistTmp writes html to a temp file whose basename is filename
-// (so gh uses the right name in the gist). Returns the path.
-func writeGistTmp(filename, html string) (string, error) {
+// writeGistTmp writes html to a temp dir and returns the path.
+func writeGistTmp(html string) (string, error) {
 	dir, err := os.MkdirTemp("", "shelley-gist-*")
 	if err != nil {
 		return "", err
 	}
-	path := filepath.Join(dir, filename)
+	path := filepath.Join(dir, "index.html")
 	if err := os.WriteFile(path, []byte(html), 0o600); err != nil {
 		os.RemoveAll(dir)
 		return "", err
@@ -54,7 +53,7 @@ func writeGistTmp(filename, html string) (string, error) {
 // createGist creates a new secret GitHub gist via the gh CLI and returns
 // the gist ID and the gisthost URL.
 func createGist(ctx context.Context, slug *string, html string) (gistID, gistURL string, err error) {
-	path, err := writeGistTmp(gistFilename(slug), html)
+	path, err := writeGistTmp(html)
 	if err != nil {
 		return "", "", fmt.Errorf("create temp: %w", err)
 	}
@@ -69,8 +68,7 @@ func createGist(ctx context.Context, slug *string, html string) (gistID, gistURL
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "gh", "gist", "create",
 		"--desc", desc,
-		"--secret",
-		"-f", path,
+		path,
 	)
 	out, err := cmd.Output()
 	if err != nil {
@@ -99,9 +97,10 @@ func createGist(ctx context.Context, slug *string, html string) (gistID, gistURL
 	return gistID, gistHostURL(gistID), nil
 }
 
-// updateGist updates an existing secret gist via the gh CLI.
+// updateGist updates an existing gist via the gh CLI.
+// gh gist edit <id> <file> replaces the gist content with the file.
 func updateGist(ctx context.Context, gistID string, slug *string, html string) error {
-	path, err := writeGistTmp(gistFilename(slug), html)
+	path, err := writeGistTmp(html)
 	if err != nil {
 		return fmt.Errorf("create temp: %w", err)
 	}
@@ -110,7 +109,8 @@ func updateGist(ctx context.Context, gistID string, slug *string, html string) e
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "gh", "gist", "edit", gistID,
-		"-f", path,
+		"--filename", "index.html",
+		path,
 	)
 	if err := cmd.Run(); err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
@@ -124,11 +124,10 @@ func updateGist(ctx context.Context, gistID string, slug *string, html string) e
 	return nil
 }
 
-// gistError wraps an error with a "not found" / "not authenticated" flag
-// the UI can detect for targeted messaging.
+// gistError wraps an error with a code the UI can detect for targeted messaging.
 type gistError struct {
 	msg  string
-	code string // "gh_not_found" or "gh_not_auth"
+	code string // "gh_not_auth"
 }
 
 func (e *gistError) Error() string { return e.msg }
