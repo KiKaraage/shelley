@@ -87,12 +87,12 @@ export const en: TranslationKeys = {
   setWorkingDirToMainRepo: "Set working directory to git main worktree root",
 
   // Conversation Drawer
-  archived: "Archived",
+  archived: "Settled",
   noArchivedConversations: "No settled conversations",
   noConversationsYet: "No conversations yet",
   startNewToGetStarted: "Start a new conversation to get started",
   backToConversations: "Back to Active",
-  viewArchived: "View Archived",
+  viewArchived: "View Settled",
   rename: "Rename",
   editTags: "Edit tags",
   addTagPlaceholder: "Add tag…",
