@@ -15,6 +15,13 @@
     <div class="drawer-conversation-item-flex-container">
       <div class="drawer-conversation-header-row">
         <div class="drawer-conversation-item-flex-container">
+          <span
+            v-if="conversation.cwd && ctx.groupBy.value !== 'cwd'"
+            class="conversation-cwd"
+            :title="conversation.cwd"
+          >
+            {{ ctx.formatCwdForDisplay(conversation.cwd) }}
+          </span>
           <input
             v-if="ctx.editingId.value === conversation.conversation_id"
             ref="renameInput"
@@ -136,36 +143,28 @@
         </form>
       </div>
 
-      <!-- Preview / snippet -->
-      <div
-        v-if="convState.search_snippet"
-        class="conversation-preview conversation-snippet"
-        :title="stripSnippetMarks(convState.search_snippet)"
-      >
-        <template v-for="(seg, i) in renderSnippetSegments(convState.search_snippet)" :key="i">
-          <mark v-if="seg.mark" class="conversation-snippet-mark">{{ seg.text }}</mark>
-          <template v-else>{{ seg.text }}</template>
-        </template>
-      </div>
-      <div
-        v-else-if="isDraft"
-        class="conversation-preview"
-        :title="conversation.draft?.trim() || undefined"
-      >
-        {{ conversation.draft?.trim() || "\u00a0" }}
-      </div>
-      <div v-else class="conversation-preview" :title="convState.preview || undefined">
-        {{ convState.preview || "\u00a0" }}
-      </div>
-
+      <!-- Preview + timestamp on one line -->
       <div class="conversation-meta">
         <span class="conversation-date">{{ ctx.formatDate(conversation.updated_at) }}</span>
         <span
-          v-if="conversation.cwd && ctx.groupBy.value !== 'cwd'"
-          class="conversation-cwd"
-          :title="conversation.cwd"
+          v-if="convState.search_snippet"
+          class="conversation-preview conversation-snippet"
+          :title="stripSnippetMarks(convState.search_snippet)"
         >
-          {{ ctx.formatCwdForDisplay(conversation.cwd) }}
+          <template v-for="(seg, i) in renderSnippetSegments(convState.search_snippet)" :key="i">
+            <mark v-if="seg.mark" class="conversation-snippet-mark">{{ seg.text }}</mark>
+            <template v-else>{{ seg.text }}</template>
+          </template>
+        </span>
+        <span
+          v-else-if="isDraft"
+          class="conversation-preview"
+          :title="conversation.draft?.trim() || undefined"
+        >
+          {{ conversation.draft?.trim() || "\u00a0" }}
+        </span>
+        <span v-else class="conversation-preview" :title="convState.preview || undefined">
+          {{ convState.preview || "\u00a0" }}
         </span>
         <!-- Terminal count. Only shown when the conversation has more than
              one terminal pinned to it: a single terminal is the ordinary
@@ -191,7 +190,10 @@
           </svg>
           {{ terminalCount }}
         </span>
-        <button
+      </div>
+
+      <div class="conversation-meta">
+        <span
           v-if="!isDraft && !itemArchived && hasSubagents"
           class="subagent-count-badge"
           v-tooltip.top="subagentBadgeTooltip"
@@ -218,7 +220,7 @@
               d="M9 5l7 7-7 7"
             />
           </svg>
-        </button>
+        </span>
         <div v-if="isDraft" class="conversation-actions drawer-actions-row">
           <DeleteButton :conversation-id="conversation.conversation_id" />
         </div>
@@ -283,6 +285,7 @@
       <div
         v-if="convState.git_commit"
         :class="`conversation-git drawer-git-info ${isActive ? 'drawer-git-info-active' : ''}`"
+        style="visibility: hidden"
       >
         <span
           v-tooltip.top="`Click to copy ${convState.git_commit}`"
