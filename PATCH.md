@@ -159,3 +159,16 @@ Base: 1d4cbe7
 Files: ui/src/vue/components/ContextUsageBar.vue
 Changes: Made the context warning icon (⚠️) threshold relative to the model's context window instead of a hardcoded 100k tokens. When `maxContextTokens` is known, the warning now triggers at 70% usage (matching the existing label color thresholds). Falls back to the absolute 100k threshold only when the model has no declared context window.
 Watchouts: The `percentage` computed prop is already defined above the warning check so it can be reused directly. The auto-open popup feature (`hasAutoOpened` / localStorage gate) still uses the same condition.
+
+## PATCH-016
+Status: active
+Base: e653372
+Files: ui/src/vue/components/ConversationDrawer.vue, ui/src/vue/components/ChatInterface.vue, ui/src/i18n/en.ts, ui/src/styles.css
+Changes: Settled (archived) thread preview in sidebar + auto-unarchive on send.
+  - **Main view**: up to 25 latest archived threads shown as compact one-line `.conversation-item-settled` rows below the active conversation list, separated by a `.conversation-list-separator` line. Each row shows thread name (left) + timestamp (right); on hover the timestamp fades out and Restore + Delete buttons overlay in-place using `.btn-icon-sm` icons matching active-row button sizing.
+  - **Active highlight**: settled rows get the `.active` class (blue background) when the currently viewed conversation matches, with full opacity override.
+  - **Click behavior**: clicking a settled thread opens it in the main chat view via `selectConversation`. Sending a new message to a settled thread auto-unarchives it (`api.unarchiveConversation`) and fires `onConversationUnarchived` to update the sidebar.
+  - **Archived view**: toggled via "View Archived" footer button. Uses full `ConversationRow` layout (same as active threads) with all original buttons and actions. Header reads "Archived".
+  - **i18n**: "Archive" action renamed to "Settle" in English (`archiveConversation`, `archiveConversationAction`, `archiveCurrentConversation`, `archive` keys).
+  - **Eager loading**: archived conversations are loaded on mount for instant settled preview display.
+Watchouts: Non-English locale files retain their original archive/restore translations (not renamed to "Settle"). The `api_gist.ts` pre-existing type errors are unrelated and predate this patch.

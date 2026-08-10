@@ -18,6 +18,8 @@ Here's some patches I've made on top of Shelley:
 | [PATCH-012](PATCH.md#patch-012) | active | Switched 10 UI selectors from monospace to sans-serif font |
 | [PATCH-013](PATCH.md#patch-013) | active | Hid bash tool output block when output is empty |
 | [PATCH-014](PATCH.md#patch-014) | active | Export session as self-contained HTML to GitHub Gist |
+| [PATCH-015](PATCH.md#patch-015) | active | Context warning threshold relative to model context window |
+| [PATCH-016](PATCH.md#patch-016) | active | Settled thread preview in sidebar + auto-unarchive on send |
 
 ---
 
