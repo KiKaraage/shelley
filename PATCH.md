@@ -172,3 +172,9 @@ Changes: Settled (archived) thread preview in sidebar + auto-unarchive on send.
   - **i18n**: "Archive" action renamed to "Settle" in English (`archiveConversation`, `archiveConversationAction`, `archiveCurrentConversation`, `archive` keys).
   - **Eager loading**: archived conversations are loaded on mount for instant settled preview display.
 Watchouts: Non-English locale files retain their original archive/restore translations (not renamed to "Settle"). The `api_gist.ts` pre-existing type errors are unrelated and predate this patch.
+
+## PATCH-017
+Status: active
+Base: 1d4cbe7
+Files: ui/src/vue/components/ConversationDrawer.vue
+Changes: Moved the collapse (<<) and close (x) buttons from the right side of the drawer header to the left edge, before the title. Renamed the drawer title from "Conversations" to "Shelley" (archived view still shows the "archived" translation).
