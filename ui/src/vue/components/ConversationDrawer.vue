@@ -32,8 +32,44 @@
   <div :class="`drawer ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`">
     <!-- Header -->
     <div class="drawer-header">
+      <!-- Collapse button - desktop only -->
+      <Button
+        class="btn-icon show-on-desktop-only"
+        text
+        severity="secondary"
+        :aria-label="t('collapseSidebar')"
+        v-tooltip.top="t('collapseSidebar')"
+        @click="emit('toggle-collapse')"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            :stroke-width="2"
+            d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+          />
+        </svg>
+      </Button>
+      <!-- Close button - mobile only -->
+      <Button
+        class="btn-icon hide-on-desktop"
+        text
+        severity="secondary"
+        :aria-label="t('closeConversations')"
+        v-tooltip.top="t('closeConversations')"
+        @click="emit('close')"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            :stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </Button>
       <h2 class="app-bar-title drawer-title">
-        {{ showArchived ? t("archived") : t("conversations") }}
+        {{ showArchived ? t("archived") : "Shelley" }}
       </h2>
       <div class="drawer-header-actions">
         <!-- Search toggle button -->
@@ -127,41 +163,6 @@
               stroke-linejoin="round"
               :stroke-width="2"
               d="M12 4v16m8-8H4"
-            />
-          </svg>
-        </Button>
-        <Button
-          class="btn-icon hide-on-desktop"
-          text
-          severity="secondary"
-          :aria-label="t('closeConversations')"
-          v-tooltip.top="t('closeConversations')"
-          @click="emit('close')"
-        >
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              :stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </Button>
-        <!-- Collapse button - desktop only -->
-        <Button
-          class="btn-icon show-on-desktop-only"
-          text
-          severity="secondary"
-          :aria-label="t('collapseSidebar')"
-          v-tooltip.top="t('collapseSidebar')"
-          @click="emit('toggle-collapse')"
-        >
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              :stroke-width="2"
-              d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
             />
           </svg>
         </Button>
