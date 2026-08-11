@@ -10303,6 +10303,11 @@ kbd {
   gap: 0.5rem;
 }
 
+/* The meta row (repo · branch) packs tighter than the title rows. */
+.drawer-meta-row {
+  gap: 0.25rem;
+}
+
 .drawer-rename-input {
   width: 100%;
   background: transparent;
@@ -10364,8 +10369,8 @@ kbd {
   width: 0.8rem;
   height: 0.8rem;
   flex-shrink: 0;
-  color: var(--text-tertiary);
-  margin-right: 0.2rem;
+  color: inherit;
+  opacity: 0.8;
 }
 
 .drawer-branch-name {
