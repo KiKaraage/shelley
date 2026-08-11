@@ -197,3 +197,13 @@ Base: 1d4cbe7
 Files: Makefile
 Changes: `build-custom` now installs the freshly built binary to `~/.local/bin/shelley` in addition to `bin/shelley`. It creates `~/.local/bin` if missing, then `install -m 0755` copies the binary there. Prints both the build and install confirmation lines.
 Watchouts: `~/.local/bin` must be on `PATH` for the installed binary to be used. This is a convenience copy; the running service still restarts from the side-by-side+rename path in the Quick start, not from this install.
+
+## PATCH-020
+Status: active
+Base: 9c96638
+Files: server/repo_favicon.go (new), server/repo_favicon_test.go (new), server/server.go, ConversationDrawerRow.vue, styles.css
+Changes: Added repo favicon to the drawer meta row — a small favicon image rendered before the repo name for conversations that live in a git repo.
+  - **Server endpoint** `GET /api/repo-favicon?root=<repoRoot>`: resolves a favicon from the repo root by checking well-known paths (`favicon.ico`, `favicon.png`, `favicon.svg`, `favicon-32x32.png`, `favicon-16x16.png`, `apple-touch-icon.png`, `apple-touch-icon-precomposed.png`, `android-chrome-192x192.png`, `android-chrome-512x512.png`) in order, then parses `<link rel="icon">` declarations in `index.html` / `index.htm` via regex. Validates the resolved path stays inside the repo root via `EvalSymlinks`. Serves with correct content-type and `Cache-Control: max-age=3600`.
+  - **Frontend** `ConversationDrawerRow.vue`: renders `<img class="drawer-favicon">` before the repo name span when `git_repo_root` is present. Uses `git_repo_root` (the worktree toplevel, not `git_worktree_root`) because that's the checked-out working directory where favicon files live. A `faviconFailed` ref hides the image on 404 (no favicon in repo). Resets on conversation change via `watch`.
+  - **Tests** `repo_favicon_test.go`: four tests covering exact candidate match, HTML `<link rel="icon">` parsing, not-found, and priority order.
+Watchouts: The endpoint resolves candidates fresh on each request (cheap stat calls). Browser caching (`max-age=3600`) prevents redundant fetches across drawer re-renders. The regex only handles `<link>` elements where `rel` and `href` are on the same tag; self-closing or multiline variants with `rel` on one tag and `href` on another won't parse. The endpoint does not handle `manifest.json` or `<meta name="msapplication-TileColor">` — just the HTML `<link>` path and well-known file names.
