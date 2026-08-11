@@ -86,6 +86,7 @@ type ConversationWithState struct {
 	GitCommit        string `json:"git_commit,omitempty"`
 	GitSubject       string `json:"git_subject,omitempty"`
 	GitBranch        string `json:"git_branch,omitempty"`
+	GitRemote        string `json:"git_remote,omitempty"`
 	SubagentCount    int64  `json:"subagent_count"`
 	Preview          string `json:"preview,omitempty"`
 	PreviewUpdatedAt string `json:"preview_updated_at,omitempty"`

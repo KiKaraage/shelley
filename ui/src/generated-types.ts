@@ -99,6 +99,7 @@ export interface ConversationWithStateForTS {
   git_commit?: string;
   git_subject?: string;
   git_branch?: string;
+  git_remote?: string;
   subagent_count: number;
   preview?: string;
   preview_updated_at?: string;
