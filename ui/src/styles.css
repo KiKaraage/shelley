@@ -3514,6 +3514,25 @@ select:disabled {
   gap: 0.75rem;
 }
 
+.status-gist-link {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.status-gist-link:hover {
+  color: var(--blue-text);
+  text-decoration: underline;
+}
+
+.show-on-mobile {
+  display: none;
+}
+
 .status-message {
   font-family: var(--font-sans);
   color: var(--text-secondary);
@@ -5280,6 +5299,10 @@ svg {
 
   .hide-on-mobile {
     display: none;
+  }
+
+  .show-on-mobile {
+    display: inline;
   }
 
   /* Show inline status slot on mobile */
