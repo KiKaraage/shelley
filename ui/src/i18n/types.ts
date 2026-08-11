@@ -105,6 +105,7 @@ export interface TranslationKeys {
   confirmDeleteShort: string;
   duplicateName: string;
   agentIsWorking: string;
+  unreadResponses: string;
   subagentIsWorking: string;
   running: string;
   hideSubagents: string;

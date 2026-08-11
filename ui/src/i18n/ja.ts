@@ -104,6 +104,7 @@ export const ja: TranslationKeys = {
   confirmDelete: "本当に削除しますか？この操作は元に戻せません。",
   confirmDeleteShort: "削除？",
   duplicateName: "同じ名前の会話がすでに存在します",
+  unreadResponses: "未読の返信",
   agentIsWorking: "エージェントが作業中...",
   subagentIsWorking: "サブエージェントが作業中...",
   running: "実行中",

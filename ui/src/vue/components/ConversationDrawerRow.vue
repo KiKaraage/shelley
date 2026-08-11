@@ -126,6 +126,11 @@
           :title="ctx.t('agentIsWorking')"
         />
         <span
+          v-if="wasWorking"
+          class="working-indicator drawer-working-indicator unread-indicator"
+          :title="ctx.t('unreadResponses')"
+        />
+        <span
           v-if="!isDraft && !itemArchived && hasSubagents"
           class="subagent-count-badge"
           v-tooltip.top="subagentBadgeTooltip"
@@ -465,6 +470,17 @@ function onTagChipClick(e: MouseEvent, tag: string) {
   e.stopPropagation();
   ctx.toggleTagFilter(tag);
 }
+
+// Track when a conversation finishes working so we can show a "was working" blue dot.
+const wasWorking = computed(
+  () => ctx.seenWorkingIds.value.has(convState.value.conversation_id) && !convState.value.working && !isDraft.value,
+);
+watch(
+  () => convState.value.working,
+  (prev, was) => {
+    if (was && !prev) ctx.seenWorkingIds.value.add(convState.value.conversation_id);
+  },
+);
 
 function onRowClick(e: MouseEvent) {
   if (ctx.handleModifiedClick(e, props.conversation)) return;

@@ -105,6 +105,7 @@ export const es: TranslationKeys = {
   confirmDelete: "¿Está seguro? Esta acción no se puede deshacer.",
   confirmDeleteShort: "¿Eliminar?",
   duplicateName: "Ya existe una conversación con este nombre",
+  unreadResponses: "Respuestas sin leer",
   agentIsWorking: "El agente está trabajando...",
   subagentIsWorking: "El subagente está trabajando...",
   running: "en ejecución",
