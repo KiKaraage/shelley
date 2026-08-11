@@ -10496,9 +10496,6 @@ kbd {
   border-left: 2px solid var(--border-color);
 }
 
-.drawer-subagent-date {
-  font-size: 0.875rem;
-}
 
 .drawer-empty-state {
   padding: 1rem;

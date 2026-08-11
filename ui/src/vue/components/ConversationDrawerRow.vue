@@ -351,7 +351,7 @@
           <span v-if="sub.working" class="working-indicator" :title="ctx.t('subagentIsWorking')" />
         </div>
         <div class="conversation-meta">
-          <span class="conversation-date drawer-subagent-date">{{
+          <span class="conversation-date ">{{
             ctx.formatDate(sub.updated_at)
           }}</span>
           <div class="conversation-preview" :title="sub.preview || undefined">
