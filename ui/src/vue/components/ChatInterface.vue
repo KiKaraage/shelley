@@ -2419,12 +2419,15 @@ const gistId = ref<string | null>(null);
 const gistUrl = ref<string | null>(null);
 
 // Load gist status when conversation changes.
+let gistFetchGeneration = 0;
 watch(
   () => props.conversationId,
   async (id) => {
     if (!id) { gistId.value = null; gistUrl.value = null; return; }
+    const gen = ++gistFetchGeneration;
     try {
       const status: GistStatus = await gistApi.getGistStatus(id);
+      if (gen !== gistFetchGeneration) return; // stale — different conversation selected
       gistId.value = status.gist_id ?? null;
       gistUrl.value = status.gist_url ?? null;
     } catch { /* ignore */ }
