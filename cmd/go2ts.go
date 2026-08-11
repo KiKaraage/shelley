@@ -128,6 +128,7 @@ type conversationWithStateForTS struct {
 	GitWorktreeRoot      string   `json:"git_worktree_root,omitempty"`
 	GitCommit            string   `json:"git_commit,omitempty"`
 	GitSubject           string   `json:"git_subject,omitempty"`
+	GitBranch            string   `json:"git_branch,omitempty"`
 	SubagentCount        int64    `json:"subagent_count"`
 	Preview              string   `json:"preview,omitempty"`
 	PreviewUpdatedAt     string   `json:"preview_updated_at,omitempty"`

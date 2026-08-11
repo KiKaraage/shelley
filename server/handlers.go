@@ -901,6 +901,7 @@ func (s *Server) decorateConversations(ctx context.Context, conversations []db.C
 				cws.GitWorktreeRoot = entry.worktree
 				cws.GitCommit = entry.state.Commit
 				cws.GitSubject = entry.state.Subject
+				cws.GitBranch = entry.state.Branch
 			}
 		}
 		result[i] = cws
