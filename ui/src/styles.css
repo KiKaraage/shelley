@@ -13629,4 +13629,10 @@ kbd {
 
 .context-token-cost {
   margin-left: 0.5em;
+}/* Mobile: always show drawer row actions (no hover on touch). */
+@media (max-width: 768px) {
+  .drawer-row-actions {
+    max-width: 12rem;
+    opacity: 1;
+  }
 }
