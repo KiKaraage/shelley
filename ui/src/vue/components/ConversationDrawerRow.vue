@@ -277,7 +277,7 @@
             :title="ctx.t('subagentIsWorking')"
           />
           <span
-            v-else-if="ctx.seenWorkingIds.value.has(sub.conversation_id)"
+            v-else-if="ctx.seenWorkingIds.value.has(sub.conversation_id) && sub.conversation_id !== ctx.currentConversationId.value"
             class="working-indicator unread-indicator"
             :title="ctx.t('unreadResponses')"
           />
@@ -391,8 +391,11 @@ const tagsEditing = computed(
 );
 
 // Track when a conversation finishes working so we can show a "was working" blue dot.
-const wasWorking = computed(
-  () => ctx.seenWorkingIds.value.has(convState.value.conversation_id) && !convState.value.working && !isDraft.value,
+const wasWorking = computed(() =>
+  ctx.seenWorkingIds.value.has(convState.value.conversation_id) &&
+  !convState.value.working &&
+  !isDraft.value &&
+  convState.value.conversation_id !== ctx.currentConversationId.value,
 );
 watch(
   () => convState.value.working,
