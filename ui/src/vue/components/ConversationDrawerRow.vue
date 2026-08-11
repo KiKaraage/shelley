@@ -13,7 +13,7 @@
     @auxclick="ctx.handleAuxClick($event, conversation)"
   >
     <div class="drawer-conversation-item-flex-container">
-      <!-- Row 1: [cwd · repo] (left) + hover action buttons (right) -->
+      <!-- Row 1: [favicon · cwd · branch] -->
       <div class="drawer-conversation-header-row drawer-meta-row">
         <img
           v-if="faviconUrl && !faviconFailed"
@@ -34,6 +34,31 @@
             {{ gitBranchName }}
           </span>
         </template>
+
+      </div>
+
+      <!-- Row 2: title (left) + actions + working indicator + badge (right) -->
+      <div class="drawer-conversation-header-row">
+        <div class="drawer-conversation-item-flex-container">
+          <input
+            v-if="ctx.editingId.value === conversation.conversation_id"
+            ref="renameInput"
+            type="text"
+            :value="ctx.editingSlug.value"
+            class="conversation-title drawer-rename-input"
+            @input="ctx.editingSlug.value = ($event.target as HTMLInputElement).value"
+            @blur="ctx.handleRename(conversation.conversation_id)"
+            @keydown="ctx.handleRenameKeyDown($event, conversation.conversation_id)"
+            @click.stop
+          />
+          <div v-else-if="isDraft" class="conversation-title conversation-title-draft">
+            {{ ctx.draftLabels.value[conversation.conversation_id] || "draft" }}
+          </div>
+          <div v-else class="conversation-title">
+            <em v-if="!conversation.slug">untitled</em>
+            <template v-else>{{ conversation.slug }}</template>
+          </div>
+        </div>
         <div class="drawer-actions-row drawer-row-actions">
           <template v-if="isDraft">
             <DeleteButton :conversation-id="conversation.conversation_id" />
@@ -94,30 +119,6 @@
               </svg>
             </Button>
           </template>
-        </div>
-      </div>
-
-      <!-- Row 2: title (left) + working indicator + badge (right) -->
-      <div class="drawer-conversation-header-row">
-        <div class="drawer-conversation-item-flex-container">
-          <input
-            v-if="ctx.editingId.value === conversation.conversation_id"
-            ref="renameInput"
-            type="text"
-            :value="ctx.editingSlug.value"
-            class="conversation-title drawer-rename-input"
-            @input="ctx.editingSlug.value = ($event.target as HTMLInputElement).value"
-            @blur="ctx.handleRename(conversation.conversation_id)"
-            @keydown="ctx.handleRenameKeyDown($event, conversation.conversation_id)"
-            @click.stop
-          />
-          <div v-else-if="isDraft" class="conversation-title conversation-title-draft">
-            {{ ctx.draftLabels.value[conversation.conversation_id] || "draft" }}
-          </div>
-          <div v-else class="conversation-title">
-            <em v-if="!conversation.slug">untitled</em>
-            <template v-else>{{ conversation.slug }}</template>
-          </div>
         </div>
         <span
           v-if="convState.working"
