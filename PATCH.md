@@ -212,3 +212,12 @@ Status: active
 Base: 9c96638
 Files: ConversationDrawer.vue, ConversationDrawerRow.vue, conversationDrawerShared.ts, styles.css, ui/src/i18n/en.ts (and other locale files), ui/src/i18n/types.ts
 Changes: Light blue "was working" unread indicator in the conversation drawer. When an agent finishes working (green dot disappears), a light blue dot (`#60a5fa`) appears in its place on the same row, persisting until the user clicks the row to open the conversation. Purely client-side: a transient `Set<string>` of recently-working conversation IDs tracked in `seenWorkingIds`, populated by a `watch` on `convState.working` (true→false transition) in `ConversationDrawerRow.vue`, and cleared by `selectConversation` in `ConversationDrawer.vue`. No DB changes, no localStorage — resets on page reload. Added `unreadResponses` i18n key across all 9 locale files.
+
+## PATCH-022
+Status: active
+Base: 9c96638
+Files: ui/src/styles.css
+Changes: Three changes to `.status-bar` and `.message-input-container` to make them visually seamless:
+1. Constrained `.status-bar-content` to `max-width: 800px; margin: 0 auto;` matching `.message-input-form`, so status text aligns with input box edges.
+2. Removed `border-top: 1px solid var(--border)` from both `.message-input-container` and `.status-bar` (including the mobile media query override) so the two bars blend into one continuous surface.
+3. Zeroed out `padding-bottom` on `.status-bar` to tighten spacing above the input container.
