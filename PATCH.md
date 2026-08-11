@@ -213,8 +213,8 @@ Changes: Light blue "was working" unread indicator in the conversation drawer. W
 Status: active
 Base: 9c96638
 Files: ui/src/styles.css
-Changes: Three changes to `.status-bar` and `.message-input-container` to make them visually seamless:
-1. Constrained `.status-bar-content` to `max-width: 800px; margin: 0 auto;` matching `.message-input-form`, so status text aligns with input box edges.
+Changes: Four changes to `.status-bar` and `.message-input-container` to make them visually seamless:
+1. Constrained `.status-bar-content` to `width: 100%; max-width: 800px; margin: 0 auto;` matching `.message-input-form`, so status text aligns with input box edges while preserving full-width flex layout for `space-between` to work.
 2. Removed `border-top: 1px solid var(--border)` from both `.message-input-container` and `.status-bar` (including the mobile media query override) so the two bars blend into one continuous surface.
 3. Zeroed out `padding-bottom` on `.status-bar` to tighten spacing above the input container.
 
