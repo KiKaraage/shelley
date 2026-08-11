@@ -3,6 +3,17 @@
      inline in the message input controls row (mobile). Preserves the
      status-* / context bar / agent-thinking contract. -->
 <template>
+  <!-- Gist session link -->
+  <a
+    v-if="gistUrl"
+    :href="gistUrl"
+    target="_blank"
+    rel="noopener"
+    class="status-gist-link"
+  >
+    <span class="hide-on-mobile">Session Link</span><span class="show-on-mobile">Visit</span>
+  </a>
+
   <!-- Archived -->
   <template v-if="currentConversation?.archived">
     <span class="status-message">This conversation is archived.</span>
@@ -227,6 +238,7 @@ const props = defineProps<{
   toolOverrideList: ToolInfo[];
   toolOverrideCount: number;
   cwdError: string | null;
+  gistUrl: string | null;
   // callbacks
   onUnarchive: () => void;
   onClearError: () => void;

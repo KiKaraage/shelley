@@ -2816,6 +2816,7 @@ const statusContentProps = computed(() => {
     toolOverrideList: toolOverrideList.value,
     toolOverrideCount: toolOverrideCount.value,
     cwdError: cwdError.value,
+    gistUrl: gistUrl.value,
     onUnarchive: handleUnarchive,
     onClearError: () => (error.value = null),
     onCancel: handleCancel,
