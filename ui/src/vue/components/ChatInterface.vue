@@ -2451,9 +2451,10 @@ async function exportGistAction() {
     gistUrl.value = result.gist_url;
     gistToast(isUpdate ? "Gist updated" : "Gist created — " + result.gist_url);
   } catch (err: any) {
+    const code = err?.code;
     const msg = err?.message || "Gist export failed";
-    if (msg.includes("gh_not_auth")) gistToast("Not logged in to GitHub — run: gh auth login");
-    else if (msg.includes("gist_needs_name")) gistToast("Session must have a name (not 'Untitled')");
+    if (code === "gh_not_auth") gistToast(t("gistGhNotAuth"));
+    else if (code === "gist_needs_name") gistToast(t("gistNeedsName"));
     else gistToast(msg);
   }
 }
