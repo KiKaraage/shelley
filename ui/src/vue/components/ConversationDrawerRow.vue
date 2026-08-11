@@ -348,7 +348,16 @@
               <template v-else>{{ sub.slug }}</template>
             </div>
           </div>
-          <span v-if="sub.working" class="working-indicator" :title="ctx.t('subagentIsWorking')" />
+          <span
+            v-if="sub.working"
+            class="working-indicator"
+            :title="ctx.t('subagentIsWorking')"
+          />
+          <span
+            v-else-if="ctx.seenWorkingIds.value.has(sub.conversation_id)"
+            class="working-indicator unread-indicator"
+            :title="ctx.t('unreadResponses')"
+          />
         </div>
         <div class="conversation-meta">
           <span class="conversation-date ">{{
@@ -395,7 +404,7 @@ const gitRepoName = computed(() => {
 });
 // Favicon URL for the repo root. The server resolves the favicon from
 // well-known paths and <link rel="icon"> declarations in the repo.
-const repoRootForFavicon = computed(() => convState.value.git_repo_root || null);
+const repoRootForFavicon = computed(() => convState.value.git_repo_root || props.conversation.cwd || null);
 const faviconFailed = ref(false);
 const faviconUrl = computed(() => {
   const root = repoRootForFavicon.value;
@@ -480,6 +489,21 @@ watch(
   (prev, was) => {
     if (was && !prev) ctx.seenWorkingIds.value.add(convState.value.conversation_id);
   },
+);
+
+// Track subagent working→idle transitions so the blue dot appears on subagent rows too.
+const prevWorkingSubIds = new Set<string>();
+watch(
+  conversationSubagents,
+  (subs) => {
+    const nowWorking = new Set(subs.filter((s) => s.working).map((s) => s.conversation_id));
+    for (const id of prevWorkingSubIds) {
+      if (!nowWorking.has(id)) ctx.seenWorkingIds.value.add(id);
+    }
+    prevWorkingSubIds.clear();
+    for (const id of nowWorking) prevWorkingSubIds.add(id);
+  },
+  { deep: true },
 );
 
 function onRowClick(e: MouseEvent) {
