@@ -41,6 +41,7 @@
         @archived="handleConversationArchived"
         @unarchived="handleConversationUnarchived"
         @renamed="handleConversationRenamed"
+        @go-home="navigateToHome"
       />
 
       <div class="main-content">
@@ -605,6 +606,14 @@ function selectConversation(conversation: Conversation) {
   viewedConversation.value = conversation;
   showHomePage.value = false;
   window.history.replaceState({}, "", `/c/${conversation.slug || conversation.conversation_id}`);
+  drawerOpen.value = false;
+}
+
+function navigateToHome() {
+  showHomePage.value = true;
+  currentConversationId.value = null;
+  viewedConversation.value = null;
+  window.history.replaceState({}, "", "/home");
   drawerOpen.value = false;
 }
 
