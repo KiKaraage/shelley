@@ -16,9 +16,19 @@ async function parseResponse(r: Response): Promise<Record<string, unknown>> {
   }
 }
 
-function errorMessage(data: Record<string, unknown>, fallback: string): string {
-  const msg = data.message ?? data.error;
-  return typeof msg === "string" ? msg : fallback;
+class GistError extends Error {
+  code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = "GistError";
+    this.code = code;
+  }
+}
+
+function throwGistError(data: Record<string, unknown>, fallback: string): never {
+  const code = typeof data.error === "string" ? data.error : "";
+  const msg = typeof data.message === "string" ? data.message : fallback;
+  throw new GistError(code, msg);
 }
 
 // getGistStatus returns whether a gist exists for this conversation.
@@ -35,7 +45,7 @@ async function exportGist(conversationId: string): Promise<{ gist_id: string; gi
     headers: { "X-Shelley-Request": "1" },
   });
   const data = await parseResponse(r);
-  if (!r.ok) throw new Error(errorMessage(data, `Export failed (${r.status})`));
+  if (!r.ok) throwGistError(data, `Export failed (${r.status})`);
   return data as unknown as { gist_id: string; gist_url: string };
 }
 
@@ -46,7 +56,7 @@ async function updateGist(conversationId: string): Promise<{ gist_id: string; gi
     headers: { "X-Shelley-Request": "1" },
   });
   const data = await parseResponse(r);
-  if (!r.ok) throw new Error(errorMessage(data, `Update failed (${r.status})`));
+  if (!r.ok) throwGistError(data, `Update failed (${r.status})`);
   return data as unknown as { gist_id: string; gist_url: string };
 }
 

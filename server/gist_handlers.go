@@ -61,7 +61,7 @@ func (s *Server) handleExportGist(w http.ResponseWriter, r *http.Request, conver
 		return
 	}
 
-	messages, err := s.db.ListMessages(ctx, conversationID)
+	messages, err := s.db.ListMessagesForContext(ctx, conversationID)
 	if err != nil {
 		s.logger.Error("Failed to list messages for gist", "id", conversationID, "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -126,7 +126,7 @@ func (s *Server) handleUpdateGist(w http.ResponseWriter, r *http.Request, conver
 
 // updateGistForConversation regenerates the HTML and updates the gist.
 func (s *Server) updateGistForConversation(ctx context.Context, w http.ResponseWriter, conv *generated.Conversation) {
-	messages, err := s.db.ListMessages(ctx, conv.ConversationID)
+	messages, err := s.db.ListMessagesForContext(ctx, conv.ConversationID)
 	if err != nil {
 		s.logger.Error("Failed to list messages for gist update", "id", conv.ConversationID, "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -166,7 +166,7 @@ func (s *Server) UpdateGistForCompletion(ctx context.Context, conversationID str
 	if err != nil || conv.GistID == nil || *conv.GistID == "" {
 		return
 	}
-	messages, err := s.db.ListMessages(ctx, conversationID)
+	messages, err := s.db.ListMessagesForContext(ctx, conversationID)
 	if err != nil {
 		s.logger.Warn("gist auto-update: failed to list messages", "id", conversationID, "error", err)
 		return
