@@ -98,6 +98,7 @@ export interface ConversationWithStateForTS {
   git_worktree_root?: string;
   git_commit?: string;
   git_subject?: string;
+  git_branch?: string;
   subagent_count: number;
   preview?: string;
   preview_updated_at?: string;

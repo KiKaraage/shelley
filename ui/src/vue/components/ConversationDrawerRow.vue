@@ -22,10 +22,10 @@
         >
           {{ ctx.formatCwdForDisplay(conversation.cwd) }}
         </span>
-        <template v-if="conversation.cwd && ctx.groupBy.value !== 'cwd' && gitRepoName">
+        <template v-if="conversation.cwd && ctx.groupBy.value !== 'cwd' && gitBranchName">
           <span class="drawer-meta-sep">·</span>
-          <span class="conversation-cwd" :title="convState.git_worktree_root || convState.git_repo_root">
-            {{ gitRepoName }}
+          <span class="conversation-cwd" :title="gitBranchTooltip">
+            {{ gitBranchName }}
           </span>
         </template>
         <div class="drawer-actions-row drawer-row-actions">
@@ -306,6 +306,14 @@ const gitRepoName = computed(() => {
   const root = convState.value.git_worktree_root || convState.value.git_repo_root;
   return root ? root.split("/").pop() || null : null;
 });
+// The git branch name shown as the second meta item on the header row. Falls
+// back to the repo name when the branch is unavailable (e.g. detached HEAD).
+const gitBranchName = computed(() => convState.value.git_branch || gitRepoName.value);
+const gitBranchTooltip = computed(() =>
+  convState.value.git_branch
+    ? `${gitRepoName.value || ""} · ${convState.value.git_branch}`.trim()
+    : convState.value.git_worktree_root || convState.value.git_repo_root || "",
+);
 const isActive = computed(
   () => props.conversation.conversation_id === ctx.currentConversationId.value,
 );
