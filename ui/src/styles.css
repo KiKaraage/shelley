@@ -10365,6 +10365,14 @@ kbd {
   margin-left: auto;
 }
 
+.drawer-favicon {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
 .drawer-meta-git-icon {
   width: 0.8rem;
   height: 0.8rem;

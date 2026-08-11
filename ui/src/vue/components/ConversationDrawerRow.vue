@@ -15,6 +15,12 @@
     <div class="drawer-conversation-item-flex-container">
       <!-- Row 1: [cwd · repo] (left) + hover action buttons (right) -->
       <div class="drawer-conversation-header-row drawer-meta-row">
+        <img
+          v-if="faviconUrl && !faviconFailed"
+          :src="faviconUrl"
+          class="drawer-favicon"
+          @error="faviconFailed = true"
+        />
         <span
           v-if="conversation.cwd && ctx.groupBy.value !== 'cwd'"
           class="conversation-cwd"
@@ -381,6 +387,17 @@ const gitRepoName = computed(() => {
   const root = convState.value.git_worktree_root || convState.value.git_repo_root;
   return root ? root.split("/").pop() || null : null;
 });
+// Favicon URL for the repo root. The server resolves the favicon from
+// well-known paths and <link rel="icon"> declarations in the repo.
+const repoRootForFavicon = computed(() => convState.value.git_repo_root || null);
+const faviconFailed = ref(false);
+const faviconUrl = computed(() => {
+  const root = repoRootForFavicon.value;
+  if (!root) return "";
+  return `/api/repo-favicon?root=${encodeURIComponent(root)}`;
+});
+// Reset favicon failure state when the repo root changes (new conversation).
+watch(repoRootForFavicon, () => { faviconFailed.value = false; });
 // The "owner/repo" slug from the origin remote, shown in place of the cwd
 // folder name when available.
 const gitRemoteName = computed(() => convState.value.git_remote || null);
