@@ -23,8 +23,21 @@
           {{ gitRemoteName || ctx.formatCwdForDisplay(conversation.cwd) }}
         </span>
         <template v-if="conversation.cwd && ctx.groupBy.value !== 'cwd' && gitBranchName">
-          <span class="drawer-meta-sep">·</span>
-          <span class="conversation-cwd" :title="gitBranchTooltip">
+          <svg
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            class="drawer-meta-git-icon"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 3v12m0 0a3 3 0 103 3 3 3 0 00-3-3zm0-12a3 3 0 100 6 3 3 0 000-6zm12 0a3 3 0 100 6 3 3 0 000-6zm0 6c0 4-6 4-6 9"
+            />
+          </svg>
+          <span class="conversation-cwd drawer-branch-name" :title="gitBranchTooltip">
             {{ gitBranchName }}
           </span>
         </template>
