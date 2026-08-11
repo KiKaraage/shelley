@@ -527,6 +527,7 @@ const emit = defineEmits<{
   (e: "archived", id: string, next?: Conversation | null): void;
   (e: "unarchived", c: Conversation): void;
   (e: "renamed", c: Conversation): void;
+  (e: "go-home"): void;
 }>();
 
 const { t } = useI18n();
@@ -1395,6 +1396,6 @@ provide(DrawerCtxKey, {
 });
 
 function goHome() {
-  window.location.href = '/home';
+  emit('go-home');
 }
 </script>
