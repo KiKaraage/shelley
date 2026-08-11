@@ -207,6 +207,7 @@ Changes: Added repo favicon to the drawer meta row — a small favicon image ren
   - **Frontend** `ConversationDrawerRow.vue`: renders `<img class="drawer-favicon">` before the repo name span when `git_repo_root` is present. Uses `git_repo_root` (the worktree toplevel, not `git_worktree_root`) because that's the checked-out working directory where favicon files live. A `faviconFailed` ref hides the image on 404 (no favicon in repo). Resets on conversation change via `watch`.
   - **Tests** `repo_favicon_test.go`: four tests covering exact candidate match, HTML `<link rel="icon">` parsing, not-found, and priority order.
 Watchouts: The endpoint resolves candidates fresh on each request (cheap stat calls). Browser caching (`max-age=3600`) prevents redundant fetches across drawer re-renders. The regex only handles `<link>` elements where `rel` and `href` are on the same tag; self-closing or multiline variants with `rel` on one tag and `href` on another won't parse. The endpoint does not handle `manifest.json` or `<meta name="msapplication-TileColor">` — just the HTML `<link>` path and well-known file names.
+
 ## PATCH-021
 Status: active
 Base: 9c96638
@@ -221,3 +222,9 @@ Changes: Three changes to `.status-bar` and `.message-input-container` to make t
 1. Constrained `.status-bar-content` to `max-width: 800px; margin: 0 auto;` matching `.message-input-form`, so status text aligns with input box edges.
 2. Removed `border-top: 1px solid var(--border)` from both `.message-input-container` and `.status-bar` (including the mobile media query override) so the two bars blend into one continuous surface.
 3. Zeroed out `padding-bottom` on `.status-bar` to tighten spacing above the input container.
+
+## PATCH-023
+Status: active
+Base: 9c96638
+Files: ConversationDrawerRow.vue
+Changes: Subagent preview and date now share the same flex row (`.conversation-meta`), matching the normal conversation item layout. Previously the subagent item had three separate rows: title, preview, and date. Now it has two: title, then date + preview.
