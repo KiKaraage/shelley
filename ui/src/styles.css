@@ -1286,6 +1286,8 @@ body {
 .tool-result-content {
   padding: 0.75rem;
   padding-top: 0;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .tool-result-section {
@@ -1742,10 +1744,14 @@ body {
   font-family: var(--font-sans);
   cursor: pointer;
   line-height: 1.4;
+  transition: background-color 0.15s ease;
 }
 .bash-tool-copy-btn:hover {
   background: var(--bg-secondary);
   border-color: var(--text-secondary);
+}
+.dark .bash-tool-copy-btn {
+  background: var(--gray-800);
 }
 
 .bash-tool-code {
@@ -12062,6 +12068,8 @@ kbd {
 
 .tool-detail-modal .tool-result-content {
   padding: 0;
+  max-height: none;
+  overflow-y: visible;
 }
 
 .tool-detail-modal .tool-result-section.error.output,

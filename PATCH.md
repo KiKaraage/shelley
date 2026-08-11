@@ -235,3 +235,11 @@ Changes:
   - **Favicon fallback for archived conversations**: `ConversationDrawerRow.vue`'s `repoRootForFavicon` now falls back to `cwd` when `git_repo_root` is absent (archived conversations lack git state from the API).
   - **Settled row tooltips**: added `v-tooltip.top` to restore, delete, confirm-delete, and cancel buttons in the settled compact rows. Added `:title` to the settled title div for truncated thread names.
   - **Settled preview limit**: reduced from 25 to 20.
+
+## PATCH-025
+Status: active
+Base: 9c96638
+Files: ui/src/styles.css
+Changes:
+  - `.tool-result-content` now has `max-height: 500px; overflow-y: auto` so long tool outputs scroll instead of stretching the page. Overridden to `max-height: none; overflow-y: visible` in `.tool-detail-modal .tool-result-content` so the detail modal isn't clipped.
+  - `.bash-tool-copy-btn` background changed to `var(--gray-800)` in dark mode and gained `transition: background-color 0.15s ease`.
