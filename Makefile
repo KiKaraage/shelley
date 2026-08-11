@@ -40,7 +40,10 @@ build-custom: ui templates
 	  -X shelley.exe.dev/version.Tag=$$TAG \
 	  -X shelley.exe.dev/version.Customized=true" \
 	  -o bin/shelley ./cmd/shelley; \
-	echo "Built bin/shelley: customized, based on $$TAG, HEAD $$SHA"
+	mkdir -p "$$HOME/.local/bin"; \
+	install -m 0755 bin/shelley "$$HOME/.local/bin/shelley"; \
+	echo "Built bin/shelley: customized, based on $$TAG, HEAD $$SHA"; \
+	echo "Installed to $$HOME/.local/bin/shelley"
 
 # Build for Linux (auto-detect architecture)
 build-linux: ui templates
