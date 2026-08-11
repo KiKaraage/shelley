@@ -10402,7 +10402,7 @@ kbd {
     opacity 0.15s ease;
 }
 
-.conversation-item:hover > .drawer-conversation-item-flex-container .drawer-meta-row .drawer-row-actions {
+.conversation-item:hover > .drawer-conversation-item-flex-container > .drawer-conversation-header-row .drawer-row-actions {
   max-width: 12rem;
   opacity: 1;
 }
