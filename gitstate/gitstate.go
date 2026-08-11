@@ -25,8 +25,9 @@ type GitState struct {
 	// Subject is the commit message subject line.
 	Subject string
 
-	// RemoteSlug is the "owner/repo" derived from remote.origin.url, or empty
-	// when the repo has no origin remote (or it isn't a hosted one).
+	// RemoteSlug is the "owner/repo" derived from the upstream remote (falling
+	// back to origin), or empty when the repo has no such remote (or it isn't a
+	// hosted one).
 	RemoteSlug string
 
 	// IsRepo is true if the directory is inside a git repository.
@@ -94,11 +95,12 @@ func shortHash(full string) string {
 	return full
 }
 
-// readRemoteSlug returns the "owner/repo" slug for the origin remote, read
-// from the repo config file without shelling out to git. It checks both the
-// per-worktree gitDir/config and the shared commonDir/config (worktrees keep
-// remotes in the main repo's config). Returns "" when there's no origin or it
-// isn't a hosted remote we can derive a slug from.
+// readRemoteSlug returns the "owner/repo" slug for the upstream remote,
+// falling back to origin, read from the repo config file without shelling out
+// to git. It checks both the per-worktree gitDir/config and the shared
+// commonDir/config (worktrees keep remotes in the main repo's config). Returns
+// "" when there's no upstream/origin or it isn't a hosted remote we can derive
+// a slug from.
 func readRemoteSlug(gitDir, commonDir string) string {
 	for _, base := range []string{gitDir, commonDir} {
 		data, err := os.ReadFile(filepath.Join(base, "config"))
@@ -113,20 +115,31 @@ func readRemoteSlug(gitDir, commonDir string) string {
 }
 
 // remoteSlugFromConfig parses a git config file and returns the owner/repo
-// slug of the origin remote URL. It only understands the simple
-// `[remote "origin"]` / `url = ...` form; anything else yields "".
+// slug of the upstream remote URL, falling back to origin. It only understands
+// the simple `[remote "upstream"]` / `url = ...` form; anything else yields "".
 func remoteSlugFromConfig(data []byte) string {
-	inOrigin := false
+	for _, name := range []string{"upstream", "origin"} {
+		if slug := remoteSlugFor(data, name); slug != "" {
+			return slug
+		}
+	}
+	return ""
+}
+
+// remoteSlugFor returns the owner/repo slug for the named remote in a git
+// config file, or "" if that remote isn't present or isn't hosted.
+func remoteSlugFor(data []byte, name string) string {
+	inRemote := false
 	for _, line := range strings.Split(string(data), "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, ";") {
 			continue
 		}
 		if strings.HasPrefix(line, "[") {
-			inOrigin = strings.HasPrefix(line, `[remote "origin"`) || strings.HasPrefix(line, "[remote 'origin'")
+			inRemote = strings.HasPrefix(line, `[remote "`+name+`"`) || strings.HasPrefix(line, "[remote '"+name+"'")
 			continue
 		}
-		if !inOrigin {
+		if !inRemote {
 			continue
 		}
 		if key, val, ok := strings.Cut(line, "="); ok {
@@ -352,14 +365,19 @@ func getGitStateFromGit(dir string) *GitState {
 	}
 	// If symbolic-ref fails, we're in detached HEAD state - branch stays empty
 
-	// Get the origin remote slug
-	cmd = exec.Command("git", "config", "--get", "remote.origin.url")
-	if dir != "" {
-		cmd.Dir = dir
-	}
-	output, err = cmd.Output()
-	if err == nil {
-		state.RemoteSlug = remoteSlug(strings.TrimSpace(string(output)))
+	// Get the upstream remote slug (falling back to origin)
+	for _, name := range []string{"upstream", "origin"} {
+		cmd = exec.Command("git", "config", "--get", "remote."+name+".url")
+		if dir != "" {
+			cmd.Dir = dir
+		}
+		output, err = cmd.Output()
+		if err == nil {
+			if slug := remoteSlug(strings.TrimSpace(string(output))); slug != "" {
+				state.RemoteSlug = slug
+				break
+			}
+		}
 	}
 
 	return state

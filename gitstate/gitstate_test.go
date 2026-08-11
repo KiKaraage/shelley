@@ -285,7 +285,17 @@ func TestRemoteSlugFromConfig(t *testing.T) {
 	url = git@github.com:octocat/Hello-World.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 [remote "upstream"]
-	url = https://github.com/other/repo.git
+	url = https://github.com/upstream-owner/repo.git
+`)
+	// Upstream wins over origin.
+	if got := remoteSlugFromConfig(config); got != "upstream-owner/repo" {
+		t.Errorf("remoteSlugFromConfig() = %q, want %q", got, "upstream-owner/repo")
+	}
+}
+
+func TestRemoteSlugFromConfig_FallsBackToOrigin(t *testing.T) {
+	config := []byte(`[remote "origin"]
+	url = git@github.com:octocat/Hello-World.git
 `)
 	if got := remoteSlugFromConfig(config); got != "octocat/Hello-World" {
 		t.Errorf("remoteSlugFromConfig() = %q, want %q", got, "octocat/Hello-World")
@@ -298,9 +308,10 @@ func TestGetGitState_RemoteSlug(t *testing.T) {
 	runGit(t, tmpDir, "config", "user.email", "test@test.com")
 	runGit(t, tmpDir, "config", "user.name", "Test")
 	runGit(t, tmpDir, "remote", "add", "origin", "https://github.com/octocat/Hello-World.git")
+	runGit(t, tmpDir, "remote", "add", "upstream", "https://github.com/upstream-owner/repo.git")
 
 	state := GetGitState(tmpDir)
-	if state.RemoteSlug != "octocat/Hello-World" {
-		t.Errorf("expected RemoteSlug %q, got %q", "octocat/Hello-World", state.RemoteSlug)
+	if state.RemoteSlug != "upstream-owner/repo" {
+		t.Errorf("expected RemoteSlug %q, got %q", "upstream-owner/repo", state.RemoteSlug)
 	}
 }
