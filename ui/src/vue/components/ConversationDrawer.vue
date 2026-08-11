@@ -291,7 +291,13 @@
           :class="{ active: currentConversationId === conv.conversation_id }"
           @click="openSettledThread(conv)"
         >
-          <div class="conversation-title">
+          <img
+            v-if="conv.cwd && !failedSettledFavicons[conv.conversation_id]"
+            :src="`/api/repo-favicon?root=${encodeURIComponent(conv.cwd)}`"
+            class="settled-favicon"
+            @error="failedSettledFavicons[conv.conversation_id] = true"
+          />
+          <div class="conversation-title" :title="conv.slug || 'Untitled'">
             {{ conv.slug || "Untitled" }}
           </div>
           <span class="settled-trailing">
@@ -304,6 +310,7 @@
                 text
                 severity="secondary"
                 size="small"
+                v-tooltip.top="t('restore')"
                 :aria-label="t('restore')"
                 @click.stop="handleUnarchive($event, conv.conversation_id)"
               >
@@ -317,6 +324,7 @@
                 text
                 severity="secondary"
                 size="small"
+                v-tooltip.top="t('delete_')"
                 :aria-label="t('delete_')"
                 @click.stop="handleDeleteClick($event, conv.conversation_id)"
               >
@@ -325,10 +333,10 @@
                 </svg>
               </Button>
               <template v-else>
-                <Button class="btn-icon-sm" text severity="danger" size="small" :aria-label="t('confirmDeleteShort')" @click.stop="handleConfirmDelete($event, conv.conversation_id)">
+                <Button class="btn-icon-sm" text severity="danger" size="small" v-tooltip.top="t('confirmDeleteShort')" :aria-label="t('confirmDeleteShort')" @click.stop="handleConfirmDelete($event, conv.conversation_id)">
                   {{ t("confirmDeleteShort") }}
                 </Button>
-                <Button class="btn-icon-sm" text severity="secondary" size="small" @click.stop="handleCancelDelete($event)">
+                <Button class="btn-icon-sm" text severity="secondary" size="small" v-tooltip.top="t('cancel')" @click.stop="handleCancelDelete($event)">
                   {{ t("cancel") }}
                 </Button>
               </template>
@@ -391,7 +399,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, provide, reactive, ref, watch } from "vue";
 import type { Conversation, ConversationWithState } from "../../types";
 import { api } from "../../services/api";
 import { useI18n } from "../composables/i18n";
@@ -938,8 +946,9 @@ const stableArchivedConversations = computed(() => {
 });
 
 // Show the 25 most recent settled conversations as a preview below the active list.
-const SETTLED_PREVIEW_LIMIT = 25;
+const SETTLED_PREVIEW_LIMIT = 20;
 const settledPreview = computed(() => stableArchivedConversations.value.slice(0, SETTLED_PREVIEW_LIMIT));
+const failedSettledFavicons = reactive<Record<string, boolean>>({});
 
 const isSearching = computed(() => searchQuery.value.trim().length > 0);
 

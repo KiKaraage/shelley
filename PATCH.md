@@ -207,7 +207,7 @@ Watchouts: The endpoint resolves candidates fresh on each request (cheap stat ca
 Status: active
 Base: 9c96638
 Files: ConversationDrawer.vue, ConversationDrawerRow.vue, conversationDrawerShared.ts, styles.css, ui/src/i18n/en.ts (and other locale files), ui/src/i18n/types.ts
-Changes: Light blue "was working" unread indicator in the conversation drawer. When an agent finishes working (green dot disappears), a light blue dot (`#60a5fa`) appears in its place on the same row, persisting until the user clicks the row to open the conversation. Purely client-side: a transient `Set<string>` of recently-working conversation IDs tracked in `seenWorkingIds`, populated by a `watch` on `convState.working` (true→false transition) in `ConversationDrawerRow.vue`, and cleared by `selectConversation` in `ConversationDrawer.vue`. No DB changes, no localStorage — resets on page reload. Added `unreadResponses` i18n key across all 9 locale files.
+Changes: Light blue "was working" unread indicator in the conversation drawer. When an agent finishes working (green dot disappears), a light blue dot (`#60a5fa`) appears in its place on the same row, persisting until the user clicks the row to open the conversation. Applies to both top-level conversation rows and subagent rows. Purely client-side: a transient `Set<string>` of recently-working conversation IDs tracked in `seenWorkingIds`, populated by a `watch` on `convState.working` (true→false transition) in `ConversationDrawerRow.vue`, and cleared by `selectConversation` in `ConversationDrawer.vue`. No DB changes, no localStorage — resets on page reload. Added `unreadResponses` i18n key across all 9 locale files.
 
 ## PATCH-022
 Status: active
@@ -225,3 +225,13 @@ Status: active
 Base: 9c96638
 Files: ConversationDrawerRow.vue
 Changes: Subagent preview and date now share the same flex row (`.conversation-meta`), matching the normal conversation item layout. Previously the subagent item had three separate rows: title, preview, and date. Now it has two: title, then date + preview. Removed `.drawer-subagent-date` override so the date uses the same `0.75rem` font size as normal items.
+
+## PATCH-024
+Status: active
+Base: 9c96638
+Files: ConversationDrawer.vue, ConversationDrawerRow.vue, styles.css
+Changes:
+  - **Favicon on settled rows**: compact settled preview rows now show the repo favicon (14×14) to the left of the thread title, resolved via `/api/repo-favicon?root=<cwd>`. A `reactive` map tracks IDs that 404 to hide the image.
+  - **Favicon fallback for archived conversations**: `ConversationDrawerRow.vue`'s `repoRootForFavicon` now falls back to `cwd` when `git_repo_root` is absent (archived conversations lack git state from the API).
+  - **Settled row tooltips**: added `v-tooltip.top` to restore, delete, confirm-delete, and cancel buttons in the settled compact rows. Added `:title` to the settled title div for truncated thread names.
+  - **Settled preview limit**: reduced from 25 to 20.
