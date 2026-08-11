@@ -5,23 +5,25 @@
 
 ## Quick start
 
-```sh
-# 1. Check state
-cd ~/.config/shelley/shelley-customization
-git status --short && git branch --show-current   # expect: clean, on "ki"
-
-# 2. Check upstream
-git fetch origin main --tags
-git merge-base HEAD origin/main                   # current upstream base
-# if origin/main is ahead of this: rebase (below) before making new changes
-
-# 3. Build (UI + templates + custom ldflags stamp) and install to ~/.local/bin/shelley
-make build-custom
-bin/shelley version                               # verify: -ki.<sha>, customized:true
-
-# 4. Restart (delayed so it doesn't kill the current turn; no tmux installed)
-setsid bash -c 'sleep 5; systemctl --user restart shelley' >/dev/null 2>&1 < /dev/null &
-```
+- **Check state** — expect clean working tree on branch `ki`:
+  ```sh
+  cd ~/.config/shelley/shelley-customization
+  git status --short && git branch --show-current
+  ```
+- **Check upstream** — rebase if `origin/main` is ahead:
+  ```sh
+  git fetch origin main --tags
+  git merge-base HEAD origin/main                 # current upstream base
+  ```
+- **Build & install** — UI + templates + custom ldflags stamp, installed to `~/.local/bin/shelley`:
+  ```sh
+  make build-custom
+  bin/shelley version                             # verify: -ki.<sha>, customized:true
+  ```
+- **Restart** — delayed so it doesn't kill the current turn (no tmux installed):
+  ```sh
+  setsid bash -c 'sleep 5; systemctl --user restart shelley' >/dev/null 2>&1 < /dev/null &
+  ```
 
 ## Rules
 
