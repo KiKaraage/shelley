@@ -15,24 +15,17 @@ git fetch origin main --tags
 git merge-base HEAD origin/main                   # current upstream base
 # if origin/main is ahead of this: rebase (below) before making new changes
 
-# 3. Build UI, then Go binary (custom stamp)
-cd ui && pnpm run build && cd ..
-BASE=$(git merge-base HEAD origin/main)
-TAG=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "$BASE"); SHA=$(git rev-parse --short HEAD)
-go build -ldflags "-X shelley.exe.dev/version.Version=${TAG#v}-ki.$SHA -X shelley.exe.dev/version.Tag=$TAG -X shelley.exe.dev/version.Customized=true" -o bin/shelley ./cmd/shelley
+# 3. Build (UI + templates + custom ldflags stamp) and install to ~/.local/bin/shelley
+make build-custom
 bin/shelley version                               # verify: -ki.<sha>, customized:true
 
-# 4. Install (side-by-side + rename; never copy over the running binary)
-DEST=/var/home/ki/.local/bin/shelley; SRC=bin/shelley
-cp "$SRC" "$DEST.new" && chown --reference="$DEST" "$DEST.new" && chmod --reference="$DEST" "$DEST.new" && mv "$DEST.new" "$DEST"
-
-# 5. Restart (delayed so it doesn't kill the current turn; no tmux installed)
+# 4. Restart (delayed so it doesn't kill the current turn; no tmux installed)
 setsid bash -c 'sleep 5; systemctl --user restart shelley' >/dev/null 2>&1 < /dev/null &
 ```
 
 ## Rules
 
-Keep the changes minimum. Never plain `make build` — only the `build-custom` ldflags stamp; never copy over the running binary — side-by-side + rename only; never restart shelley mid-turn — always delayed via `setsid`; never anchor to our own commit SHAs (rewritten on rebase) — use upstream `Base` SHAs; always update PATCH.md in the same commit as the code change; don't edit existing DB migrations/schema — new tables only via new migrations.
+Keep the changes minimum. Never plain `make build` — only the `build-custom` ldflags stamp; never restart shelley mid-turn — always delayed via `setsid`; never anchor to our own commit SHAs (rewritten on rebase) — use upstream `Base` SHAs; always update PATCH.md in the same commit as the code change; don't edit existing DB migrations/schema — new tables only via new migrations.
 
 ## PATCH-001
 Status: active
