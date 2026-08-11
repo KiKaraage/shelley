@@ -20,7 +20,7 @@
           class="conversation-cwd"
           :title="conversation.cwd"
         >
-          {{ ctx.formatCwdForDisplay(conversation.cwd) }}
+          {{ gitRemoteName || ctx.formatCwdForDisplay(conversation.cwd) }}
         </span>
         <template v-if="conversation.cwd && ctx.groupBy.value !== 'cwd' && gitBranchName">
           <span class="drawer-meta-sep">·</span>
@@ -306,6 +306,9 @@ const gitRepoName = computed(() => {
   const root = convState.value.git_worktree_root || convState.value.git_repo_root;
   return root ? root.split("/").pop() || null : null;
 });
+// The "owner/repo" slug from the origin remote, shown in place of the cwd
+// folder name when available.
+const gitRemoteName = computed(() => convState.value.git_remote || null);
 // The git branch name shown as the second meta item on the header row. Falls
 // back to the repo name when the branch is unavailable (e.g. detached HEAD).
 const gitBranchName = computed(() => convState.value.git_branch || gitRepoName.value);

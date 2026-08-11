@@ -250,3 +250,57 @@ func runGitOutput(t *testing.T, dir string, args ...string) string {
 	}
 	return string(output)
 }
+
+func TestRemoteSlug(t *testing.T) {
+	tests := []struct {
+		name   string
+		remote string
+		want   string
+	}{
+		{"https github", "https://github.com/octocat/Hello-World.git", "octocat/Hello-World"},
+		{"https github no git", "https://github.com/octocat/Hello-World", "octocat/Hello-World"},
+		{"ssh scp github", "git@github.com:octocat/Hello-World.git", "octocat/Hello-World"},
+		{"ssh url github", "ssh://git@github.com/octocat/Hello-World.git", "octocat/Hello-World"},
+		{"git protocol", "git://github.com/octocat/Hello-World.git", "octocat/Hello-World"},
+		{"gitlab", "https://gitlab.com/group/subgroup/repo.git", "group/subgroup"},
+		{"trailing slash", "https://github.com/octocat/Hello-World/", "octocat/Hello-World"},
+		{"empty", "", ""},
+		{"local path", "/srv/myrepo", ""},
+		{"no owner repo", "https://github.com", ""},
+		{"single segment", "https://github.com/octocat", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := remoteSlug(tt.remote); got != tt.want {
+				t.Errorf("remoteSlug(%q) = %q, want %q", tt.remote, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRemoteSlugFromConfig(t *testing.T) {
+	config := []byte(`[core]
+	repositoryformatversion = 0
+[remote "origin"]
+	url = git@github.com:octocat/Hello-World.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[remote "upstream"]
+	url = https://github.com/other/repo.git
+`)
+	if got := remoteSlugFromConfig(config); got != "octocat/Hello-World" {
+		t.Errorf("remoteSlugFromConfig() = %q, want %q", got, "octocat/Hello-World")
+	}
+}
+
+func TestGetGitState_RemoteSlug(t *testing.T) {
+	tmpDir := t.TempDir()
+	runGit(t, tmpDir, "init")
+	runGit(t, tmpDir, "config", "user.email", "test@test.com")
+	runGit(t, tmpDir, "config", "user.name", "Test")
+	runGit(t, tmpDir, "remote", "add", "origin", "https://github.com/octocat/Hello-World.git")
+
+	state := GetGitState(tmpDir)
+	if state.RemoteSlug != "octocat/Hello-World" {
+		t.Errorf("expected RemoteSlug %q, got %q", "octocat/Hello-World", state.RemoteSlug)
+	}
+}

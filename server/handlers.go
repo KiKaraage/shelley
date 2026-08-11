@@ -900,6 +900,7 @@ func (s *Server) decorateConversations(ctx context.Context, conversations []db.C
 				cws.GitCommit = entry.state.Commit
 				cws.GitSubject = entry.state.Subject
 				cws.GitBranch = entry.state.Branch
+				cws.GitRemote = entry.state.RemoteSlug
 			}
 		}
 		result[i] = cws

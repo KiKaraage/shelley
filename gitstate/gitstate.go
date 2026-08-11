@@ -25,6 +25,10 @@ type GitState struct {
 	// Subject is the commit message subject line.
 	Subject string
 
+	// RemoteSlug is the "owner/repo" derived from remote.origin.url, or empty
+	// when the repo has no origin remote (or it isn't a hosted one).
+	RemoteSlug string
+
 	// IsRepo is true if the directory is inside a git repository.
 	IsRepo bool
 }
@@ -70,6 +74,7 @@ func getGitStateFromFiles(dir string) (*GitState, bool) {
 		return nil, false
 	}
 	state := &GitState{IsRepo: true, Worktree: worktree, Branch: branch}
+	state.RemoteSlug = readRemoteSlug(gitDir, commonDir)
 	if commit != "" {
 		state.Commit = shortHash(commit)
 		if subject, err := readCommitSubject(commonDir, commit); err == nil {
@@ -87,6 +92,87 @@ func shortHash(full string) string {
 		return full[:7]
 	}
 	return full
+}
+
+// readRemoteSlug returns the "owner/repo" slug for the origin remote, read
+// from the repo config file without shelling out to git. It checks both the
+// per-worktree gitDir/config and the shared commonDir/config (worktrees keep
+// remotes in the main repo's config). Returns "" when there's no origin or it
+// isn't a hosted remote we can derive a slug from.
+func readRemoteSlug(gitDir, commonDir string) string {
+	for _, base := range []string{gitDir, commonDir} {
+		data, err := os.ReadFile(filepath.Join(base, "config"))
+		if err != nil {
+			continue
+		}
+		if slug := remoteSlugFromConfig(data); slug != "" {
+			return slug
+		}
+	}
+	return ""
+}
+
+// remoteSlugFromConfig parses a git config file and returns the owner/repo
+// slug of the origin remote URL. It only understands the simple
+// `[remote "origin"]` / `url = ...` form; anything else yields "".
+func remoteSlugFromConfig(data []byte) string {
+	inOrigin := false
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, ";") {
+			continue
+		}
+		if strings.HasPrefix(line, "[") {
+			inOrigin = strings.HasPrefix(line, `[remote "origin"`) || strings.HasPrefix(line, "[remote 'origin'")
+			continue
+		}
+		if !inOrigin {
+			continue
+		}
+		if key, val, ok := strings.Cut(line, "="); ok {
+			if strings.TrimSpace(key) == "url" {
+				return remoteSlug(strings.TrimSpace(val))
+			}
+		}
+	}
+	return ""
+}
+
+// remoteSlug extracts "owner/repo" from a hosted remote URL. Supports
+// https://, git://, ssh:// and scp-like (git@host:owner/repo.git) forms for
+// github.com and other hosts. Returns "" for non-remote URLs (e.g. local
+// paths) or when no owner/repo can be derived.
+func remoteSlug(remote string) string {
+	remote = strings.TrimSpace(remote)
+	if remote == "" {
+		return ""
+	}
+	var path string
+	switch {
+	case strings.Contains(remote, "://"):
+		// https://host/owner/repo.git, git://host/owner/repo.git, ssh://git@host/owner/repo.git
+		path = remote[strings.Index(remote, "://")+3:]
+		if i := strings.IndexByte(path, '@'); i >= 0 {
+			path = path[i+1:]
+		}
+		if i := strings.IndexByte(path, '/'); i >= 0 {
+			path = path[i+1:]
+		} else {
+			return ""
+		}
+	case strings.Contains(remote, ":"):
+		// scp-like: git@github.com:owner/repo.git
+		path = remote[strings.Index(remote, ":")+1:]
+	default:
+		return "" // local path or unknown form
+	}
+	path = strings.TrimSuffix(path, ".git")
+	path = strings.TrimSuffix(path, "/")
+	parts := strings.Split(path, "/")
+	if len(parts) < 2 {
+		return ""
+	}
+	return parts[0] + "/" + parts[1]
 }
 
 // findWorktree walks up from dir to the worktree root (the directory holding
@@ -266,6 +352,16 @@ func getGitStateFromGit(dir string) *GitState {
 	}
 	// If symbolic-ref fails, we're in detached HEAD state - branch stays empty
 
+	// Get the origin remote slug
+	cmd = exec.Command("git", "config", "--get", "remote.origin.url")
+	if dir != "" {
+		cmd.Dir = dir
+	}
+	output, err = cmd.Output()
+	if err == nil {
+		state.RemoteSlug = remoteSlug(strings.TrimSpace(string(output)))
+	}
+
 	return state
 }
 
@@ -281,6 +377,7 @@ func (g *GitState) Equal(other *GitState) bool {
 		g.Branch == other.Branch &&
 		g.Commit == other.Commit &&
 		g.Subject == other.Subject &&
+		g.RemoteSlug == other.RemoteSlug &&
 		g.IsRepo == other.IsRepo
 }
 
