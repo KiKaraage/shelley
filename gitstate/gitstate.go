@@ -75,7 +75,7 @@ func getGitStateFromFiles(dir string) (*GitState, bool) {
 		return nil, false
 	}
 	state := &GitState{IsRepo: true, Worktree: worktree, Branch: branch}
-	state.RemoteSlug = readRemoteSlug(gitDir, commonDir)
+	state.RemoteSlug = readRemoteSlug(gitDir, commonDir, branch)
 	if commit != "" {
 		state.Commit = shortHash(commit)
 		if subject, err := readCommitSubject(commonDir, commit); err == nil {
@@ -95,19 +95,20 @@ func shortHash(full string) string {
 	return full
 }
 
-// readRemoteSlug returns the "owner/repo" slug for the upstream remote,
-// falling back to origin, read from the repo config file without shelling out
-// to git. It checks both the per-worktree gitDir/config and the shared
-// commonDir/config (worktrees keep remotes in the main repo's config). Returns
-// "" when there's no upstream/origin or it isn't a hosted remote we can derive
-// a slug from.
-func readRemoteSlug(gitDir, commonDir string) string {
+// readRemoteSlug returns the "owner/repo" slug for the remote this repo
+// pushes to, read from the repo config file without shelling out to git. It
+// checks both the per-worktree gitDir/config and the shared commonDir/config
+// (worktrees keep remotes in the main repo's config). Priority: the current
+// branch's upstream remote (the fork you push to), then upstream, then origin.
+// Returns "" when no suitable remote exists or it isn't a hosted remote we can
+// derive a slug from.
+func readRemoteSlug(gitDir, commonDir string, branch string) string {
 	for _, base := range []string{gitDir, commonDir} {
 		data, err := os.ReadFile(filepath.Join(base, "config"))
 		if err != nil {
 			continue
 		}
-		if slug := remoteSlugFromConfig(data); slug != "" {
+		if slug := remoteSlugFromConfig(data, branch); slug != "" {
 			return slug
 		}
 	}
@@ -115,12 +116,51 @@ func readRemoteSlug(gitDir, commonDir string) string {
 }
 
 // remoteSlugFromConfig parses a git config file and returns the owner/repo
-// slug of the upstream remote URL, falling back to origin. It only understands
-// the simple `[remote "upstream"]` / `url = ...` form; anything else yields "".
-func remoteSlugFromConfig(data []byte) string {
-	for _, name := range []string{"upstream", "origin"} {
+// slug of the remote this repo pushes to. Priority: the current branch's
+// upstream remote, then upstream, then origin. It only understands the simple
+// `[remote "name"]` / `url = ...` and `[branch "x"]` / `remote = ...` forms;
+// anything else yields "".
+func remoteSlugFromConfig(data []byte, branch string) string {
+	for _, name := range remotePriority(data, branch) {
 		if slug := remoteSlugFor(data, name); slug != "" {
 			return slug
+		}
+	}
+	return ""
+}
+
+// remotePriority returns the ordered list of remote names to try: the current
+// branch's upstream remote first, then upstream, then origin.
+func remotePriority(data []byte, branch string) []string {
+	priority := []string{"upstream", "origin"}
+	if branch != "" {
+		if upstream := branchUpstreamRemote(data, branch); upstream != "" {
+			priority = append([]string{upstream}, priority...)
+		}
+	}
+	return priority
+}
+
+// branchUpstreamRemote returns the remote name a branch tracks, from the
+// `[branch "x"]` / `remote = y` entry in a git config file, or "" if none.
+func branchUpstreamRemote(data []byte, branch string) string {
+	inBranch := false
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, ";") {
+			continue
+		}
+		if strings.HasPrefix(line, "[") {
+			inBranch = strings.HasPrefix(line, `[branch "`+branch+`"`) || strings.HasPrefix(line, "[branch '"+branch+"'")
+			continue
+		}
+		if !inBranch {
+			continue
+		}
+		if key, val, ok := strings.Cut(line, "="); ok {
+			if strings.TrimSpace(key) == "remote" {
+				return strings.TrimSpace(val)
+			}
 		}
 	}
 	return ""
@@ -365,22 +405,36 @@ func getGitStateFromGit(dir string) *GitState {
 	}
 	// If symbolic-ref fails, we're in detached HEAD state - branch stays empty
 
-	// Get the upstream remote slug (falling back to origin)
-	for _, name := range []string{"upstream", "origin"} {
-		cmd = exec.Command("git", "config", "--get", "remote."+name+".url")
-		if dir != "" {
-			cmd.Dir = dir
+	// Get the remote slug for the repo this branch pushes to: the branch's
+	// upstream remote first, then upstream, then origin.
+	names := []string{"upstream", "origin"}
+	if state.Branch != "" {
+		if upstream := strings.TrimSpace(runGitConfig(dir, "branch."+state.Branch+".remote")); upstream != "" {
+			names = append([]string{upstream}, names...)
 		}
-		output, err = cmd.Output()
-		if err == nil {
-			if slug := remoteSlug(strings.TrimSpace(string(output))); slug != "" {
-				state.RemoteSlug = slug
-				break
-			}
+	}
+	for _, name := range names {
+		if slug := remoteSlug(runGitConfig(dir, "remote."+name+".url")); slug != "" {
+			state.RemoteSlug = slug
+			break
 		}
 	}
 
 	return state
+}
+
+// runGitConfig runs `git config --get <key>` in dir and returns the trimmed
+// value, or "" on error.
+func runGitConfig(dir, key string) string {
+	cmd := exec.Command("git", "config", "--get", key)
+	if dir != "" {
+		cmd.Dir = dir
+	}
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(output))
 }
 
 // Equal reports whether g and other represent the same git state.

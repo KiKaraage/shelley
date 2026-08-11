@@ -288,8 +288,25 @@ func TestRemoteSlugFromConfig(t *testing.T) {
 	url = https://github.com/upstream-owner/repo.git
 `)
 	// Upstream wins over origin.
-	if got := remoteSlugFromConfig(config); got != "upstream-owner/repo" {
+	if got := remoteSlugFromConfig(config, ""); got != "upstream-owner/repo" {
 		t.Errorf("remoteSlugFromConfig() = %q, want %q", got, "upstream-owner/repo")
+	}
+}
+
+func TestRemoteSlugFromConfig_BranchUpstreamWins(t *testing.T) {
+	config := []byte(`[remote "origin"]
+	url = git@github.com:octocat/Hello-World.git
+[remote "kikaraage"]
+	url = https://github.com/KiKaraage/shelley.git
+[remote "upstream"]
+	url = https://github.com/upstream-owner/repo.git
+[branch "ki"]
+	remote = kikaraage
+	merge = refs/heads/ki
+`)
+	// The branch's upstream remote (the fork you push to) wins.
+	if got := remoteSlugFromConfig(config, "ki"); got != "KiKaraage/shelley" {
+		t.Errorf("remoteSlugFromConfig() = %q, want %q", got, "KiKaraage/shelley")
 	}
 }
 
@@ -297,7 +314,7 @@ func TestRemoteSlugFromConfig_FallsBackToOrigin(t *testing.T) {
 	config := []byte(`[remote "origin"]
 	url = git@github.com:octocat/Hello-World.git
 `)
-	if got := remoteSlugFromConfig(config); got != "octocat/Hello-World" {
+	if got := remoteSlugFromConfig(config, ""); got != "octocat/Hello-World" {
 		t.Errorf("remoteSlugFromConfig() = %q, want %q", got, "octocat/Hello-World")
 	}
 }
@@ -313,5 +330,23 @@ func TestGetGitState_RemoteSlug(t *testing.T) {
 	state := GetGitState(tmpDir)
 	if state.RemoteSlug != "upstream-owner/repo" {
 		t.Errorf("expected RemoteSlug %q, got %q", "upstream-owner/repo", state.RemoteSlug)
+	}
+}
+
+func TestGetGitState_RemoteSlug_BranchUpstream(t *testing.T) {
+	tmpDir := t.TempDir()
+	runGit(t, tmpDir, "init")
+	runGit(t, tmpDir, "config", "user.email", "test@test.com")
+	runGit(t, tmpDir, "config", "user.name", "Test")
+	runGit(t, tmpDir, "remote", "add", "origin", "https://github.com/octocat/Hello-World.git")
+	runGit(t, tmpDir, "remote", "add", "upstream", "https://github.com/upstream-owner/repo.git")
+	runGit(t, tmpDir, "remote", "add", "kikaraage", "https://github.com/KiKaraage/shelley.git")
+	runGit(t, tmpDir, "checkout", "-b", "ki")
+	runGit(t, tmpDir, "config", "branch.ki.remote", "kikaraage")
+	runGit(t, tmpDir, "config", "branch.ki.merge", "refs/heads/ki")
+
+	state := GetGitState(tmpDir)
+	if state.RemoteSlug != "KiKaraage/shelley" {
+		t.Errorf("expected RemoteSlug %q, got %q", "KiKaraage/shelley", state.RemoteSlug)
 	}
 }
