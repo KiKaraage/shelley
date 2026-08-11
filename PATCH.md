@@ -218,6 +218,7 @@ Changes: Changes to `.status-bar` and `.message-input-container` to make them vi
 2. Removed `border-top: 1px solid var(--border)` from both `.message-input-container` and `.status-bar` (including the mobile media query override) so the two bars blend into one continuous surface.
 3. Zeroed out `padding-bottom` on `.status-bar` to tighten spacing above the input container.
 4. Reduced `.status-bar` `min-height` from `2.5rem` to `2rem`.
+5. Reduced `.message-input-container` `padding` from `1rem` to `0.5rem 1rem` (top/bottom from 1rem to 0.5rem).
 
 ## PATCH-023
 Status: active
