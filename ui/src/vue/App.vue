@@ -45,7 +45,15 @@
       />
 
       <div class="main-content">
+        <HomePage
+          v-if="showHomePage"
+          :is-drawer-collapsed="drawerCollapsed"
+          @open-drawer="() => (drawerOpen = true)"
+          @toggle-drawer-collapse="toggleDrawerCollapsed"
+          @new-conversation="startNewConversation"
+        />
         <ChatInterface
+          v-else
           :conversation-id="currentConversationId"
           :stream-status="streamStatus"
           :reconnect-nonce="reconnectNonce"
@@ -214,6 +222,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, provide, ref, watch } from "vue";
 import ChatInterface from "./components/ChatInterface.vue";
+import HomePage from "./components/HomePage.vue";
 import ConversationDrawer from "./components/ConversationDrawer.vue";
 import CommandPalette from "./components/CommandPalette.vue";
 import ModelsModal from "./components/ModelsModal.vue";
@@ -269,6 +278,9 @@ function getSlugFromPath(): string | null {
 function isNewPath(): boolean {
   return window.location.pathname === "/new";
 }
+function isHomePath(): boolean {
+  return window.location.pathname === "/home";
+}
 
 // A brand-new-conversation draft composed offline never reaches the server
 // (createDraft fails), so it survives only in localStorage under the "new"
@@ -282,6 +294,7 @@ function hasPendingNewDraft(): boolean {
 // Captured BEFORE render so URL-updating effects don't clobber it.
 const initialSlugFromUrl = getSlugFromPath();
 const initialIsNew = isNewPath() || (!getSlugFromPath() && hasPendingNewDraft());
+const showHomePage = ref(isHomePath());
 
 function updateUrlWithSlug(conversation: Conversation | undefined) {
   const currentSlug = getSlugFromPath();
@@ -547,13 +560,15 @@ async function loadConversations() {
     const currentList = streamHash ? conversations.value : snapshot.conversations;
     const topLevel = currentList.filter((c) => !c.parent_conversation_id);
 
-    const slugConv = await resolveInitialSlug(currentList);
-    if (slugConv) {
-      currentConversationId.value = slugConv.conversation_id;
-      viewedConversation.value = slugConv;
-    } else if (!initialIsNew && topLevel.length > 0) {
-      currentConversationId.value = topLevel[0].conversation_id;
-      viewedConversation.value = topLevel[0];
+    if (!showHomePage.value) {
+      const slugConv = await resolveInitialSlug(currentList);
+      if (slugConv) {
+        currentConversationId.value = slugConv.conversation_id;
+        viewedConversation.value = slugConv;
+      } else if (!initialIsNew && topLevel.length > 0) {
+        currentConversationId.value = topLevel[0].conversation_id;
+        viewedConversation.value = topLevel[0];
+      }
     }
   } catch (err) {
     console.error("Failed to load conversations:", err);
@@ -570,6 +585,7 @@ function startNewConversation() {
   }
   currentConversationId.value = null;
   viewedConversation.value = null;
+  showHomePage.value = false;
   window.history.replaceState({}, "", "/new");
   drawerOpen.value = false;
 }
@@ -601,6 +617,8 @@ function setConversationCwd(cwd: string) {
 function selectConversation(conversation: Conversation) {
   currentConversationId.value = conversation.conversation_id;
   viewedConversation.value = conversation;
+  showHomePage.value = false;
+  window.history.replaceState({}, "", `/c/${conversation.slug || conversation.conversation_id}`);
   drawerOpen.value = false;
 }
 

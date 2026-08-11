@@ -1395,6 +1395,6 @@ provide(DrawerCtxKey, {
 });
 
 function goHome() {
-  window.location.href = '/';
+  window.location.href = '/home';
 }
 </script>

@@ -13636,3 +13636,47 @@ kbd {
     opacity: 1;
   }
 }
+
+/* ---- Home page tabs ---- */
+.home-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
+  padding: 0 1rem;
+}
+
+.home-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-color-secondary);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.home-tab:hover {
+  color: var(--text-color);
+}
+
+.home-tab.active {
+  color: var(--text-color);
+  border-bottom-color: var(--primary-color, var(--p-primary-color));
+}
+
+.home-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.home-tab-content {
+  padding: 2rem;
+}
+
+.home-placeholder {
+  color: var(--text-color-secondary);
+  text-align: center;
+  padding: 3rem 1rem;
+  font-size: 1rem;
+}
