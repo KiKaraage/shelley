@@ -13,12 +13,12 @@
 - **Check upstream** — rebase if `origin/main` is ahead:
   ```sh
   git fetch origin main --tags
-  git merge-base HEAD origin/main                 # current upstream base
+  git merge-base HEAD origin/main # current upstream base
   ```
 - **Build & install** — UI + templates + custom ldflags stamp, installed to `~/.local/bin/shelley`:
   ```sh
   make build-custom
-  bin/shelley version                             # verify: -ki.<sha>, customized:true
+  bin/shelley version # verify: -ki.<sha>, customized:true
   ```
 - **Restart** — delayed so it doesn't kill the current turn (no tmux installed):
   ```sh
@@ -222,4 +222,4 @@ Changes: Three changes to `.status-bar` and `.message-input-container` to make t
 Status: active
 Base: 9c96638
 Files: ConversationDrawerRow.vue
-Changes: Subagent preview and date now share the same flex row (`.conversation-meta`), matching the normal conversation item layout. Previously the subagent item had three separate rows: title, preview, and date. Now it has two: title, then date + preview.
+Changes: Subagent preview and date now share the same flex row (`.conversation-meta`), matching the normal conversation item layout. Previously the subagent item had three separate rows: title, preview, and date. Now it has two: title, then date + preview. Removed `.drawer-subagent-date` override so the date uses the same `0.75rem` font size as normal items.
