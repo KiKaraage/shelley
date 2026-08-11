@@ -104,6 +104,7 @@ export const zhCN: TranslationKeys = {
   confirmDelete: "确定要删除吗？此操作无法撤消。",
   confirmDeleteShort: "删除？",
   duplicateName: "已存在同名对话",
+  unreadResponses: "未读回复",
   agentIsWorking: "代理正在工作...",
   subagentIsWorking: "子代理正在工作...",
   running: "运行中",

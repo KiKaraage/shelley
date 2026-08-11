@@ -104,6 +104,7 @@ export const ru: TranslationKeys = {
   confirmDelete: "Вы уверены? Это действие нельзя отменить.",
   confirmDeleteShort: "Удалить?",
   duplicateName: "Диалог с таким именем уже существует",
+  unreadResponses: "Непрочитанные ответы",
   agentIsWorking: "Агент работает...",
   subagentIsWorking: "Субагент работает...",
   running: "работает",

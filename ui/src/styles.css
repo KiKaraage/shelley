@@ -9934,6 +9934,12 @@ kbd {
   background-color: var(--green-500, #22c55e);
 }
 
+/* Unread: light-blue variant of the working indicator, shown after an agent
+   finishes (or a response arrives) while the user hasn't opened the row yet. */
+.unread-indicator {
+  background-color: #60a5fa !important;
+}
+
 .drawer-subagent-count-badge-text {
   font-weight: 500;
 }

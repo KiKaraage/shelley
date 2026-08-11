@@ -106,6 +106,7 @@ export const fr: TranslationKeys = {
   confirmDelete: "Êtes-vous sûr ? Cette action est irréversible.",
   confirmDeleteShort: "Supprimer ?",
   duplicateName: "Une conversation portant ce nom existe déjà",
+  unreadResponses: "Réponses non lues",
   agentIsWorking: "L'agent travaille...",
   subagentIsWorking: "Le sous-agent travaille...",
   running: "en cours",

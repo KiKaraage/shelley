@@ -93,6 +93,8 @@ export interface DrawerCtx {
   handleDeleteClick: (e: MouseEvent, conversationId: string) => void;
   handleConfirmDelete: (e: MouseEvent, conversationId: string) => void;
   handleCancelDelete: (e: MouseEvent) => void;
+  seenWorkingIds: Ref<Set<string>>;
 }
 
 export const DrawerCtxKey: InjectionKey<DrawerCtx> = Symbol("shelley-conversation-drawer");
+

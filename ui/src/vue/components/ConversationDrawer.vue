@@ -481,6 +481,7 @@ const collapsedGroups = ref<Set<string>>(new Set());
 const groupMenuOpen = ref(false);
 const resortKey = ref(0);
 const seenIds = ref<Set<string> | null>(null);
+const seenWorkingIds = ref(new Set<string>());
 const copiedConvId = ref<string | null>(null);
 const pendingDeleteId = ref<string | null>(null);
 const pendingDeleteRef = ref<HTMLElement | null>(null);
@@ -1030,6 +1031,7 @@ provide(DrawerCtxKey, {
   subagentsByParent,
   expandedSubagents,
   seenIds,
+  seenWorkingIds,
   copiedConvId,
   pendingDeleteId,
   pendingDeleteRef,
@@ -1046,7 +1048,7 @@ provide(DrawerCtxKey, {
   formatCwdForDisplay,
   handleModifiedClick,
   handleAuxClick,
-  selectConversation: (c: Conversation) => emit("select-conversation", c),
+  selectConversation: (c: Conversation) => { seenWorkingIds.value.delete(c.conversation_id); emit("select-conversation", c); },
   toggleSubagents,
   handleStartRename,
   handleRename,

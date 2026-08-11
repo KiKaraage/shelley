@@ -104,6 +104,7 @@ export const vi: TranslationKeys = {
   confirmDelete: "Thật sự chắc chưa?",
   confirmDeleteShort: "Xoá?",
   duplicateName: "Bị trùng tên với hội thoại đã có",
+  unreadResponses: "Chưa đọc",
   agentIsWorking: "Agent đang làm việc...",
   subagentIsWorking: "Subagent đang làm việc...",
   running: "đang chạy",
