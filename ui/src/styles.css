@@ -9953,10 +9953,16 @@ kbd {
   margin-left: auto;
 }
 
-.drawer-meta-sep {
-  color: var(--text-tertiary);
-  font-size: 0.75rem;
+.drawer-meta-git-icon {
+  width: 0.8rem;
+  height: 0.8rem;
   flex-shrink: 0;
+  color: var(--text-tertiary);
+  margin-right: 0.2rem;
+}
+
+.drawer-branch-name {
+  font-weight: 400;
 }
 
 .drawer-row-actions {
