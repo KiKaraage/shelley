@@ -94,6 +94,8 @@ func (s *Server) handleExportGist(w http.ResponseWriter, r *http.Request, conver
 		})
 	}); err != nil {
 		s.logger.Error("Failed to save gist ID", "id", conversationID, "error", err)
+		http.Error(w, "Failed to save gist ID", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
