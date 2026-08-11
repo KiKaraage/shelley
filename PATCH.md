@@ -190,3 +190,10 @@ Changes: Reworked the conversation drawer meta row (Row 1) to show git identity 
   - **Branch name at regular font weight** (`font-weight: 400`); the meta row packs tighter (`gap: 0.25rem`).
   - **Drawer actions row collapses to zero width** when the conversation item isn't hovered (`max-width: 0; overflow: hidden`), transitioning open on hover instead of just fading opacity.
 Watchouts: The slug prefers the branch's upstream remote so forks show the fork's owner/repo (e.g. `KiKaraage/shelley`) rather than the original. `gitstate.GitState.Equal` includes `RemoteSlug` so cache invalidation accounts for remote changes. The `git_branch`/`git_remote` fields were hand-added to `ui/src/generated-types.ts` because the local `go2ts` generator produces non-reproducible output (tabs + a `gist_id` field); regenerate carefully if you ever run it.
+
+## PATCH-019
+Status: active
+Base: 1d4cbe7
+Files: Makefile
+Changes: `build-custom` now installs the freshly built binary to `~/.local/bin/shelley` in addition to `bin/shelley`. It creates `~/.local/bin` if missing, then `install -m 0755` copies the binary there. Prints both the build and install confirmation lines.
+Watchouts: `~/.local/bin` must be on `PATH` for the installed binary to be used. This is a convenience copy; the running service still restarts from the side-by-side+rename path in the Quick start, not from this install.
