@@ -945,8 +945,8 @@ const stableArchivedConversations = computed(() => {
   return items;
 });
 
-// Show the 25 most recent settled conversations as a preview below the active list.
-const SETTLED_PREVIEW_LIMIT = 20;
+// Show the 15 most recent settled conversations as a preview below the active list.
+const SETTLED_PREVIEW_LIMIT = 15;
 const settledPreview = computed(() => stableArchivedConversations.value.slice(0, SETTLED_PREVIEW_LIMIT));
 const failedSettledFavicons = reactive<Record<string, boolean>>({});
 
