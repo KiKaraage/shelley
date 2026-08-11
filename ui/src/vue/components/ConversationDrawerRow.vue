@@ -400,7 +400,8 @@ const wasWorking = computed(() =>
 watch(
   () => convState.value.working,
   (prev, was) => {
-    if (was && !prev) ctx.seenWorkingIds.value.add(convState.value.conversation_id);
+    if (was && !prev && convState.value.conversation_id !== ctx.currentConversationId.value)
+      ctx.seenWorkingIds.value.add(convState.value.conversation_id);
   },
 );
 
@@ -411,7 +412,8 @@ watch(
   (subs) => {
     const nowWorking = new Set(subs.filter((s) => s.working).map((s) => s.conversation_id));
     for (const id of prevWorkingSubIds) {
-      if (!nowWorking.has(id)) ctx.seenWorkingIds.value.add(id);
+      if (!nowWorking.has(id) && id !== ctx.currentConversationId.value)
+        ctx.seenWorkingIds.value.add(id);
     }
     prevWorkingSubIds.clear();
     for (const id of nowWorking) prevWorkingSubIds.add(id);
