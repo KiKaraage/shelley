@@ -103,22 +103,7 @@
           v-tooltip.top="t('gitGraph')"
           @click="showGitGraph = true"
         >
-          <svg
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            viewBox="0 0 24 24"
-            class="chat-icon-1rem"
-            aria-hidden="true"
-          >
-            <path d="M6 16.6V7.4" />
-            <path d="M6 16.6C8 11 12 6 14.6 5" />
-            <circle cx="6" cy="5" r="2.4" />
-            <circle cx="17" cy="5" r="2.4" />
-            <circle cx="6" cy="19" r="2.4" />
-          </svg>
+          <GitBranchIcon class="chat-icon-1rem" />
         </Button>
 
         <!-- Terminal -->
@@ -518,6 +503,7 @@ import MessageSelectionToolbar from "./MessageSelectionToolbar.vue";
 import DiffViewer from "./DiffViewer.vue";
 import ImageCommentModal from "./ImageCommentModal.vue";
 import GitGraphViewer from "./GitGraphViewer.vue";
+import GitBranchIcon from "./GitBranchIcon.vue";
 import AgentsMdEditorModal from "./AgentsMdEditorModal.vue";
 import TerminalPanel from "./TerminalPanel.vue";
 import VersionChecker from "./VersionChecker.vue";

@@ -23,20 +23,7 @@
           {{ gitRemoteName || ctx.formatCwdForDisplay(conversation.cwd) }}
         </span>
         <template v-if="conversation.cwd && ctx.groupBy.value !== 'cwd' && gitBranchName">
-          <svg
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            class="drawer-meta-git-icon"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 3v12m0 0a3 3 0 103 3 3 3 0 00-3-3zm0-12a3 3 0 100 6 3 3 0 000-6zm12 0a3 3 0 100 6 3 3 0 000-6zm0 6c0 4-6 4-6 9"
-            />
-          </svg>
+          <GitBranchIcon class="drawer-meta-git-icon" />
           <span class="conversation-cwd drawer-branch-name" :title="gitBranchTooltip">
             {{ gitBranchName }}
           </span>
@@ -294,6 +281,7 @@
 <script setup lang="ts">
 import { computed, defineComponent, h, inject, ref, watch, type VNode } from "vue";
 import Button from "primevue/button";
+import GitBranchIcon from "./GitBranchIcon.vue";
 import type { Conversation, ConversationWithState } from "../../types";
 import { isImeComposing } from "../../utils/imeComposing";
 import {
