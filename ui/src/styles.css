@@ -2690,7 +2690,7 @@ body {
 .message-input-container {
   flex: 0 0 auto;
   background: var(--bg-base);
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   padding-left: max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
