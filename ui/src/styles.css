@@ -1629,14 +1629,19 @@ body {
 }
 
 .bash-tool-command {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.bash-tool-command-line {
   font-family: var(--font-mono);
   font-size: 0.875rem;
   color: var(--text-primary);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  flex-shrink: 1;
-  min-width: 0;
 }
 
 .bash-tool-cwd {
