@@ -487,6 +487,13 @@ body {
   overflow: hidden;
 }
 
+.header-favicon {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
 .header-title {
   overflow: hidden;
   text-overflow: ellipsis;
