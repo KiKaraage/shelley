@@ -4,7 +4,7 @@
 <template>
   <div ref="wrapperRef" class="tag-picker-wrapper">
     <Button
-      :class="`btn-icon${hasTags ? ' tag-picker-active' : ''}`"
+      :class="`btn-icon-sm${hasTags ? ' tag-picker-active' : ''}`"
       text
       severity="secondary"
       :aria-label="t('editTags')"
