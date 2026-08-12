@@ -25,6 +25,22 @@ func writeAgentMsg(t *testing.T, database *db.DB, convID string, content []llm.C
 	}
 }
 
+// writeUserMsg writes a user message with the given text.
+func writeUserMsg(t *testing.T, database *db.DB, convID string, text string) {
+	t.Helper()
+	_, err := database.CreateMessage(context.Background(), db.CreateMessageParams{
+		ConversationID: convID,
+		Type:           db.MessageTypeUser,
+		LLMData: llm.Message{
+			Role:    llm.MessageRoleUser,
+			Content: []llm.Content{{Type: llm.ContentTypeText, Text: text}},
+		},
+	})
+	if err != nil {
+		t.Fatalf("CreateMessage(%s): %v", convID, err)
+	}
+}
+
 func previewTextBlock(s string) llm.Content {
 	return llm.Content{Type: llm.ContentTypeText, Text: s}
 }
@@ -61,8 +77,8 @@ func TestConversationListPreview(t *testing.T) {
 		previewTextBlock("final summary"),
 	})
 
-	// Conversation B: the newest agent message is tool-only (no text), so the
-	// preview must fall back to the previous message's text block.
+	// Conversation B: the newest agent message is tool-only. Since tool calls
+	// are now included, the preview shows the tool name.
 	convB, err := database.CreateConversation(ctx, nil, true, nil, nil, db.ConversationOptions{})
 	if err != nil {
 		t.Fatal(err)
@@ -70,7 +86,8 @@ func TestConversationListPreview(t *testing.T) {
 	writeAgentMsg(t, database, convB.ConversationID, []llm.Content{previewTextBlock("earlier text")})
 	writeAgentMsg(t, database, convB.ConversationID, []llm.Content{previewToolBlock("bash")})
 
-	// Conversation C: only tool calls, ever — no preview at all.
+	// Conversation C: the agent message has only a tool call. The preview
+	// shows the tool name.
 	convC, err := database.CreateConversation(ctx, nil, true, nil, nil, db.ConversationOptions{})
 	if err != nil {
 		t.Fatal(err)
@@ -107,6 +124,15 @@ func TestConversationListPreview(t *testing.T) {
 		previewTextBlock("text wins"),
 	})
 
+	// Conversation G: a user message is the newest message. The preview shows
+	// the user's text.
+	convG, err := database.CreateConversation(ctx, nil, true, nil, nil, db.ConversationOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeAgentMsg(t, database, convG.ConversationID, []llm.Content{previewTextBlock("old reply")})
+	writeUserMsg(t, database, convG.ConversationID, "what about pelicans?")
+
 	// Drive the actual conversation-list path: the preview/preview_updated_at
 	// columns are computed inside the list query itself, then copied onto each
 	// ConversationWithState by decorateConversations. Reading the list back is
@@ -123,11 +149,11 @@ func TestConversationListPreview(t *testing.T) {
 	if got := byID[convA.ConversationID].Preview; got != "final summary" {
 		t.Errorf("convA preview = %q, want %q", got, "final summary")
 	}
-	if got := byID[convB.ConversationID].Preview; got != "earlier text" {
-		t.Errorf("convB preview = %q, want %q", got, "earlier text")
+	if got := byID[convB.ConversationID].Preview; got != "bash" {
+		t.Errorf("convB preview = %q, want %q", got, "bash")
 	}
-	if got := byID[convC.ConversationID].Preview; got != "" {
-		t.Errorf("convC should have no preview, got %q", got)
+	if got := byID[convC.ConversationID].Preview; got != "bash" {
+		t.Errorf("convC preview = %q, want %q", got, "bash")
 	}
 	if byID[convA.ConversationID].PreviewUpdatedAt == "" {
 		t.Errorf("convA preview should carry an updatedAt timestamp")
@@ -151,5 +177,9 @@ func TestConversationListPreview(t *testing.T) {
 	// convF has thinking then text; the text block wins within the message.
 	if got := byID[convF.ConversationID].Preview; got != "text wins" {
 		t.Errorf("convF preview = %q, want %q", got, "text wins")
+	}
+	// convG has a user message after the agent message; user text wins.
+	if got := byID[convG.ConversationID].Preview; got != "what about pelicans?" {
+		t.Errorf("convG preview = %q, want %q", got, "what about pelicans?")
 	}
 }

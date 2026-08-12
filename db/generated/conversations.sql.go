@@ -648,14 +648,14 @@ SELECT c.conversation_id, c.slug, c.user_initiated, c.created_at, c.updated_at, 
   -- it back apart.
   CAST(COALESCE((
     SELECT strftime('%Y-%m-%dT%H:%M:%SZ', m.created_at) || substr((
-             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking')
+             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', ''))
                FROM json_each(m.llm_data, '$.Content') je
-              WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> ''
+              WHERE je.value ->> 'Type' IN (2, 3, 5) AND COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', '')) <> ''
               ORDER BY je.key DESC LIMIT 1), 1, 300)
       FROM messages m
-     WHERE m.conversation_id = c.conversation_id AND m.type = 'agent'
+     WHERE m.conversation_id = c.conversation_id AND m.type IN ('agent', 'user')
        AND EXISTS (SELECT 1 FROM json_each(m.llm_data, '$.Content') je
-                   WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> '')
+                   WHERE je.value ->> 'Type' IN (2, 3, 5) AND COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', '')) <> '')
      ORDER BY m.sequence_id DESC LIMIT 1), '') AS TEXT) AS preview_packed,
   CAST(COALESCE((
     SELECT MAX(m.sequence_id) FROM messages m
@@ -785,25 +785,30 @@ func (q *Queries) ListArchivedConversations(ctx context.Context, arg ListArchive
 
 const listConversations = `-- name: ListConversations :many
 SELECT c.conversation_id, c.slug, c.user_initiated, c.created_at, c.updated_at, c.cwd, c.archived, c.parent_conversation_id, c.model, c.conversation_options, c.current_generation, c.agent_working, c.tags, c.is_draft, c.draft, c.queued_messages, c.gist_id,
-  -- preview_packed: locate the newest agent message that actually contains a
-  -- text block (the EXISTS short-circuits on the first one), then pull that
-  -- block. The outer ORDER BY rides idx_messages_conv_type_seq, so we stop at
-  -- the first qualifying message instead of expanding and globally sorting
-  -- every agent message's content blocks. The first 20 bytes are the fixed
+  -- preview_packed: locate the newest agent or user message that actually
+  -- contains a usable content block (text, thinking, or tool call), then pull
+  -- that block. The outer ORDER BY rides idx_messages_conv_type_seq, so we
+  -- stop at the first qualifying message. The first 20 bytes are the fixed
   -- RFC3339 timestamp (strftime '%Y-%m-%dT%H:%M:%SZ'); the rest is the preview
-  -- text capped to 300 chars so we don't haul multi-KB replies across the
-  -- driver + JSON + gzip for a one-line UI field. db.splitPreviewPacked splits
-  -- it back apart.
+  -- text capped to 300 chars. db.splitPreviewPacked splits it back apart.
   CAST(COALESCE((
     SELECT strftime('%Y-%m-%dT%H:%M:%SZ', m.created_at) || substr((
-             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking')
+             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''),
+                              je.value ->> 'Thinking',
+                              je.value ->> 'ToolName')
                FROM json_each(m.llm_data, '$.Content') je
-              WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> ''
+              WHERE je.value ->> 'Type' IN (2, 3, 5)
+                AND COALESCE(NULLIF(je.value ->> 'Text', ''),
+                             je.value ->> 'Thinking',
+                             je.value ->> 'ToolName') <> ''
               ORDER BY je.key DESC LIMIT 1), 1, 300)
       FROM messages m
-     WHERE m.conversation_id = c.conversation_id AND m.type = 'agent'
+     WHERE m.conversation_id = c.conversation_id AND m.type IN ('agent', 'user')
        AND EXISTS (SELECT 1 FROM json_each(m.llm_data, '$.Content') je
-                   WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> '')
+                   WHERE je.value ->> 'Type' IN (2, 3, 5)
+                     AND COALESCE(NULLIF(je.value ->> 'Text', ''),
+                                  je.value ->> 'Thinking',
+                                  je.value ->> 'ToolName') <> '')
      ORDER BY m.sequence_id DESC LIMIT 1), '') AS TEXT) AS preview_packed,
   CAST(COALESCE((
     SELECT MAX(m.sequence_id) FROM messages m
@@ -994,14 +999,14 @@ SELECT c.conversation_id, c.slug, c.user_initiated, c.created_at, c.updated_at, 
   -- it back apart.
   CAST(COALESCE((
     SELECT strftime('%Y-%m-%dT%H:%M:%SZ', m.created_at) || substr((
-             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking')
+             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', ''))
                FROM json_each(m.llm_data, '$.Content') je
-              WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> ''
+              WHERE je.value ->> 'Type' IN (2, 3, 5) AND COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', '')) <> ''
               ORDER BY je.key DESC LIMIT 1), 1, 300)
       FROM messages m
-     WHERE m.conversation_id = c.conversation_id AND m.type = 'agent'
+     WHERE m.conversation_id = c.conversation_id AND m.type IN ('agent', 'user')
        AND EXISTS (SELECT 1 FROM json_each(m.llm_data, '$.Content') je
-                   WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> '')
+                   WHERE je.value ->> 'Type' IN (2, 3, 5) AND COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', '')) <> '')
      ORDER BY m.sequence_id DESC LIMIT 1), '') AS TEXT) AS preview_packed,
   CAST(COALESCE((
     SELECT MAX(m.sequence_id) FROM messages m
@@ -1093,14 +1098,14 @@ SELECT c.conversation_id, c.slug, c.user_initiated, c.created_at, c.updated_at, 
   -- it back apart.
   CAST(COALESCE((
     SELECT strftime('%Y-%m-%dT%H:%M:%SZ', m.created_at) || substr((
-             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking')
+             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', ''))
                FROM json_each(m.llm_data, '$.Content') je
-              WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> ''
+              WHERE je.value ->> 'Type' IN (2, 3, 5) AND COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', '')) <> ''
               ORDER BY je.key DESC LIMIT 1), 1, 300)
       FROM messages m
-     WHERE m.conversation_id = c.conversation_id AND m.type = 'agent'
+     WHERE m.conversation_id = c.conversation_id AND m.type IN ('agent', 'user')
        AND EXISTS (SELECT 1 FROM json_each(m.llm_data, '$.Content') je
-                   WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> '')
+                   WHERE je.value ->> 'Type' IN (2, 3, 5) AND COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', '')) <> '')
      ORDER BY m.sequence_id DESC LIMIT 1), '') AS TEXT) AS preview_packed,
   CAST(COALESCE((
     SELECT MAX(m.sequence_id) FROM messages m
@@ -1254,14 +1259,14 @@ SELECT DISTINCT c.conversation_id, c.slug, c.user_initiated, c.created_at, c.upd
   -- pm here to avoid colliding with the outer LEFT JOIN messages m.
   CAST(COALESCE((
     SELECT strftime('%Y-%m-%dT%H:%M:%SZ', pm.created_at) || substr((
-             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking')
+             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', ''))
                FROM json_each(pm.llm_data, '$.Content') je
-              WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> ''
+              WHERE je.value ->> 'Type' IN (2, 3, 5) AND COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', '')) <> ''
               ORDER BY je.key DESC LIMIT 1), 1, 300)
       FROM messages pm
-     WHERE pm.conversation_id = c.conversation_id AND pm.type = 'agent'
+     WHERE pm.conversation_id = c.conversation_id AND pm.type IN ('agent', 'user')
        AND EXISTS (SELECT 1 FROM json_each(pm.llm_data, '$.Content') je
-                   WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> '')
+                   WHERE je.value ->> 'Type' IN (2, 3, 5) AND COALESCE(NULLIF(je.value ->> 'Text', ''), NULLIF(je.value ->> 'Thinking', ''), NULLIF(je.value ->> 'ToolName', '')) <> '')
      ORDER BY pm.sequence_id DESC LIMIT 1), '') AS TEXT) AS preview_packed,
   CAST(COALESCE((
     SELECT MAX(pm.sequence_id) FROM messages pm
