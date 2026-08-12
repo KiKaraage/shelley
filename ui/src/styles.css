@@ -794,6 +794,93 @@ body {
   background: var(--border);
 }
 
+/* --- Tag picker (chat header) --- */
+
+.tag-picker-wrapper {
+  position: relative;
+}
+
+.btn-icon.tag-picker-active {
+  color: var(--primary);
+}
+
+.tag-picker-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 50;
+  margin-top: 0.25rem;
+  min-width: 14rem;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tag-picker-input {
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.tag-picker-input:focus {
+  border-color: var(--primary);
+}
+
+.tag-picker-separator {
+  height: 1px;
+  margin: 0.25rem;
+  background: var(--border);
+}
+
+.tag-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.375rem 0.625rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: none;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tag-picker-item:hover {
+  background: var(--bg-hover, rgba(0, 0, 0, 0.04));
+}
+
+.tag-picker-check {
+  width: 1rem;
+  text-align: center;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.tag-picker-hash {
+  color: var(--text-secondary);
+}
+
+.tag-picker-create {
+  color: var(--text-secondary);
+}
+
+.tag-picker-empty {
+  padding: 0.375rem 0.625rem;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
 @keyframes conversationItemEnter {
   from {
     opacity: 0;
