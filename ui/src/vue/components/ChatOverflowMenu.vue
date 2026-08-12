@@ -187,8 +187,14 @@
             </Transition>
           </span>
           <span class="overflow-choice-alternatives" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <template v-if="conversationViewMode === 'all'">
+            <svg v-for="alt in altIcons" :key="alt" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <template v-if="alt === 'all'">
+                <path d="M8 6h12M8 12h12M8 18h12" stroke-width="2" stroke-linecap="round" />
+                <circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none" />
+                <circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                <circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none" />
+              </template>
+              <template v-else-if="alt === 'end-of-turn'">
                 <path d="M8 7h12M8 17h12" stroke-width="2" stroke-linecap="round" />
                 <circle cx="4" cy="7" r="1.4" fill="currentColor" stroke="none" />
                 <path
@@ -198,18 +204,12 @@
                   stroke-linejoin="round"
                 />
               </template>
-              <template v-else-if="conversationViewMode === 'end-of-turn'">
-                <path d="M8 6h12M8 12h12M8 18h12" stroke-width="2" stroke-linecap="round" />
-                <circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none" />
-                <circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none" />
-                <circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none" />
-                <path d="M18 10l-2 2 2 2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-              </template>
               <template v-else>
                 <path d="M8 6h12M8 12h12M8 18h12" stroke-width="2" stroke-linecap="round" />
                 <circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none" />
                 <circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none" />
                 <circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none" />
+                <path d="M18 10l-2 2 2 2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
               </template>
             </svg>
           </span>
@@ -358,6 +358,8 @@ const conversationViewLabel = computed(() => {
     mode === "all" ? t("seeEndOfTurnMessagesOnly") : mode === "end-of-turn" ? t("seeAutoExpand") : t("seeAllMessages");
   return `${current} → ${next}`;
 });
+const allModes: ConversationViewMode[] = ["all", "end-of-turn", "auto-expand"];
+const altIcons = computed(() => allModes.filter((m) => m !== conversationViewMode.value));
 function toggleConversationView() {
   const mode = conversationViewMode.value;
   const next: ConversationViewMode = mode === "all" ? "end-of-turn" : mode === "end-of-turn" ? "auto-expand" : "all";

@@ -1433,11 +1433,9 @@ function wrapTurnsInBands(nodes: RenderNode[], currentGeneration: number): void 
 
   if (turns.length === 0) return;
 
-  // The current turn is the last turn in the latest generation.
-  const isCurrentTurn = (turnIdx: number) => {
-    const turn = turns[turnIdx];
-    return turn.endMsg.generation === currentGeneration;
-  };
+  // The current turn is the last turn overall (most recent end_of_turn).
+  const lastTurnIdx = turns.length - 1;
+  const isCurrentTurn = (turnIdx: number) => turnIdx === lastTurnIdx;
 
   // Process turns in reverse order to avoid index shifting.
   for (let t = turns.length - 1; t >= 0; t--) {
