@@ -38,7 +38,7 @@
         class="tag-picker-item tag-picker-create"
         @click="applyCustomTag"
       >
-        + Create "<strong>#{{ filter }}</strong>"
+        + <strong>#{{ filter }}</strong>
       </button>
       <div v-if="displayedTags.length === 0 && !createable && customTags.length === 0" class="tag-picker-empty">
         No matches
