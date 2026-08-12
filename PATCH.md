@@ -312,7 +312,7 @@ Changes: Bash tool summary now splits chained `&&` commands across multiple line
 Status: active
 Base: 4a98848
 Files: ChatInterface.vue, styles.css
-Changes: Added the repo favicon to `.header-left` in the chat header, positioned before `.header-title`. Renders a `1rem × 1rem` `<img>` via `/api/repo-favicon?root=<cwd>`, sized to match the header button icons. The favicon URL falls back through `currentConversation.cwd → selectedCwd`, so it shows whenever any repo context exists — even with no active conversation. Hidden only when no cwd is available at all. Same `/api/repo-favicon` endpoint already used by the drawer rows (PATCH-020). No new server code.
+Changes: Added the repo favicon to `.header-left` in the chat header, positioned before `.header-title`. Renders a `1.3rem × 1.3rem` `<img>` via `/api/repo-favicon?root=<cwd>`, sized to match the header button icons. The favicon URL falls back through `currentConversation.cwd → selectedCwd`, so it shows whenever any repo context exists — even with no active conversation. Hidden only when no cwd is available at all. Same `/api/repo-favicon` endpoint already used by the drawer rows (PATCH-020). No new server code.
 Watchouts: The base `Conversation` type lacks `git_repo_root` (only present on `ConversationWithState`), so the computed uses `cwd` directly — the server resolves the repo root internally.
 
 ## PATCH-032
