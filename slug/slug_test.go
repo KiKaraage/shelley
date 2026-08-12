@@ -801,3 +801,61 @@ func TestGenerateSlug_UsageOnAppendedMarker(t *testing.T) {
 		t.Errorf("slug on conversation = %v, want my-generated-slug", updated.Slug)
 	}
 }
+
+// flakyLLMService fails on the first call, then succeeds. Simulates a
+// transient error that a single retry can recover from.
+type flakyLLMService struct {
+	calls int
+}
+
+func (f *flakyLLMService) Do(ctx context.Context, req *llm.Request) (*llm.Response, error) {
+	f.calls++
+	if f.calls == 1 {
+		return nil, fmt.Errorf("transient connection reset")
+	}
+	return &llm.Response{
+		Content: []llm.Content{{Type: llm.ContentTypeText, Text: "flaky-recovered"}},
+	}, nil
+}
+
+func (f *flakyLLMService) Provider() string        { return "" }
+func (f *flakyLLMService) TokenContextWindow() int { return 8192 }
+func (f *flakyLLMService) MaxImageDimension() int  { return 0 }
+func (f *flakyLLMService) MaxImageBytes() int      { return 0 }
+func (f *flakyLLMService) SupportsImages() bool    { return true }
+
+// TestGenerateSlugText_RetriesTransientFailure verifies that generateSlugText
+// retries the slug LLM call once when the first attempt fails transiently,
+// recovering with the second attempt.
+func TestGenerateSlugText_RetriesTransientFailure(t *testing.T) {
+	flaky := &flakyLLMService{}
+	provider := &recordingProvider{
+		modelIDs:   []string{"my-custom-model"},
+		fallbackTo: flaky,
+	}
+
+	slug, err := generateSlugText(context.Background(), provider, "some message", "my-custom-model")
+	if err != nil {
+		t.Fatalf("expected retry to recover, got error: %v", err)
+	}
+	if slug != "flaky-recovered" {
+		t.Errorf("expected slug %q, got %q", "flaky-recovered", slug)
+	}
+	if flaky.calls != 2 {
+		t.Errorf("expected 2 calls (initial + retry), got %d", flaky.calls)
+	}
+}
+
+// TestGenerateSlugText_NoRetryAfterRetryFailure verifies that if the retry
+// also fails, the error is returned.
+func TestGenerateSlugText_NoRetryAfterRetryFailure(t *testing.T) {
+	provider := &recordingProvider{
+		modelIDs:   []string{"my-custom-model"},
+		fallbackTo: &MockLLMServiceWithError{},
+	}
+
+	_, err := generateSlugText(context.Background(), provider, "some message", "my-custom-model")
+	if err == nil {
+		t.Fatal("expected error from always-failing service")
+	}
+}

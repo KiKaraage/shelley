@@ -116,7 +116,17 @@ Respond with exactly one slug and no other text or markup.`, userMessage)
 
 	response, err := models.WorkhorseDo(ctxWithTimeout, llmProvider, conversationModelID, request)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate slug: %w", err)
+		// Transient failures (rate limits, connection resets) get one retry so
+		// a single hiccup doesn't leave the conversation without a title.
+		select {
+		case <-time.After(slugRetryDelay):
+		case <-ctx.Done():
+			return "", ctx.Err()
+		}
+		response, err = models.WorkhorseDo(ctxWithTimeout, llmProvider, conversationModelID, request)
+		if err != nil {
+			return "", fmt.Errorf("failed to generate slug: %w", err)
+		}
 	}
 
 	slug := Sanitize(strings.TrimSpace(llm.FirstText(response)))
@@ -125,6 +135,11 @@ Respond with exactly one slug and no other text or markup.`, userMessage)
 	}
 	return slug, nil
 }
+
+// slugRetryDelay is the pause before retrying the slug LLM call after a
+// transient failure. A single retry keeps conversations titled without
+// doubling latency on the common success path.
+const slugRetryDelay = 2 * time.Second
 
 // PromptPreamble is the fixed leading text of the slug-generation prompt. It is
 // exported so tests (e.g. fake LLM services shared with the agent loop) can
