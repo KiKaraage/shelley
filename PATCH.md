@@ -29,26 +29,26 @@
 
 Keep the changes minimum. Never plain `make build` — only the `build-custom` ldflags stamp; never restart shelley mid-turn — always delayed via `setsid`; never anchor to our own commit SHAs (rewritten on rebase) — use upstream `Base` SHAs; minimize DB migrations/schema change when possible
 
-## PATCH-001
+## P001
 Status: active
 Base: 5c2cce3
 Files: ChatInterface.vue, ChatOverflowMenu.vue, styles.css
 Changes: Moved Diffs, Git Graph, Terminal from the overflow menu into always-visible header buttons, ordered [+, Diffs, Git Graph, Terminal, ⋮]; removed the menu items, their emits, and the now-unused hasCwd prop. Also removed the separators around Archive Conversation and put the theme and notification switches on one row in the overflow menu (split 60:40 — theme has 3 options, notifications 2).
 Watchouts: Keep the header buttons as the only entry points for Diffs/Git Graph/Terminal; don't restore the open-diffs/open-git-graph/open-terminal emits or menu items while the header buttons exist.
 
-## PATCH-002
+## P002
 Status: active
 Base: 1d4cbe7
 Files: ChatInterface.vue, ChatOverflowMenu.vue, ConversationDrawer.vue
 Changes: Added tooltips to the New Thread (+), overflow menu (⋮), and mobile hamburger (☰) header buttons, plus the mobile drawer's + and x buttons.
 
-## PATCH-003
+## P003
 Status: active
 Base: 1d4cbe7
 Files: ChatInterface.vue
 Changes: In-app terminal now launches zsh instead of bash (`exec zsh -i`). The server wraps the command as `bash --login -c '<cmd>'`, but `exec zsh -i` replaces bash with zsh.
 
-## PATCH-004
+## P004
 Status: active
 Base: 1d4cbe7
 Files: BashTool.vue, styles.css
@@ -58,13 +58,13 @@ Changes:
   - Added `max-height: 350px; overflow: auto` to `.tool-result-content` (generic fallback card), `.bash-tool-code`, `.bash-tool-streaming`, `.bash-tool-preview-code`, `.tool-code` (GenericTool), `.patch-tool-raw-diff` and `.patch-tool-diff` so long tool outputs scroll instead of stretching the page. Modal overrides (`.tool-detail-modal .bash-tool-code` / `.tool-code`) reset to `max-height: none; overflow: visible` so the detail modal isn't clipped.
   - `.bash-tool-copy-btn` background changed to `var(--gray-800)` in dark mode and gained `transition: background-color 0.15s ease`.
 
-## PATCH-005
+## P005
 Status: active
 Base: 1d4cbe7
 Files: skills/skills.go, skills/skills_test.go
 Changes: Added ~/.agents/skills/ to DefaultDirs discovery paths so Shelley recognizes skills installed by other agent tools (Claude Code, etc.). The directory is checked alongside ~/.config/shelley/, ~/.config/agents/skills/, and ~/.shelley/.
 
-## PATCH-006
+## P006
 Status: active
 Base: 1d4cbe7
 Files: claudetool/bash.go, claudetool/shell.go, claudetool/toolset.go, claudetool/env.go, server/convo.go, server/handlers.go, cmd/shelley/main.go, ui/src/vue/components/ChatOverflowMenu.vue, ui/src/i18n/en.ts (and other locale files), ui/src/i18n/types.ts, claudetool/bash_test.go
@@ -75,7 +75,7 @@ Changes: Git commit attribution is now a user-configurable dropdown ("Git Attrib
 The setting is stored via the existing settings API (key: `shelley.attribution`, values: `co-author`, `assisted-by`, `off`). The legacy `git config shelley.no-trailer` path still works as a fallback when no explicit mode is set.
 Watchouts: NewToolSet reads the setting fresh on each turn, so changes take effect on the next message. The `GitAttributionMode` type is shared between bash and shell tools. The `BashTool.resolvedAttribution()` method handles the legacy git config fallback; when an explicit mode is set via the DB setting, it takes precedence. `ShelleyEnv.ModelDisplayName` is populated from `ToolSetConfig.ResolveModelDisplayName()` which calls `LLMProvider.GetModelInfo()`; nil-safe and falls back to the raw model ID.
 
-## PATCH-007
+## P007
 Status: active
 Base: 1d4cbe7
 Files: db/schema/038-model-enabled.sql, db/schema/039-model-context-window.sql, db/query/models.sql, db/generated/models.sql.go, db/generated/models.go, db/db.go, models/models.go, models/models_test.go, llm/oai/oai.go, llm/oai/oai_responses.go, llm/gem/gem.go, llm/ant/ant.go, server/custom_models.go, server/server.go, ui/src/services/api.ts, ui/src/vue/components/ModelsModal.vue, ui/src/vue/components/ModelFormModal.vue, ui/src/vue/components/ImportModelsModal.vue (new), ui/src/vue/components/customModelConstants.ts, ui/src/styles.css, ui/src/i18n/en.ts (and other locale files), ui/src/i18n/types.ts
@@ -87,7 +87,7 @@ Changes: Overhauled custom-model storage and management:
   - **Usage cost and cache hit rate**: The status bar context-usage label shows the estimated cost (from the pricing lookup) alongside the token count (e.g. `76k $0.43`). The token marker in the chat timeline also shows per-call cost. The Usage Details modal (per-message) shows Cache Hit Rate = (cache_read + cache_write) / (cache_read + cache_write + input + output) * 100%. The pricing lookup runs when usage entries are first needed (hover/focus/click on the context bar).
 Watchouts: `max_tokens` still controls max output/completion tokens (`max_completion_tokens` on the wire) — it is NOT the context window. `context_window` is the total context size for the UI meter. Only OpenAI Chat Completions (`provider_type: "openai"`) is supported for import; Anthropic/Gemini/OpenAI Responses have different model-list APIs. The sqlc-generated files picked up a version bump (v1.30.0 -> v1.31.1) in their headers — harmless. The `customModelRows()` change means any test that creates a model without `Enabled: 1` will have it filtered from the runtime; `models_test.go` was updated to set `Enabled: 1`.
 
-## PATCH-008
+## P008
 Status: active
 Base: 1d4cbe7
 Fixes: resolveCost now matches imported-model pricing by endpoint prefix (usage URLs carry trailing segments like /chat/completions that never matched the base endpoint); path-boundary guard prevents hostname spoofing.
@@ -100,7 +100,7 @@ Changes: Import pricing from /v1/models into the DB:
   - Duplicate model preserves pricing from source.
 Watchouts: Existing models in the DB will have 0 pricing — re-import from the provider to populate. The embedded models.dev snapshot also covers crof.ai models as a fallback.
 
-## PATCH-009
+## P009
 Status: active
 Base: 1d4cbe7
 Files: ui/src/vue/components/ModelsModal.vue, ui/src/styles.css, ui/src/i18n/en.ts (and other locale files), ui/src/i18n/types.ts
@@ -112,32 +112,32 @@ Changes:
   - Added `disable`/`enable` i18n keys across all 9 locale files.
 Watchouts: `bulkToggleEnabled` only clears `_pending` on the affected models (not all) to avoid interfering with concurrent individual toggles. `handleDelete` re-finds the index on rollback to handle concurrent array shifts. `bulkDelete` and `handleDelete` restore `selectedKeys` on error.
 
-## PATCH-010
+## P010
 Status: active
 Base: 1d4cbe7
 Files: ui/src/utils/messageTime.ts, ui/src/utils/messageTime.test.ts, ui/src/vue/components/ConversationDrawer.vue, ui/src/vue/components/MessageInfoModal.vue, ui/src/vue/components/UsageDetailModal.vue, ui/src/vue/components/VersionChecker.vue, ui/src/vue/components/TokenCostGraph.vue, ui/src/vue/components/GitGraphViewer.vue, ui/src/vue/components/GitRepoPicker.vue, ui/src/utils/conversationMarkdown.ts
 Changes: All time displays now use 24-hour format instead of 12-hour. Added `hour12: false` to the shared `messageTime.ts` formatters (message timestamps, absolute timestamps) and to every other explicit time formatter: ConversationDrawer's today-timestamp, MessageInfoModal, UsageDetailModal, VersionChecker, TokenCostGraph hover time, GitGraphViewer commit date, GitRepoPicker tooltip, and conversationMarkdown's Started/Exported timestamps. The `hour` fields were bumped from `numeric` to `2-digit` in `messageTime.ts` so 24h times render zero-padded (e.g. `09:05` not `9:05`).
 Watchouts: `hour12: false` forces 24h regardless of the user's locale; this intentionally overrides locale defaults. The day-only formatters (formatDay) were left unchanged — they don't render a time-of-day.
 
-## PATCH-011
+## P011
 Status: active
 Base: 1d4cbe7
 Files: ConversationDrawer.vue
 Changes: The conversation drawer's CWD display now shows only the repo basename (e.g. `shelley-customization`) instead of the tildified full path (`~/.config/shelley/shelley-customization`). The full path remains in the title tooltip. Also removed the now-unused `tildifyPath` import.
 
-## PATCH-012
+## P012
 Status: active
 Base: 1d4cbe7
 Files: ui/src/styles.css
 Changes: Switched several UI elements from monospace (`var(--font-mono)`) to sans-serif (`var(--font-sans)`): `.app-bar-title`, `.conversation-cwd` (also added `font-weight: bold`), `.model-bar-name`, `.system-prompt-label`, `.system-prompt-tools-label`, `.system-prompt-tool-name`, `.bash-tool-copy-btn`, `.status-message`, `.status-readout`, and `.animated-working`.
 
-## PATCH-013
+## P013
 Status: active
 Base: a8e2ee0
 Files: BashTool.vue
 Changes: When a bash tool call produces empty output, the output block is hidden and the label reads "Clean exit" instead of "Output:". When there is output, it still shows "Output" (or "Output (Error)") as before.
 
-## PATCH-014
+## P014
 Status: active
 Base: 1d4cbe7
 Files: db/schema/041-gist-id.sql, db/query/conversations.sql, db/generated/conversations.sql.go, db/generated/models.go, server/gist.go, server/gist_export_html.go, server/gist_handlers.go, server/embed/gist.html.tmpl, server/handlers.go, server/server.go, ui/src/services/api_gist.ts, ui/src/vue/components/ChatOverflowMenu.vue, ui/src/vue/components/ChatInterface.vue, ui/src/styles.css, ui/src/i18n/en.ts (and other locale files), ui/src/i18n/types.ts
@@ -151,14 +151,14 @@ Changes: Export Shelley session as a self-contained HTML file to a GitHub secret
   - **Tests**: `gist_test.go` (slug validation, error classification), `gist_export_html_test.go` (13 edge cases: nil fields, malformed JSON, tool calls with nil/string input, tool result errors, image-only results, etc.), `api_gist.test.ts` (plain-text error body handling).
 Watchouts: Requires `gh` CLI installed and authenticated. The `init()` staleness check in `ui/embedfs.go` calls `os.Exit(1)` when build is stale — rebuild UI before testing. `html/template` was replaced with `text/template` for the embedded HTML to avoid escaping content inside `<script>` tags.
 
-## PATCH-015
+## P015
 Status: superseded (upstream 48bfcc3 removed the ⚠️ icon and replaced the warning with color-coded token counts)
 Base: 1d4cbe7
 Files: ui/src/vue/components/ContextUsageBar.vue
 Changes: Made the context warning icon (⚠️) threshold relative to the model's context window instead of a hardcoded 100k tokens. When `maxContextTokens` is known, the warning now triggers at 70% usage (matching the existing label color thresholds). Falls back to the absolute 100k threshold only when the model has no declared context window.
 Watchouts: The `percentage` computed prop is already defined above the warning check so it can be reused directly. The auto-open popup feature (`hasAutoOpened` / localStorage gate) still uses the same condition.
 
-## PATCH-016
+## P016
 Status: active
 Base: e653372
 Files: ui/src/vue/components/ConversationDrawer.vue, ui/src/vue/components/ChatInterface.vue, ui/src/i18n/en.ts, ui/src/styles.css
@@ -171,13 +171,13 @@ Changes: Settled (archived) thread preview in sidebar + auto-unarchive on send.
   - **Eager loading**: archived conversations are loaded on mount for instant settled preview display.
 Watchouts: Non-English locale files retain their original archive/restore translations (not renamed to "Settle"). The `api_gist.ts` pre-existing type errors are unrelated and predate this patch.
 
-## PATCH-017
+## P017
 Status: active
 Base: 1d4cbe7
 Files: ui/src/vue/components/ConversationDrawer.vue, ui/src/vue/components/ConversationDrawerRow.vue, ui/src/styles.css
 Changes: Moved the collapse (<<) and close (x) buttons from the right side of the drawer header to the left edge, before the title. Renamed the drawer title from "Conversations" to "Shelley" (archived view still shows the "archived" translation). Both `.working-indicator` and `.drawer-working-indicator` now have a solid green background (`--green-500, #22c55e`) with no border. Tightened conversation item padding and gaps. Row structure: Row 1 = [favicon · cwd · gitRepoName]; Row 2 = [title] [hover-only action buttons] [working indicator] [subagent badge]; Row 3 = [date] [preview]. Action buttons live on Row 2 (right of title, left of working indicator) and collapse to zero width when not hovered. Git commit line removed from template. Action buttons (rename/edit tags/archive) only visible on hover via CSS opacity transition (always visible on mobile via `@media (max-width: 768px)` override). The main working indicator is hidden while any of the row's subagents are running (`runningSubagentCount > 0`), since the subagent-count badge already shows its own running ring in that case — reducing duplicate green-dot noise on the row. The indicator still appears on the subagent conversation item and inside the badge.
 
-## PATCH-018
+## P018
 Status: active
 Base: 9c96638
 Files: gitstate/gitstate.go, gitstate/gitstate_test.go, server/server.go, server/handlers.go, cmd/go2ts.go, ui/src/generated-types.ts, ui/src/vue/components/ConversationDrawerRow.vue, ui/src/vue/components/ChatInterface.vue, ui/src/vue/components/GitBranchIcon.vue (new), ui/src/styles.css
@@ -189,14 +189,14 @@ Changes: Reworked the conversation drawer meta row (Row 1) to show git identity 
   - **Drawer actions row collapses to zero width** when the conversation item isn't hovered (`max-width: 0; overflow: hidden`), transitioning open on hover instead of just fading opacity.
 Watchouts: The slug prefers the branch's upstream remote so forks show the fork's owner/repo (e.g. `KiKaraage/shelley`) rather than the original. `gitstate.GitState.Equal` includes `RemoteSlug` so cache invalidation accounts for remote changes. The `git_branch`/`git_remote` fields were hand-added to `ui/src/generated-types.ts` because the local `go2ts` generator produces non-reproducible output (tabs + a `gist_id` field); regenerate carefully if you ever run it.
 
-## PATCH-019
+## P019
 Status: active
 Base: 1d4cbe7
 Files: Makefile
 Changes: `build-custom` now installs the freshly built binary to `~/.local/bin/shelley` in addition to `bin/shelley`. It creates `~/.local/bin` if missing, then `install -m 0755` copies the binary there. Prints both the build and install confirmation lines.
 Watchouts: `~/.local/bin` must be on `PATH` for the installed binary to be used. This is a convenience copy; the running service still restarts from the side-by-side+rename path in the Quick start, not from this install.
 
-## PATCH-020
+## P020
 Status: active
 Base: 9c96638
 Files: server/repo_favicon.go (new), server/repo_favicon_test.go (new), server/server.go, ConversationDrawerRow.vue, styles.css
@@ -206,13 +206,13 @@ Changes: Added repo favicon to the drawer meta row — a small favicon image ren
   - **Tests** `repo_favicon_test.go`: four tests covering exact candidate match, HTML `<link rel="icon">` parsing, not-found, and priority order.
 Watchouts: The endpoint resolves candidates fresh on each request (cheap stat calls). Browser caching (`max-age=3600`) prevents redundant fetches across drawer re-renders. The regex only handles `<link>` elements where `rel` and `href` are on the same tag; self-closing or multiline variants with `rel` on one tag and `href` on another won't parse. The endpoint does not handle `manifest.json` or `<meta name="msapplication-TileColor">` — just the HTML `<link>` path and well-known file names.
 
-## PATCH-021
+## P021
 Status: active
 Base: 9c96638
 Files: ConversationDrawer.vue, ConversationDrawerRow.vue, conversationDrawerShared.ts, styles.css, ui/src/i18n/en.ts (and other locale files), ui/src/i18n/types.ts
 Changes: Light blue "was working" unread indicator in the conversation drawer. When an agent finishes working (green dot disappears), a light blue dot (`#60a5fa`) appears in its place on the same row, persisting until the user clicks the row to open the conversation. Applies to both top-level conversation rows and subagent rows. Purely client-side: a transient `Set<string>` of recently-working conversation IDs tracked in `seenWorkingIds`, populated by a `watch` on `convState.working` (true→false transition) in `ConversationDrawerRow.vue`, and cleared by `selectConversation` in `ConversationDrawer.vue`. No DB changes, no localStorage — resets on page reload. Added `unreadResponses` i18n key across all 9 locale files. The unread dot is suppressed when the conversation (or subagent) is the currently selected one, so open threads never show a stale blue dot.
 
-## PATCH-022
+## P022
 Status: active
 Base: 9c96638
 Files: ui/src/styles.css
@@ -223,13 +223,13 @@ Changes: Changes to `.status-bar` and `.message-input-container` to make them vi
 4. Reduced `.status-bar` `min-height` from `2.5rem` to `2rem`.
 5. Reduced `.message-input-container` `padding` from `1rem` to `0.5rem 1rem` (top/bottom from 1rem to 0.5rem).
 
-## PATCH-023
+## P023
 Status: active
 Base: 9c96638
 Files: ConversationDrawerRow.vue
 Changes: Subagent preview and date now share the same flex row (`.conversation-meta`), matching the normal conversation item layout. Previously the subagent item had three separate rows: title, preview, and date. Now it has two: title, then date + preview. Removed `.drawer-subagent-date` override so the date uses the same `0.75rem` font size as normal items.
 
-## PATCH-024
+## P024
 Status: active
 Base: 9c96638
 Files: ConversationDrawer.vue, ConversationDrawerRow.vue, styles.css
@@ -239,7 +239,7 @@ Changes:
   - **Settled row tooltips**: added `v-tooltip.top` to restore, delete, confirm-delete, and cancel buttons in the settled compact rows. Added `:title` to the settled title div for truncated thread names.
   - **Settled preview limit**: reduced from 25 to 20.
 
-## PATCH-025
+## P025
 Status: active
 Base: 9c96638
 Files: server/gist_handlers.go, ui/src/services/api_gist.ts, ui/src/vue/components/ChatInterface.vue
@@ -251,7 +251,7 @@ Changes: Fixed five bugs in the gist export/update flow:
   - **Stale gist status on conversation switch**: the gist status watcher had no request cancellation — switching conversations quickly let a stale `getGistStatus` response overwrite the current conversation's state. Added a generation counter to discard stale responses.
 Watchouts: `db.Queries()` vs `db.QueriesTx()` distinction is critical — always use `QueriesTx` for write operations. The `gh gist edit` push has CDN propagation latency; the gist URL may show stale HTML briefly after updating.
 
-## PATCH-026
+## P026
 Status: active
 Base: 4a98848
 Files: slug/slug.go, slug/slug_test.go, server/handlers.go
@@ -261,7 +261,7 @@ Changes: Added retry for slug-tagged and conversation-model slug generation.
   - Root cause: provider-level retries (ant/oai/gem) have 15s+ backoffs that blow past the slug goroutine's 10s per-call + 15s outer timeout, making provider retries dead code for slug calls. Slug-level retry with a short delay works within the budget.
 Watchouts: `slugRetries` and `slugRetryDelay` are package-level constants in `slug/slug.go`. The `flakyLLMService` test mock validates recovery on second attempt; `TestGenerateSlugText_TaggedModelWins` now takes ~2s due to the retry delay on the failing tagged model.
 
-## PATCH-027
+## P027
 Status: active
 Base: 4a98848
 Files: claudetool/bash.go, claudetool/bashkit/bashkit.go, claudetool/bashkit/bashkit_test.go
@@ -273,7 +273,7 @@ Changes: Block chained `cd <path> && ...` when `<path>` resolves to the current 
   - Tests: 13 cases covering abs/relative/~/dot-dot/subshell/fallback patterns.
 Watchouts: Only blocks same-dir chains; different-dir chains still get the existing hint from `ChainsCdWithCommand`.
 
-## PATCH-028
+## P028
 Status: active
 Base: 4a98848
 Files: db/query/conversations.sql, db/generated/conversations.sql.go, server/conversation_preview_test.go
@@ -281,7 +281,7 @@ Changes: Conversation drawer previews now include thinking content and user mess
 Watchouts: ToolName and Thinking fields serialize as empty strings in non-relevant blocks, so each COALESCE leg wraps its field in NULLIF(x, '').
 
 
-## PATCH-029
+## P029
 Status: active
 Base: 4a98848
 Files: ui/src/services/settings.ts, ui/src/utils/conversationView.ts, ui/src/utils/conversationView.test.ts, ui/src/vue/components/renderNode.ts, ui/src/i18n/types.ts, ui/src/i18n/en.ts (and other locale files), ui/src/vue/components/ChatOverflowMenu.vue, ui/src/vue/components/ChatInterface.vue, ui/src/vue/components/MessageRenderNode.vue, ui/src/vue/components/TurnBand.vue (new), ui/src/vue/components/tools/ThinkingContent.vue, ui/src/vue/composables/toolDetail.ts, ui/src/styles.css
@@ -303,20 +303,20 @@ Changes: Added "Auto Expand" as a third brevity mode alongside "See All" and "Se
   - **Tests**: Added auto-expand assertions to `conversationView.test.ts`.
 Watchouts: The `wrapTurnsInBands` function processes nodes in reverse order to avoid index shifting. `carried-band` nodes within a turn collapse with the turn. Tool pills between messages are also inner content that collapses. The current turn is always expanded regardless of manual toggle state.
 
-## PATCH-030
+## P030
 Status: active
 Base: 4a98848
 Files: BashTool.vue, styles.css
 Changes: Bash tool summary now splits chained `&&` commands across multiple lines. Each segment after the first gets its own line prefixed with `&&`. Per-line CSS truncation (`text-overflow: ellipsis`) keeps long segments within available width. Single-command inputs render identically to before (one line). No hardcoded max length — CSS handles truncation per line.
 
-## PATCH-031
+## P031
 Status: active
 Base: 4a98848
 Files: ChatInterface.vue, styles.css
 Changes: Added the repo favicon to `.header-left` in the chat header, positioned before `.header-title`. Renders a `1.3rem × 1.3rem` `<img>` via `/api/repo-favicon?root=<cwd>`, sized to match the header button icons. The favicon URL falls back through `currentConversation.cwd → selectedCwd`, so it shows whenever any repo context exists — even with no active conversation. Hidden only when no cwd is available at all. Same `/api/repo-favicon` endpoint already used by the drawer rows (PATCH-020). No new server code.
 Watchouts: The base `Conversation` type lacks `git_repo_root` (only present on `ConversationWithState`), so the computed uses `cwd` directly — the server resolves the repo root internally.
 
-## PATCH-032
+## P032
 Status: active
 Base: 4a98848
 Files: ChatInterface.vue, HeaderTagPicker.vue (new), styles.css
@@ -325,3 +325,18 @@ Changes: Added a tag picker dropdown to the chat header, positioned in `.header-
   - **ChatInterface.vue**: `HeaderTagPicker` inserted after `<h1 class="header-title">` inside `.header-left`. Receives `currentConversation` and `onConversationUpdate` props so tag changes refresh the sidebar.
   - **styles.css**: `.tag-picker-wrapper`, `.tag-picker-menu` (min-width 10rem), `.tag-picker-input`, `.tag-picker-item`, `.tag-picker-check`, `.tag-picker-hash`, `.tag-picker-create`, `.tag-picker-empty` — follows the same design tokens as `.group-by-menu`. Removed `overflow: hidden` from `.header-left` so the dropdown floats outside the header area.
 Watchouts: The tag vocabulary is a client-side const (`SUGGESTED_TAGS`), not derived from the server — adding a tag to one conversation won't auto-populate the dropdown for others. The `onConversationUpdate` prop must be wired for tag changes to reflect in the sidebar; without it the button still works but the sidebar won't refresh until a page reload.
+
+## P033
+Per-block action bars on thinking and text content blocks
+- Status: superseded (upstream 8d34550 "Give thinking blocks their own copy action inside the message" implements the same per-block copy with `splitContentEntities` in coalesceContent.ts; the upstream approach also groups adjacent answer content and keeps message-level info/fork)
+- Base: 4a98848
+- Files: Message.vue, styles.css
+- Changes: Per-block action bars on thinking and text content blocks. The copy/fork/details overlay now appears per-block instead of once for the whole message. Only thinking blocks and text blocks get their own action bar — tool blocks get nothing. Each block's copy extracts only that block's text. Hover tracks the specific block index; a tap on the message body still toggles visibility globally via `showActionBar`.
+
+## P034
+Merge drawer tag row into meta row (date + preview + tags)
+- Status: active
+- Base: 4a98848
+- Files: ConversationDrawerRow.vue, styles.css
+- Changes: Merged the tag row (formerly Row 3) into the timestamp+preview row (Row 4), with tags pushed to the right edge via `margin-left: auto`. The tags `<div>` now lives inside `.conversation-meta` alongside the date and preview spans, using a new `.conversation-tags-inline` class that drops `margin-top` and adds auto-left-margin + `flex-shrink: 0`. Row count for non-draft conversations drops from 4 to 3: [favicon · cwd · branch] / [title · actions · indicators] / [date · preview · tags]. Also fixed `.message-action-button:last-child` tooltip clipping the right edge.
+
