@@ -7,7 +7,9 @@
     <div class="bash-tool-header" @click="isExpanded = !isExpanded">
       <div class="bash-tool-summary">
         <span class="bash-tool-emoji" :class="{ running: isRunning }">🛠️</span>
-        <span class="bash-tool-command" :title="command">{{ displayCommand }}</span>
+        <div class="bash-tool-command" :title="command">
+          <span v-for="(line, i) in displayCommandLines" :key="i" class="bash-tool-command-line">{{ line }}</span>
+        </div>
         <span v-if="isComplete && isCancelled" class="bash-tool-cancelled">✗ cancelled</span>
         <ToolStatusIcon
           v-if="isComplete && hasError && !isCancelled"
@@ -163,10 +165,12 @@ const output = computed(() =>
 
 const isCancelled = computed(() => props.hasError && isCancelledToolResult(output.value));
 
-const displayCommand = computed(() => {
+const displayCommandLines = computed(() => {
   const cmd = command.value;
-  const maxLen = 300;
-  return cmd.length <= maxLen ? cmd : cmd.substring(0, maxLen) + "...";
+  if (!cmd.includes(" && ")) return [cmd];
+  return cmd.split(" && ").flatMap((part, i) =>
+    i === 0 ? [part] : [`&& ${part}`],
+  );
 });
 
 const isComplete = computed(() => !props.isRunning && props.toolResult !== undefined);
