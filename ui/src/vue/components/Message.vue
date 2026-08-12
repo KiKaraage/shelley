@@ -49,12 +49,6 @@
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
     >
-      <MessageActionBar
-        v-if="actionBarVisible && (hasCopyAction || hasUsageAction || hasForkAction)"
-        :on-copy="hasCopyAction ? handleCopy : undefined"
-        :on-show-usage="hasUsageAction ? handleShowUsage : undefined"
-        :on-fork="hasForkAction ? handleFork : undefined"
-      />
       <div class="message-content" data-testid="message-content">
         <div class="whitespace-pre-wrap break-words">{{ errorText }}</div>
         <RefusalContinueButton
@@ -88,12 +82,6 @@
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
     >
-      <MessageActionBar
-        v-if="actionBarVisible && (hasCopyAction || hasUsageAction || hasForkAction)"
-        :on-copy="hasCopyAction ? handleCopy : undefined"
-        :on-show-usage="hasUsageAction ? handleShowUsage : undefined"
-        :on-fork="hasForkAction ? handleFork : undefined"
-      />
       <div class="message-content" data-testid="message-content">
         <div v-for="(td, index) in displayData" :key="index">
           <MessageDisplayData
@@ -126,15 +114,7 @@
       :data-commentable="isCommentable ? 'true' : undefined"
       role="article"
       @click="handleMessageClick"
-      @mouseenter="isHovered = true"
-      @mouseleave="isHovered = false"
     >
-      <MessageActionBar
-        v-if="actionBarVisible && (hasCopyAction || hasUsageAction || hasForkAction)"
-        :on-copy="hasCopyAction ? handleCopy : undefined"
-        :on-show-usage="hasUsageAction ? handleShowUsage : undefined"
-        :on-fork="hasForkAction ? handleFork : undefined"
-      />
       <div class="message-content" data-testid="message-content">
         <div v-if="authorEmail" class="message-author-email" data-testid="message-author-email">
           {{ authorEmail }}
@@ -173,7 +153,20 @@
         </div>
 
         <template v-else>
-          <div v-for="(item, index) in coalescedContent" :key="index">
+          <div
+            v-for="(item, index) in coalescedContent"
+            :key="index"
+            class="msg-content-block-wrapper"
+            @mouseenter="hoveredBlockIndex = index"
+            @mouseleave="hoveredBlockIndex = null"
+          >
+            <!-- Per-block action bar: only on thinking and text blocks -->
+            <MessageActionBar
+              v-if="isActionBarBlock(item) && (hoveredBlockIndex === index || showActionBar)"
+              :on-copy="() => handleBlockCopy(item)"
+              :on-show-usage="hasUsageAction ? handleShowUsage : undefined"
+              :on-fork="hasForkAction ? handleFork : undefined"
+            />
             <CitedText
               v-if="item.kind === 'text'"
               :text="item.text"
@@ -243,7 +236,7 @@ import ErrorRetryButton from "./ErrorRetryButton.vue";
 import RefusalContinueButton from "./RefusalContinueButton.vue";
 import MessageContentBlock from "./MessageContentBlock.vue";
 import CitedText from "./CitedText.vue";
-import { coalesceContent } from "../../utils/coalesceContent";
+import { coalesceContent, type CoalescedItem } from "../../utils/coalesceContent";
 import { perfCount } from "../../utils/perf";
 import MessageDisplayData from "./MessageDisplayData.vue";
 
@@ -292,6 +285,7 @@ const isHovered = ref(false);
 const showUsageModal = ref(false);
 const showInfoModal = ref(false);
 const messageRef = ref<HTMLDivElement | null>(null);
+const hoveredBlockIndex = ref<number | null>(null);
 
 const actionBarVisible = computed(() => showActionBar.value || isHovered.value);
 
@@ -394,29 +388,36 @@ const displayedDistillationContent = computed(
   () => distillationContentOverride.value ?? distillation.value.distillationContent,
 );
 
-// ---- Text extraction for copy ----
-function getMessageText(): string {
-  const m = llmMessage.value;
-  if (!m?.Content) return "";
-  const textParts: string[] = [];
-  m.Content.forEach((content) => {
-    const contentType = getContentType(content.Type);
-    if (contentType === "text" && content.Text) {
-      textParts.push(content.Text);
-    } else if (contentType === "thinking") {
-      const thinkingText = content.Thinking || content.Text;
-      if (thinkingText) textParts.push(`[Thinking]\n${thinkingText}`);
-    } else if (contentType === "tool_result" && content.ToolResult) {
-      content.ToolResult.forEach((result) => {
-        if (result.Text) textParts.push(result.Text);
-      });
-    }
-  });
-  return textParts.join("\n");
+// ---- Per-block action bar logic ----
+
+/** Does this block qualify for its own action bar? Only thinking and text blocks. */
+function isActionBarBlock(item: CoalescedItem): boolean {
+  if (item.kind === "text") return true;
+  const ct = item.content ? getContentType(item.content.Type) : "";
+  return ct === "thinking";
 }
 
-const messageText = computed(() => getMessageText());
-const hasCopyAction = computed(() => !!messageText.value);
+/** Extract copy text for a single coalesced block. */
+function getBlockText(item: CoalescedItem): string {
+  if (item.kind === "text") return item.text;
+  const c = item.content;
+  if (!c) return "";
+  const ct = getContentType(c.Type);
+  if (ct === "thinking") return c.Thinking || c.Text || "";
+  if (ct === "text") return c.Text || "";
+  return "";
+}
+
+function handleBlockCopy(item: CoalescedItem) {
+  const text = getBlockText(item);
+  if (text) {
+    navigator.clipboard.writeText(text).catch((err) => {
+      console.error("Failed to copy text:", err);
+    });
+  }
+  showActionBar.value = false;
+}
+
 // Info action on agent (usage) and user (lightweight metadata) for symmetry.
 const hasUsageAction = computed(
   () => (props.message.type === "agent" && !!usage.value) || props.message.type === "user",
@@ -573,16 +574,6 @@ function handleMessageClick(e: MouseEvent) {
     return;
   }
   showActionBar.value = !showActionBar.value;
-}
-
-function handleCopy() {
-  const text = messageText.value;
-  if (text) {
-    navigator.clipboard.writeText(text).catch((err) => {
-      console.error("Failed to copy text:", err);
-    });
-  }
-  showActionBar.value = false;
 }
 
 // Agent messages with token usage open the detailed usage modal; other

@@ -325,3 +325,9 @@ Changes: Added a tag picker dropdown to the chat header, positioned in `.header-
   - **ChatInterface.vue**: `HeaderTagPicker` inserted after `<h1 class="header-title">` inside `.header-left`. Receives `currentConversation` and `onConversationUpdate` props so tag changes refresh the sidebar.
   - **styles.css**: `.tag-picker-wrapper`, `.tag-picker-menu` (min-width 10rem), `.tag-picker-input`, `.tag-picker-item`, `.tag-picker-check`, `.tag-picker-hash`, `.tag-picker-create`, `.tag-picker-empty` — follows the same design tokens as `.group-by-menu`. Removed `overflow: hidden` from `.header-left` so the dropdown floats outside the header area.
 Watchouts: The tag vocabulary is a client-side const (`SUGGESTED_TAGS`), not derived from the server — adding a tag to one conversation won't auto-populate the dropdown for others. The `onConversationUpdate` prop must be wired for tag changes to reflect in the sidebar; without it the button still works but the sidebar won't refresh until a page reload.
+
+## PATCH-033
+Status: active
+Base: 4a98848
+Files: Message.vue, styles.css
+Changes: Per-block action bars on thinking and text content blocks. The copy/fork/details overlay now appears per-block instead of once for the whole message. Only thinking blocks and text blocks get their own action bar — tool blocks get nothing. Each block's copy extracts only that block's text. Hover tracks the specific block index; a tap on the message body still toggles visibility globally via `showActionBar`.

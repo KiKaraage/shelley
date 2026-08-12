@@ -9872,6 +9872,11 @@ kbd {
   gap: 0.25rem;
 }
 
+/* Per-block wrapper: enables per-block hover and positioning for the action bar */
+.msg-content-block-wrapper {
+  position: relative;
+}
+
 /* MessageActionBar styles */
 .message-action-bar-wrapper {
   position: absolute;
