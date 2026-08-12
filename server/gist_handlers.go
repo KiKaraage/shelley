@@ -87,7 +87,7 @@ func (s *Server) handleExportGist(w http.ResponseWriter, r *http.Request, conver
 		return
 	}
 
-	if err := s.db.Queries(ctx, func(q *generated.Queries) error {
+	if err := s.db.QueriesTx(ctx, func(q *generated.Queries) error {
 		return q.SetGistID(ctx, generated.SetGistIDParams{
 			GistID:         &gistID,
 			ConversationID: conversationID,
