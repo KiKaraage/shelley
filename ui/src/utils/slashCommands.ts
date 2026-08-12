@@ -51,4 +51,9 @@ export const SLASH_COMMANDS = {
     description: "renames this conversation",
     takesArgs: true,
   },
+  RECAP: {
+    command: "/recap",
+    description: "recap the whole thread",
+    takesArgs: false,
+  },
 } as const satisfies Record<string, SlashCommand>;
