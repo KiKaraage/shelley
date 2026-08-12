@@ -38,10 +38,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { useConversationView } from "../../composables/conversationView";
 
 const props = defineProps<{ thinking: string }>();
 
-const isExpanded = ref(false);
+const { conversationViewMode } = useConversationView();
+const isExpanded = ref(conversationViewMode.value === "auto-expand");
 
 // Collapsed preview: first line only, capped to keep the DOM light.
 // Visual truncation (ellipsis at the edge of the line) is done in CSS

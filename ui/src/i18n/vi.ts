@@ -26,6 +26,7 @@ export const vi: TranslationKeys = {
   conversationView: "Chế độ xem cuộc trò chuyện",
   seeAllMessages: "Xem tất cả",
   seeEndOfTurnMessagesOnly: "Chỉ xem tin nhắn cuối lượt",
+  seeAutoExpand: "Tự động mở rộng",
   brevity: "Ngắn gọn",
   look: "Giao diện",
 

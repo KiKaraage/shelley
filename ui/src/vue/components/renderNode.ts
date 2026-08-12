@@ -9,7 +9,8 @@ export type RenderNode =
   | { kind: "message"; key: string; item: CoalescedItem }
   | { kind: "tool-pills"; key: string; items: CoalescedItem[] }
   | { kind: "tool-call"; key: string; item: CoalescedItem }
-  | { kind: "carried-band"; key: string; count: number; children: RenderNode[] };
+  | { kind: "carried-band"; key: string; count: number; children: RenderNode[] }
+  | { kind: "turn-band"; key: string; duration: string; children: RenderNode[] };
 
 // A run of consecutive render nodes wrapped in one content-visibility:auto
 // element. Granularity matters in WebKit: one giant container (the whole

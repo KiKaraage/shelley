@@ -26,6 +26,7 @@ export const zhTW: TranslationKeys = {
   conversationView: "對話檢視",
   seeAllMessages: "查看全部",
   seeEndOfTurnMessagesOnly: "僅查看回合結束訊息",
+  seeAutoExpand: "自動展開",
   brevity: "簡潔",
   look: "外觀",
 

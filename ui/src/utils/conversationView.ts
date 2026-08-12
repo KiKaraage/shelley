@@ -43,6 +43,7 @@ export function isVisibleConversationMessage(
   mode: ConversationViewMode,
 ): boolean {
   if (mode === "all") return true;
+  if (mode === "auto-expand") return true;
   if (isHumanUserMessage(message)) return true;
   if (isDistillStatusMessage(message)) return true;
   if (message.type === "agent") return !!message.end_of_turn;

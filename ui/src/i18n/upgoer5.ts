@@ -26,6 +26,7 @@ export const upgoer5: TranslationKeys = {
   conversationView: "Talk view",
   seeAllMessages: "See all",
   seeEndOfTurnMessagesOnly: "See only end-of-turn messages",
+  seeAutoExpand: "Auto Expand",
   brevity: "Shortness",
   look: "Look",
 

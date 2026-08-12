@@ -9530,6 +9530,42 @@ kbd {
   opacity: 0.85;
 }
 
+.turn-band {
+  margin: 0.25rem 0;
+}
+
+.turn-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--border);
+  padding: 0.35rem 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: center;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.turn-toggle:hover {
+  color: var(--text-primary);
+}
+
+.turn-toggle-label {
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.turn-band-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .generation-divider {
   display: flex;
   align-items: center;

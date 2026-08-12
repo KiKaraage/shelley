@@ -56,21 +56,56 @@
       :on-fork="onFork"
     />
   </CarriedBand>
+  <TurnBand
+    v-else-if="node.kind === 'turn-band'"
+    :duration="node.duration"
+    :expanded="expanded"
+    :on-toggle="onToggleTurn"
+  >
+    <MessageRenderNode
+      v-for="child in node.children"
+      :key="child.key"
+      :node="child"
+      :conversation-id="conversationId"
+      :on-open-diff-viewer="onOpenDiffViewer"
+      :on-comment-text-change="onCommentTextChange"
+      :on-fork="onFork"
+    />
+  </TurnBand>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import type { RenderNode } from "./renderNode";
 import MessageComponent from "./Message.vue";
 import MessageTimestamp from "./MessageTimestamp.vue";
 import ToolPillsRow from "./ToolPillsRow.vue";
 import CoalescedToolCall from "./CoalescedToolCall.vue";
 import CarriedBand from "./CarriedBand.vue";
+import TurnBand from "./TurnBand.vue";
+import { useConversationView } from "../composables/conversationView";
 
-defineProps<{
+const props = defineProps<{
   node: RenderNode;
   conversationId: string | null;
   onOpenDiffViewer: (commit: string, cwd?: string) => void;
   onCommentTextChange: (text: string) => void;
   onFork: (messageId: string) => void;
+  onToggleTurn?: (key: string) => void;
+  isTurnExpanded?: (key: string, isCurrentTurn: boolean) => boolean;
 }>();
+
+const { conversationViewMode } = useConversationView();
+
+const expanded = computed(() => {
+  if (props.node.kind !== "turn-band") return false;
+  if (props.isTurnExpanded) return props.isTurnExpanded(props.node.key, false);
+  return false;
+});
+
+function onToggleTurn() {
+  if (props.node.kind === "turn-band" && props.onToggleTurn) {
+    props.onToggleTurn(props.node.key);
+  }
+}
 </script>

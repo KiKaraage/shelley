@@ -166,7 +166,7 @@
                   <circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none" />
                   <circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none" />
                 </template>
-                <template v-else>
+                <template v-else-if="conversationViewMode === 'end-of-turn'">
                   <path d="M8 7h12M8 17h12" stroke-width="2" stroke-linecap="round" />
                   <circle cx="4" cy="7" r="1.4" fill="currentColor" stroke="none" />
                   <path
@@ -175,6 +175,13 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   />
+                </template>
+                <template v-else>
+                  <path d="M8 6h12M8 12h12M8 18h12" stroke-width="2" stroke-linecap="round" />
+                  <circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none" />
+                  <circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                  <circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none" />
+                  <path d="M18 10l-2 2 2 2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                 </template>
               </svg>
             </Transition>
@@ -190,6 +197,13 @@
                   stroke-linecap="round"
                   stroke-linejoin="round"
                 />
+              </template>
+              <template v-else-if="conversationViewMode === 'end-of-turn'">
+                <path d="M8 6h12M8 12h12M8 18h12" stroke-width="2" stroke-linecap="round" />
+                <circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none" />
+                <circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                <circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none" />
+                <path d="M18 10l-2 2 2 2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
               </template>
               <template v-else>
                 <path d="M8 6h12M8 12h12M8 18h12" stroke-width="2" stroke-linecap="round" />
@@ -304,7 +318,7 @@ import Select from "primevue/select";
 import type { Link } from "../../types";
 import type { Locale } from "../../i18n/types";
 import { useI18n } from "../composables/i18n";
-import { useConversationView } from "../composables/conversationView";
+import { useConversationView, type ConversationViewMode } from "../composables/conversationView";
 import { menuShortcutLabel, isFirefox } from "../../utils/menuShortcuts";
 import { type ThemeMode, getStoredTheme, setStoredTheme, applyTheme } from "../../services/theme";
 import {
@@ -337,14 +351,17 @@ const emit = defineEmits<{
 const { t, locale, setLocale } = useI18n();
 const { conversationViewMode, setConversationViewMode } = useConversationView();
 const conversationViewLabel = computed(() => {
+  const mode = conversationViewMode.value;
   const current =
-    conversationViewMode.value === "all" ? t("seeAllMessages") : t("seeEndOfTurnMessagesOnly");
+    mode === "all" ? t("seeAllMessages") : mode === "end-of-turn" ? t("seeEndOfTurnMessagesOnly") : t("seeAutoExpand");
   const next =
-    conversationViewMode.value === "all" ? t("seeEndOfTurnMessagesOnly") : t("seeAllMessages");
+    mode === "all" ? t("seeEndOfTurnMessagesOnly") : mode === "end-of-turn" ? t("seeAutoExpand") : t("seeAllMessages");
   return `${current} → ${next}`;
 });
 function toggleConversationView() {
-  setConversationViewMode(conversationViewMode.value === "all" ? "end-of-turn" : "all");
+  const mode = conversationViewMode.value;
+  const next: ConversationViewMode = mode === "all" ? "end-of-turn" : mode === "end-of-turn" ? "auto-expand" : "all";
+  setConversationViewMode(next);
 }
 
 // Edit File uses Cmd/Ctrl+Shift+P (VS Code parity). Firefox reserves that combo

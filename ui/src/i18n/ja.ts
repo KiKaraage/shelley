@@ -26,6 +26,7 @@ export const ja: TranslationKeys = {
   conversationView: "会話表示",
   seeAllMessages: "すべて表示",
   seeEndOfTurnMessagesOnly: "ターン終了メッセージのみ表示",
+  seeAutoExpand: "自動展開",
   brevity: "簡潔さ",
   look: "外観",
 
