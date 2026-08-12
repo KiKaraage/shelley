@@ -4,7 +4,7 @@
 <template>
   <div ref="wrapperRef" class="tag-picker-wrapper">
     <Button
-      :class="`btn-icon-sm${hasTags ? ' tag-picker-active' : ''}`"
+      class="btn-icon"
       text
       severity="secondary"
       :aria-label="t('editTags')"
@@ -55,7 +55,7 @@ import { parseTags } from "./conversationDrawerShared";
 import { api } from "../../services/api";
 import type { Conversation } from "../../types";
 
-const SUGGESTED_TAGS = ["explore", "plan", "ongoing", "check", "revise", "done"];
+const SUGGESTED_TAGS = ["explore", "plan", "ongoing", "human-verify", "revise", "done"];
 
 const { t } = useI18n();
 
@@ -70,7 +70,6 @@ const wrapperRef = ref<HTMLElement | null>(null);
 const inputRef = ref<HTMLInputElement | null>(null);
 
 const currentTags = computed(() => (props.conversation ? parseTags(props.conversation) : []));
-const hasTags = computed(() => currentTags.value.length > 0);
 
 const displayedTags = computed(() => {
   const q = filter.value.trim().toLowerCase();
