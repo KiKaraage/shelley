@@ -160,49 +160,7 @@
         </span>
       </div>
 
-      <!-- Tags / tag editor -->
-      <div
-        v-if="tagsEditing || conversationTags.length > 0"
-        :ref="setTagEditorRefMaybe"
-        :class="`conversation-tags${tagsEditing ? ' conversation-tags-editing' : ''}`"
-        @click="tagsEditing ? $event.stopPropagation() : undefined"
-      >
-        <template v-for="tag in conversationTags" :key="tag">
-          <span v-if="tagsEditing" class="conversation-tag conversation-tag-removable">
-            <span class="conversation-tag-hash">#</span>{{ tag }}
-            <button
-              type="button"
-              class="conversation-tag-remove"
-              :aria-label="`${ctx.t('removeTag')} ${tag}`"
-              v-tooltip.top="ctx.t('removeTag')"
-              @click="ctx.handleRemoveTag(conversation, tag)"
-            >
-              ×
-            </button>
-          </span>
-          <span v-else class="conversation-tag" :title="`#${tag}`">
-            <span class="conversation-tag-hash">#</span>{{ tag }}
-          </span>
-        </template>
-        <form
-          v-if="tagsEditing"
-          class="conversation-tag-inline-form"
-          @submit.prevent="ctx.handleAddTag(conversation)"
-        >
-          <span class="conversation-tag-hash">#</span>
-          <input
-            ref="tagInput"
-            type="text"
-            :value="ctx.tagInput.value"
-            :placeholder="ctx.t('addTagPlaceholder')"
-            class="conversation-tag-inline-input"
-            @input="ctx.tagInput.value = ($event.target as HTMLInputElement).value"
-            @keydown="onTagInputKeyDown"
-          />
-        </form>
-      </div>
-
-      <!-- Row 3: timestamp + preview -->
+      <!-- Row 3: timestamp + preview + tags -->
       <div class="conversation-meta">
         <span class="conversation-date">{{ ctx.formatDate(conversation.updated_at) }}</span>
         <span
@@ -225,6 +183,47 @@
         <span v-else class="conversation-preview" :title="convState.preview || undefined">
           {{ convState.preview || "\u00a0" }}
         </span>
+        <!-- Tags (merged into meta row, pushed right via margin-left: auto) -->
+        <div
+          v-if="tagsEditing || conversationTags.length > 0"
+          :ref="setTagEditorRefMaybe"
+          :class="`conversation-tags conversation-tags-inline${tagsEditing ? ' conversation-tags-editing' : ''}`"
+          @click="tagsEditing ? $event.stopPropagation() : undefined"
+        >
+          <template v-for="tag in conversationTags" :key="tag">
+            <span v-if="tagsEditing" class="conversation-tag conversation-tag-removable">
+              <span class="conversation-tag-hash">#</span>{{ tag }}
+              <button
+                type="button"
+                class="conversation-tag-remove"
+                :aria-label="`${ctx.t('removeTag')} ${tag}`"
+                v-tooltip.top="ctx.t('removeTag')"
+                @click="ctx.handleRemoveTag(conversation, tag)"
+              >
+                ×
+              </button>
+            </span>
+            <span v-else class="conversation-tag" :title="`#${tag}`">
+              <span class="conversation-tag-hash">#</span>{{ tag }}
+            </span>
+          </template>
+          <form
+            v-if="tagsEditing"
+            class="conversation-tag-inline-form"
+            @submit.prevent="ctx.handleAddTag(conversation)"
+          >
+            <span class="conversation-tag-hash">#</span>
+            <input
+              ref="tagInput"
+              type="text"
+              :value="ctx.tagInput.value"
+              :placeholder="ctx.t('addTagPlaceholder')"
+              class="conversation-tag-inline-input"
+              @input="ctx.tagInput.value = ($event.target as HTMLInputElement).value"
+              @keydown="onTagInputKeyDown"
+            />
+          </form>
+        </div>
       </div>
     </div>
 

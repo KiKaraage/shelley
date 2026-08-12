@@ -11909,6 +11909,15 @@ kbd {
   align-items: center;
 }
 
+/* Inline variant: tags live inside the .conversation-meta flex row and are
+   pushed to the right edge via margin-left: auto. No top margin since the
+   parent already provides vertical rhythm. */
+.conversation-tags-inline {
+  margin-left: auto;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
 .conversation-tag {
   display: inline-flex;
   align-items: center;
@@ -13420,4 +13429,11 @@ kbd {
   text-align: center;
   padding: 3rem 1rem;
   font-size: 1rem;
+}
+
+/* Prevent the last button's tooltip from clipping the right edge */
+.message-action-button:last-child::after {
+  left: auto;
+  right: 0;
+  transform: none;
 }
