@@ -160,11 +160,57 @@
         </span>
       </div>
 
+      <div class="conversation-meta">
+        <span class="conversation-date">{{ ctx.formatDate(conversation.updated_at) }}</span>
+        <span
+          v-if="convState.search_snippet"
+          class="conversation-preview conversation-snippet"
+          :title="stripSnippetMarks(convState.search_snippet)"
+        >
+          <template v-for="(seg, i) in renderSnippetSegments(convState.search_snippet)" :key="i">
+            <mark v-if="seg.mark" class="conversation-snippet-mark">{{ seg.text }}</mark>
+            <template v-else>{{ seg.text }}</template>
+          </template>
+        </span>
+        <span
+          v-else-if="isDraft"
+          class="conversation-preview"
+          :title="conversation.draft?.trim() || undefined"
+        >
+          {{ conversation.draft?.trim() || "\u00a0" }}
+        </span>
+        <span v-else class="conversation-preview" :title="convState.preview || undefined">
+          {{ convState.preview || "\u00a0" }}
+        </span>
+        <!-- Terminal count. Only shown when the conversation has more than
+             one terminal pinned to it: a single terminal is the ordinary
+             case and not worth a badge. -->
+        <span
+          v-if="!isDraft && !itemArchived && terminalCount > 1"
+          class="conversation-terminal-count"
+          v-tooltip.top="`${terminalCount} ${ctx.t('terminalsPinnedHere')}`"
+          :aria-label="`${terminalCount} ${ctx.t('terminalsPinnedHere')}`"
+        >
+          <svg
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            class="conversation-terminal-count-icon"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              :stroke-width="2"
+              d="M8 9l3 3-3 3m5 0h3M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z"
+            />
+          </svg>
+          {{ terminalCount }}
+        </span>
       <!-- Tags / tag editor -->
       <div
         v-if="tagsEditing || conversationTags.length > 0"
         :ref="setTagEditorRefMaybe"
-        :class="`conversation-tags${tagsEditing ? ' conversation-tags-editing' : ''}`"
+        :class="`conversation-tags conversation-tags-inline${tagsEditing ? ' conversation-tags-editing' : ''}`"
         @click="tagsEditing ? $event.stopPropagation() : undefined"
       >
         <template v-for="tag in conversationTags" :key="tag">
@@ -254,54 +300,6 @@
           </Teleport>
         </form>
       </div>
-
-      <!-- Row 3: timestamp + preview -->
-      <div class="conversation-meta">
-        <span class="conversation-date">{{ ctx.formatDate(conversation.updated_at) }}</span>
-        <span
-          v-if="convState.search_snippet"
-          class="conversation-preview conversation-snippet"
-          :title="stripSnippetMarks(convState.search_snippet)"
-        >
-          <template v-for="(seg, i) in renderSnippetSegments(convState.search_snippet)" :key="i">
-            <mark v-if="seg.mark" class="conversation-snippet-mark">{{ seg.text }}</mark>
-            <template v-else>{{ seg.text }}</template>
-          </template>
-        </span>
-        <span
-          v-else-if="isDraft"
-          class="conversation-preview"
-          :title="conversation.draft?.trim() || undefined"
-        >
-          {{ conversation.draft?.trim() || "\u00a0" }}
-        </span>
-        <span v-else class="conversation-preview" :title="convState.preview || undefined">
-          {{ convState.preview || "\u00a0" }}
-        </span>
-        <!-- Terminal count. Only shown when the conversation has more than
-             one terminal pinned to it: a single terminal is the ordinary
-             case and not worth a badge. -->
-        <span
-          v-if="!isDraft && !itemArchived && terminalCount > 1"
-          class="conversation-terminal-count"
-          v-tooltip.top="`${terminalCount} ${ctx.t('terminalsPinnedHere')}`"
-          :aria-label="`${terminalCount} ${ctx.t('terminalsPinnedHere')}`"
-        >
-          <svg
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            class="conversation-terminal-count-icon"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              :stroke-width="2"
-              d="M8 9l3 3-3 3m5 0h3M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z"
-            />
-          </svg>
-          {{ terminalCount }}
-        </span>
       </div>
     </div>
 
