@@ -4,6 +4,7 @@
 // conversation it starts collapsed. Provided by the detail-modal wrapper;
 // tool components read it via useInToolDetail()/useToolExpanded().
 import { inject, provide, ref, type InjectionKey, type Ref } from "vue";
+import { useConversationView } from "./conversationView";
 
 export const ToolDetailKey: InjectionKey<{ defaultExpanded: boolean }> = Symbol("tool-detail");
 
@@ -19,5 +20,6 @@ export function useInToolDetail(): boolean {
 /** A ref for a tool card's expand/collapse, seeded from the detail context. */
 export function useToolExpanded(): Ref<boolean> {
   const { defaultExpanded } = inject(ToolDetailKey, { defaultExpanded: false });
-  return ref(defaultExpanded);
+  const { conversationViewMode } = useConversationView();
+  return ref(defaultExpanded || conversationViewMode.value === "auto-expand");
 }

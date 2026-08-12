@@ -27,6 +27,7 @@ export const fr: TranslationKeys = {
   conversationView: "Affichage de la conversation",
   seeAllMessages: "Tout afficher",
   seeEndOfTurnMessagesOnly: "Afficher uniquement les messages de fin de tour",
+  seeAutoExpand: "Auto Expandre",
   brevity: "Concision",
   look: "Apparence",
 

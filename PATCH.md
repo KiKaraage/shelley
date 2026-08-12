@@ -279,3 +279,25 @@ Base: 4a98848
 Files: db/query/conversations.sql, db/generated/conversations.sql.go, server/conversation_preview_test.go
 Changes: Conversation drawer previews now include thinking content. The five preview queries in `conversations.sql` (ListConversations, ListAllConversations, SearchConversations, SearchConversationsWithMessages, SearchConversationsFTSList) previously only extracted Type=2 (text) content blocks. They now also match Type=3 (thinking) blocks via `COALESCE(NULLIF(Text, ''), Thinking)`, so the drawer shows the latest thinking content when no text block follows it. Within a message, text blocks still win over thinking when both are present. Added `previewThinkingBlock` test helper and two new test conversations (E: thinking-only, F: thinking then text) to `conversation_preview_test.go`.
 Watchouts: The `splitPreviewPacked` function in `db/db.go` already strips inline citation markers, which also applies to thinking text — harmless since thinking blocks don't carry citations.
+
+## PATCH-026
+Status: active
+Base: 4a98848
+Files: ui/src/services/settings.ts, ui/src/utils/conversationView.ts, ui/src/utils/conversationView.test.ts, ui/src/vue/components/renderNode.ts, ui/src/i18n/types.ts, ui/src/i18n/en.ts (and other locale files), ui/src/vue/components/ChatOverflowMenu.vue, ui/src/vue/components/ChatInterface.vue, ui/src/vue/components/MessageRenderNode.vue, ui/src/vue/components/TurnBand.vue (new), ui/src/vue/components/tools/ThinkingContent.vue, ui/src/vue/composables/toolDetail.ts, ui/src/styles.css
+Changes: Added "Auto Expand" as a third brevity mode alongside "See All" and "See End of Turn".
+  - **Settings**: `ConversationViewMode` type extended with `"auto-expand"`; `getConversationViewMode()` persists and reads the new value.
+  - **Visibility**: `isVisibleConversationMessage()` returns `true` for `"auto-expand"` mode (shows everything).
+  - **Render model**: `coalescedItems` computed returns all items when mode is not `"end-of-turn"` (both `"all"` and `"auto-expand"` pass through).
+  - **Turn-band wrapping**: `wrapTurnsInBands()` post-processes `sectionNodes` in `buildRenderModel()` for auto-expand mode. It scans for human user messages (turn starts) and end-of-turn agent messages (turn ends), collects inner content between them, and wraps previous turns' inner content in `{ kind: "turn-band", key, duration, children }` nodes. The current turn (latest generation) stays fully expanded.
+  - **Duration formatting**: `formatDuration()` computes time between start/end messages, outputting "Xs", "Xm YYs", or "Xh Ym".
+  - **Toggle state**: `reactive(new Set<string>())` called `manuallyExpandedTurns` tracks user-toggled turns. `toggleTurn()` and `isTurnExpanded()` functions manage the state.
+  - **TurnBand.vue**: New component with transparent background, centered "Run for Xm YYs" text, dashed bottom border, no chevron, expand/collapse with slot for children.
+  - **MessageRenderNode.vue**: Added `turn-band` kind handling, imports `TurnBand.vue`, accepts `onToggleTurn` and `isTurnExpanded` props.
+  - **ChatInterface.vue**: Passes `toggleTurn` and `isTurnExpanded` to `MessageRenderNode`.
+  - **ThinkingContent.vue**: Defaults `isExpanded` to `true` when `conversationViewMode` is `"auto-expand"`.
+  - **toolDetail.ts**: `useToolExpanded()` defaults to `true` when `conversationViewMode` is `"auto-expand"`.
+  - **ChatOverflowMenu.vue**: Cycle changed from 2-state to 3-state: all → end-of-turn → auto-expand → all. Updated SVG icons, aria labels, and label computation.
+  - **i18n**: Added `seeAutoExpand` key across all 9 locale files.
+  - **CSS**: Added `.turn-band`, `.turn-toggle`, `.turn-toggle-label`, `.turn-band-body` styles.
+  - **Tests**: Added auto-expand assertions to `conversationView.test.ts`.
+Watchouts: The `wrapTurnsInBands` function processes nodes in reverse order to avoid index shifting. `carried-band` nodes within a turn collapse with the turn. Tool pills between messages are also inner content that collapses. The current turn is always expanded regardless of manual toggle state.

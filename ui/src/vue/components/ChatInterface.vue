@@ -164,6 +164,8 @@
                   :on-comment-text-change="setDiffCommentText"
                   :on-cancel-queued="cancelQueuedMessages"
                   :on-fork="forkHandler"
+                  :on-toggle-turn="toggleTurn"
+                  :is-turn-expanded="isTurnExpanded"
                 />
               </div>
             </div>
@@ -380,7 +382,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, provide, reactive, ref, watch } from "vue";
 import Button from "primevue/button";
 import PvMessage from "primevue/message";
 import {
@@ -1230,7 +1232,7 @@ const welcomeParts = computed(() =>
 
 const coalescedItems = computed(() => {
   const items = perfWrap("chat.coalesceMessages", () => coalesceMessages(messages.value))();
-  if (conversationViewMode.value === "all") return items;
+  if (conversationViewMode.value !== "end-of-turn") return items;
   return items.filter(
     (item) =>
       item.type === "message" &&
@@ -1305,6 +1307,97 @@ const loadingSubtitle = computed(() => {
       : `${formatBytes(progress.bytesDownloaded)} downloaded`;
   return knownText ? `${bytes} · ~${knownText} last time` : bytes;
 });
+
+// ---- Auto-expand turn-band state ----
+const manuallyExpandedTurns = reactive(new Set<string>());
+function toggleTurn(key: string) {
+  if (manuallyExpandedTurns.has(key)) {
+    manuallyExpandedTurns.delete(key);
+  } else {
+    manuallyExpandedTurns.add(key);
+  }
+}
+function isTurnExpanded(key: string, isCurrentTurn: boolean): boolean {
+  if (isCurrentTurn) return true;
+  return manuallyExpandedTurns.has(key);
+}
+
+function formatDuration(startMs: number, endMs: number): string {
+  const diff = Math.max(0, endMs - startMs);
+  const totalSec = Math.round(diff / 1000);
+  if (totalSec < 60) return `${totalSec}s`;
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m ${seconds}s`;
+}
+
+function wrapTurnsInBands(nodes: RenderNode[], currentGeneration: number): void {
+  // Find turn boundaries: human user messages start turns, end_of_turn agent messages end them.
+  // Collect indices of message nodes that are human user messages and end_of_turn agent messages.
+  const turnStarts: number[] = [];
+  const turnEnds: number[] = [];
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    if (node.kind === "message" && node.item.message) {
+      const msg = node.item.message;
+      if (isHumanUserMessage(msg)) {
+        turnStarts.push(i);
+      } else if (msg.type === "agent" && msg.end_of_turn) {
+        turnEnds.push(i);
+      }
+    }
+  }
+
+  if (turnStarts.length === 0) return;
+
+  // Match each turn start with the next turn end.
+  const turns: { startIdx: number; endIdx: number; startMsg: Message; endMsg: Message }[] = [];
+  let endPtr = 0;
+  for (const startIdx of turnStarts) {
+    while (endPtr < turnEnds.length && turnEnds[endPtr] <= startIdx) endPtr++;
+    if (endPtr < turnEnds.length) {
+      const endIdx = turnEnds[endPtr];
+      const startMsg = (nodes[startIdx] as { kind: "message"; item: CoalescedItem }).item.message!;
+      const endMsg = (nodes[endIdx] as { kind: "message"; item: CoalescedItem }).item.message!;
+      turns.push({ startIdx, endIdx, startMsg, endMsg });
+      endPtr++;
+    }
+  }
+
+  if (turns.length === 0) return;
+
+  // The current turn is the last turn in the latest generation.
+  const isCurrentTurn = (turnIdx: number) => {
+    const turn = turns[turnIdx];
+    return turn.endMsg.generation === currentGeneration;
+  };
+
+  // Process turns in reverse order to avoid index shifting.
+  for (let t = turns.length - 1; t >= 0; t--) {
+    const turn = turns[t];
+    const current = isCurrentTurn(t);
+    if (current) continue; // Current turn stays expanded.
+
+    // Inner content: nodes between startIdx+1 and endIdx (exclusive).
+    const innerNodes = nodes.slice(turn.startIdx + 1, turn.endIdx);
+    if (innerNodes.length === 0) continue;
+
+    const startMs = Date.parse(turn.startMsg.created_at) || 0;
+    const endMs = Date.parse(turn.endMsg.created_at) || 0;
+    const duration = formatDuration(startMs, endMs);
+    const key = `turn-${turn.startMsg.message_id}`;
+
+    // Replace inner nodes with a single turn-band node.
+    nodes.splice(turn.startIdx + 1, turn.endIdx - turn.startIdx - 1, {
+      kind: "turn-band",
+      key,
+      duration,
+      children: innerNodes,
+    });
+  }
+}
 
 // ---- Render model (porting renderMessages into structured data) ----
 const renderModel = computed<GenerationBlock[]>(perfWrap("chat.renderModel", buildRenderModel));
@@ -1516,6 +1609,11 @@ function buildRenderModel(): GenerationBlock[] {
       i++;
     }
     flushPills("end");
+
+    // Auto-expand: wrap inner content of previous turns in turn-band nodes
+    if (conversationViewMode.value === "auto-expand") {
+      wrapTurnsInBands(sectionNodes, currentGeneration);
+    }
 
     blocks.push({
       generation,

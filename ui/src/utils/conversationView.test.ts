@@ -68,4 +68,12 @@ assert.equal(
   false,
 );
 
+// auto-expand mode: everything is visible
+assert.equal(isVisibleConversationMessage(intermediate, "auto-expand"), true);
+assert.equal(isVisibleConversationMessage(final, "auto-expand"), true);
+assert.equal(isVisibleConversationMessage(toolResult, "auto-expand"), true);
+assert.equal(isVisibleConversationMessage(human, "auto-expand"), true);
+assert.equal(isVisibleConversationMessage(distilledSummary, "auto-expand"), true);
+assert.equal(isVisibleConversationMessage(message({ message_id: "system", type: "system" }), "auto-expand"), true);
+
 console.log("conversationView tests passed");

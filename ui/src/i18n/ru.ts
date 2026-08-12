@@ -26,6 +26,7 @@ export const ru: TranslationKeys = {
   conversationView: "Вид беседы",
   seeAllMessages: "Показать всё",
   seeEndOfTurnMessagesOnly: "Показывать только сообщения конца хода",
+  seeAutoExpand: "Авторазвернуть",
   brevity: "Краткость",
   look: "Вид",
 

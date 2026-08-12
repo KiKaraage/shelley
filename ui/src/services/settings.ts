@@ -2,7 +2,7 @@ const MARKDOWN_KEY = "shelley-markdown-rendering";
 const CONVERSATION_VIEW_KEY = "shelley-conversation-view";
 
 export type MarkdownMode = "off" | "agent" | "all";
-export type ConversationViewMode = "all" | "end-of-turn";
+export type ConversationViewMode = "all" | "end-of-turn" | "auto-expand";
 
 export function getMarkdownMode(): MarkdownMode {
   const val = localStorage.getItem(MARKDOWN_KEY);
@@ -18,7 +18,10 @@ export function setMarkdownMode(mode: MarkdownMode): void {
 }
 
 export function getConversationViewMode(): ConversationViewMode {
-  return localStorage.getItem(CONVERSATION_VIEW_KEY) === "end-of-turn" ? "end-of-turn" : "all";
+  const val = localStorage.getItem(CONVERSATION_VIEW_KEY);
+  if (val === "end-of-turn") return "end-of-turn";
+  if (val === "auto-expand") return "auto-expand";
+  return "all";
 }
 
 export function setConversationViewMode(mode: ConversationViewMode): void {

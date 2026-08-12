@@ -26,6 +26,7 @@ export const es: TranslationKeys = {
   conversationView: "Vista de conversación",
   seeAllMessages: "Ver todo",
   seeEndOfTurnMessagesOnly: "Ver solo los mensajes de fin de turno",
+  seeAutoExpand: "Auto Expandir",
   brevity: "Brevedad",
   look: "Apariencia",
 

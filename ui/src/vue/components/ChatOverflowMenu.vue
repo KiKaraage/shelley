@@ -256,6 +256,23 @@
                 <path d="m2.7 17 1.1 1.1 2.3-2.5" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
+            <button
+              type="button"
+              class="overflow-choice-option"
+              :class="{ 'is-selected': conversationViewMode === 'auto-expand' }"
+              :aria-label="t('seeAutoExpand')"
+              :aria-pressed="conversationViewMode === 'auto-expand'"
+              :title="t('seeAutoExpand')"
+              @click="setConversationViewMode('auto-expand')"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <path d="M8 6h12M8 12h12M8 18h12" stroke-linecap="round" />
+                <circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none" />
+                <circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                <circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none" />
+                <path d="M18 10l-2 2 2 2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -411,6 +428,7 @@ const emit = defineEmits<{
 
 const { t, locale, setLocale } = useI18n();
 const { conversationViewMode, setConversationViewMode } = useConversationView();
+
 
 // Edit File uses Cmd/Ctrl+Shift+P (VS Code parity). Firefox reserves that combo
 // for "New Private Window" and never delivers it to the page, so the shortcut
