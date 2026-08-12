@@ -251,3 +251,13 @@ Changes: Fixed five bugs in the gist export/update flow:
   - **Dead error toasts**: `exportGistAction` catch block checked `msg.includes("gh_not_auth")` but `errorMessage()` returned `data.message` (human text), not `data.error` (code). Both friendly-toast branches never fired. Introduced `GistError` class carrying the error code; catch now matches `err.code` and uses i18n keys (`gistGhNotAuth`, `gistNeedsName`).
   - **Stale gist status on conversation switch**: the gist status watcher had no request cancellation — switching conversations quickly let a stale `getGistStatus` response overwrite the current conversation's state. Added a generation counter to discard stale responses.
 Watchouts: `db.Queries()` vs `db.QueriesTx()` distinction is critical — always use `QueriesTx` for write operations. The `gh gist edit` push has CDN propagation latency; the gist URL may show stale HTML briefly after updating.
+
+## PATCH-026
+Status: active
+Base: 4a98848
+Files: slug/slug.go, slug/slug_test.go, server/handlers.go
+Changes: Added retry for slug-tagged and conversation-model slug generation.
+  - New `callSlugLLMWithRetry` retries once after a 2s delay, respecting context cancellation. Applied to models tagged `"slug"` (primary slug providers) and the conversation model (last-resort fallback). Not applied to `predictable`, `slug-backup`, or preferred substring models — for those, falling through to the next model in the chain is a better recovery path than retrying.
+  - Goroutine timeout bumped 15s → 30s in both `handlers.go` call sites to accommodate the additional retry delay.
+  - Root cause: provider-level retries (ant/oai/gem) have 15s+ backoffs that blow past the slug goroutine's 10s per-call + 15s outer timeout, making provider retries dead code for slug calls. Slug-level retry with a short delay works within the budget.
+Watchouts: `slugRetries` and `slugRetryDelay` are package-level constants in `slug/slug.go`. The `flakyLLMService` test mock validates recovery on second attempt; `TestGenerateSlugText_TaggedModelWins` now takes ~2s due to the retry delay on the failing tagged model.
