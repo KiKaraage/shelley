@@ -52,6 +52,10 @@
         <h1 class="app-bar-title header-title" :title="currentConversation?.slug || 'Shelley'">
           {{ displayTitle }}
         </h1>
+        <HeaderTagPicker
+          :conversation="currentConversation"
+          :on-updated="props.onConversationUpdate"
+        />
       </div>
 
       <div class="header-actions">
@@ -515,6 +519,7 @@ import AgentsMdEditorModal from "./AgentsMdEditorModal.vue";
 import TerminalPanel from "./TerminalPanel.vue";
 import VersionChecker from "./VersionChecker.vue";
 import ChatOverflowMenu from "./ChatOverflowMenu.vue";
+import HeaderTagPicker from "./HeaderTagPicker.vue";
 import { matchChatInterfaceAction } from "../../utils/menuShortcuts";
 import MessageRenderNode from "./MessageRenderNode.vue";
 import QueuedGhostMessage from "./QueuedGhostMessage.vue";
