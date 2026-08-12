@@ -1459,7 +1459,7 @@ body {
 .tool-result-content {
   padding: 0.75rem;
   padding-top: 0;
-  max-height: 500px;
+  max-height: 350px;
   overflow-y: auto;
 }
 
@@ -1752,7 +1752,8 @@ body {
   border-radius: 0.25rem;
   padding: 0.75rem;
   margin: 0;
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 350px;
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--text-primary);
@@ -1944,7 +1945,8 @@ body {
   border-radius: 0.25rem;
   padding: 0.75rem;
   margin: 0;
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 350px;
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--text-primary);
@@ -1953,7 +1955,7 @@ body {
 /* See note on .tool-code.error: error output boxes get no red fill. */
 
 .bash-tool-streaming {
-  max-height: 300px;
+  max-height: 350px;
   overflow-y: auto;
   border-color: var(--accent-primary);
   background: var(--bg-base);
@@ -1974,7 +1976,7 @@ body {
   border-radius: 0.25rem;
   padding: 0.5rem 0.75rem;
   margin: 0;
-  max-height: 10rem;
+  max-height: 350px;
   overflow-y: auto;
   white-space: pre-wrap;
   word-break: break-word;
@@ -2191,7 +2193,7 @@ body {
   overflow-x: auto;
   white-space: pre;
   color: var(--text-secondary);
-  max-height: 400px;
+  max-height: 350px;
 }
 
 /* Patch Tool Simple Diff View */
@@ -2203,7 +2205,8 @@ body {
   border-radius: 0.25rem;
   padding: 0.75rem;
   margin: 0;
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 350px;
   line-height: 1.4;
 }
 
@@ -12508,6 +12511,7 @@ kbd {
    * height or add a nested overflow, otherwise long output produces two
    * scrollbars (inner box + modal body). Let it grow and scroll the body. */
   max-height: none;
+  overflow: visible;
   overflow-x: auto;
   overflow-y: visible;
 }

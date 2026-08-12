@@ -52,7 +52,11 @@ Changes: In-app terminal now launches zsh instead of bash (`exec zsh -i`). The s
 Status: active
 Base: 1d4cbe7
 Files: BashTool.vue, styles.css
-Changes: In the bash tool call details, hid the "Working Directory" and "Command" sections; added "Copy Command" and "Copy Results" buttons to the right of the Output header.
+Changes:
+  - Bash tool summary: Remove working directory label, only show truncated command + tool call status icon + chevron toggle
+  - Bash tool results: Hide the "Working Directory" and "Command" sections; added "Copy Command" and "Copy Results" buttons to the right of the Output header.
+  - Added `max-height: 350px; overflow: auto` to `.tool-result-content` (generic fallback card), `.bash-tool-code`, `.bash-tool-streaming`, `.bash-tool-preview-code`, `.tool-code` (GenericTool), `.patch-tool-raw-diff` and `.patch-tool-diff` so long tool outputs scroll instead of stretching the page. Modal overrides (`.tool-detail-modal .bash-tool-code` / `.tool-code`) reset to `max-height: none; overflow: visible` so the detail modal isn't clipped.
+  - `.bash-tool-copy-btn` background changed to `var(--gray-800)` in dark mode and gained `transition: background-color 0.15s ease`.
 
 ## PATCH-005
 Status: active
@@ -237,14 +241,6 @@ Changes:
   - **Settled preview limit**: reduced from 25 to 20.
 
 ## PATCH-025
-Status: active
-Base: 9c96638
-Files: ui/src/styles.css
-Changes:
-  - `.tool-result-content` now has `max-height: 500px; overflow-y: auto` so long tool outputs scroll instead of stretching the page. Overridden to `max-height: none; overflow-y: visible` in `.tool-detail-modal .tool-result-content` so the detail modal isn't clipped.
-  - `.bash-tool-copy-btn` background changed to `var(--gray-800)` in dark mode and gained `transition: background-color 0.15s ease`.
-
-## PATCH-026
 Status: active
 Base: 9c96638
 Files: server/gist_handlers.go, ui/src/services/api_gist.ts, ui/src/vue/components/ChatInterface.vue
