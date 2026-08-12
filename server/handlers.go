@@ -1313,7 +1313,7 @@ func (s *Server) handleChatConversation(w http.ResponseWriter, r *http.Request, 
 	if firstMessage {
 		ctxNoCancel := context.WithoutCancel(ctx)
 		go func() {
-			slugCtx, cancel := context.WithTimeout(ctxNoCancel, 15*time.Second)
+			slugCtx, cancel := context.WithTimeout(ctxNoCancel, 30*time.Second)
 			defer cancel()
 			_, marker, err := slug.GenerateSlug(slugCtx, s.llmManager, s.db, s.logger, conversationID, req.Message, modelID)
 			// Publish the usage marker before anything else. It owns a real
@@ -1511,7 +1511,7 @@ func (s *Server) handleNewConversation(w http.ResponseWriter, r *http.Request) {
 	if firstMessage && !hookSlugApplied {
 		ctxNoCancel := context.WithoutCancel(ctx)
 		go func() {
-			slugCtx, cancel := context.WithTimeout(ctxNoCancel, 15*time.Second)
+			slugCtx, cancel := context.WithTimeout(ctxNoCancel, 30*time.Second)
 			defer cancel()
 			_, marker, err := slug.GenerateSlug(slugCtx, s.llmManager, s.db, s.logger, conversationID, req.Message, modelID)
 			// Publish the usage marker before anything else. It owns a real

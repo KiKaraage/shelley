@@ -126,10 +126,10 @@ func preferredModels(available []string, tried map[string]bool) []string {
 // generateSlugText generates a human-readable slug for a conversation based on the user message
 // Priority order:
 // 1. If conversationModelID is "predictable", use it
-// 2. Try models tagged with "slug" (try the LLM call; if it fails, continue)
-// 3. Try models tagged with "slug-backup"
-// 4. Try models matching preferredModelSubstrings (covers untagged gateway models)
-// 5. Fall back to the conversation's model (conversationModelID)
+// 2. Try models tagged with "slug" (with retry; if it fails, continue)
+// 3. Try models tagged with "slug-backup" (no retry)
+// 4. Try models matching preferredModelSubstrings (covers untagged gateway models, no retry)
+// 5. Fall back to the conversation's model (conversationModelID, with retry)
 func generateSlugText(ctx context.Context, llmProvider LLMServiceProvider, logger *slog.Logger, userMessage, conversationModelID string) (string, error) {
 	// If conversation is using predictable model, use it for slug generation too
 	if conversationModelID == "predictable" {
@@ -159,9 +159,14 @@ func generateSlugText(ctx context.Context, llmProvider LLMServiceProvider, logge
 				continue
 			}
 			logger.Debug("Trying model for slug generation", "model", modelID, "tag", tag)
-			slug, err := callSlugLLM(ctx, llmService, userMessage)
+			var slugText string
+			if tag == "slug" {
+				slugText, err = callSlugLLMWithRetry(ctx, llmService, userMessage, logger, modelID)
+			} else {
+				slugText, err = callSlugLLM(ctx, llmService, userMessage)
+			}
 			if err == nil {
-				return slug, nil
+				return slugText, nil
 			}
 			logger.Warn("Slug generation failed, trying next model", "model", modelID, "tag", tag, "error", err)
 		}
@@ -193,7 +198,7 @@ func generateSlugText(ctx context.Context, llmProvider LLMServiceProvider, logge
 		llmService, err := llmProvider.GetService(conversationModelID)
 		if err == nil {
 			logger.Debug("Using conversation model for slug generation", "model", conversationModelID)
-			return callSlugLLM(ctx, llmService, userMessage)
+			return callSlugLLMWithRetry(ctx, llmService, userMessage, logger, conversationModelID)
 		}
 		logger.Debug("Conversation model not available for slug generation", "model", conversationModelID, "error", err)
 	}
@@ -210,6 +215,14 @@ func hasTag(tags, tag string) bool {
 	}
 	return false
 }
+
+// slugRetries is the number of times a single model is retried on transient
+// failure. Only applied to slug-tagged and conversation-model calls; cheaper
+// fallback models (slug-backup, preferred) still get one attempt.
+const slugRetries = 1
+
+// slugRetryDelay is the pause between retries of the same model.
+const slugRetryDelay = 2 * time.Second
 
 // PromptPreamble is the fixed leading text of the slug-generation prompt. It is
 // exported so tests (e.g. fake LLM services shared with the agent loop) can
@@ -272,6 +285,32 @@ Respond with only the slug, nothing else.`, userMessage)
 	}
 
 	return slug, nil
+}
+
+// callSlugLLMWithRetry calls callSlugLLM with one retry on transient failure.
+// Used for slug-tagged models and the conversation model where a single hiccup
+// shouldn't leave the conversation without a title.
+func callSlugLLMWithRetry(ctx context.Context, llmService llm.Service, userMessage string, logger *slog.Logger, modelID string) (string, error) {
+	slug, err := callSlugLLM(ctx, llmService, userMessage)
+	if err == nil {
+		return slug, nil
+	}
+	for attempt := 1; attempt <= slugRetries; attempt++ {
+		if ctx.Err() != nil {
+			return "", err
+		}
+		logger.Warn("Retrying slug generation", "model", modelID, "attempt", attempt+1, "error", err)
+		select {
+		case <-time.After(slugRetryDelay):
+		case <-ctx.Done():
+			return "", ctx.Err()
+		}
+		slug, err = callSlugLLM(ctx, llmService, userMessage)
+		if err == nil {
+			return slug, nil
+		}
+	}
+	return "", err
 }
 
 // Sanitize cleans a string to be a valid slug

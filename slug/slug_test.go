@@ -947,3 +947,99 @@ func TestGenerateSlug_UsageOnAppendedMarker(t *testing.T) {
 		t.Errorf("slug on conversation = %v, want my-generated-slug", updated.Slug)
 	}
 }
+
+// flakyLLMService fails on the first call, then succeeds. Simulates a
+// transient error that a single retry can recover from.
+type flakyLLMService struct {
+	calls int
+}
+
+func (f *flakyLLMService) Do(ctx context.Context, req *llm.Request) (*llm.Response, error) {
+	f.calls++
+	if f.calls == 1 {
+		return nil, fmt.Errorf("transient connection reset")
+	}
+	return &llm.Response{
+		Content: []llm.Content{{Type: llm.ContentTypeText, Text: "flaky-recovered"}},
+	}, nil
+}
+
+func (f *flakyLLMService) Provider() string              { return "" }
+func (f *flakyLLMService) TokenContextWindow() int       { return 8192 }
+func (f *flakyLLMService) MaxImageDimension() int       { return 0 }
+func (f *flakyLLMService) MaxImageBytes() int            { return 0 }
+func (f *flakyLLMService) SupportsImages() bool          { return true }
+
+// TestCallSlugLLMWithRetry_RecoversFromTransientFailure verifies that
+// callSlugLLMWithRetry retries once and recovers when the second attempt
+// succeeds.
+func TestCallSlugLLMWithRetry_RecoversFromTransientFailure(t *testing.T) {
+	svc := &flakyLLMService{}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+
+	slug, err := callSlugLLMWithRetry(context.Background(), svc, "test message", logger, "test-model")
+	if err != nil {
+		t.Fatalf("expected retry to recover, got error: %v", err)
+	}
+	if slug != "flaky-recovered" {
+		t.Errorf("expected slug %q, got %q", "flaky-recovered", slug)
+	}
+	if svc.calls != 2 {
+		t.Errorf("expected 2 calls (initial + retry), got %d", svc.calls)
+	}
+}
+
+// TestCallSlugLLMWithRetry_GivesUpAfterRetries verifies that if the retry
+// also fails, the error is returned.
+func TestCallSlugLLMWithRetry_GivesUpAfterRetries(t *testing.T) {
+	svc := &MockLLMServiceWithError{}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+
+	_, err := callSlugLLMWithRetry(context.Background(), svc, "test", logger, "test-model")
+	if err == nil {
+		t.Fatal("expected error from always-failing service")
+	}
+}
+
+// TestCallSlugLLMWithRetry_RespectsContextCancellation verifies that
+// callSlugLLMWithRetry does not retry when the context is already cancelled.
+func TestCallSlugLLMWithRetry_RespectsContextCancellation(t *testing.T) {
+	svc := &flakyLLMService{}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately
+
+	_, err := callSlugLLMWithRetry(ctx, svc, "test", logger, "test-model")
+	if err == nil {
+		t.Fatal("expected error from cancelled context")
+	}
+	if svc.calls != 1 {
+		t.Errorf("expected exactly 1 call (no retry on cancelled ctx), got %d", svc.calls)
+	}
+}
+
+// TestGenerateSlugText_ConversationModelRetries verifies that the conversation
+// model fallback uses callSlugLLMWithRetry.
+func TestGenerateSlugText_ConversationModelRetries(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+
+	// Provider with no tagged models and no preferred matches — forces
+	// conversation-model fallback.
+	flaky := &flakyLLMService{}
+	provider := &recordingProvider{
+		modelIDs:   []string{},
+		fallbackTo: flaky,
+	}
+
+	slug, err := generateSlugText(context.Background(), provider, logger, "some message", "my-model")
+	if err != nil {
+		t.Fatalf("expected retry to recover, got error: %v", err)
+	}
+	if slug != "flaky-recovered" {
+		t.Errorf("expected slug %q, got %q", "flaky-recovered", slug)
+	}
+	if flaky.calls != 2 {
+		t.Errorf("expected 2 calls (initial + retry), got %d", flaky.calls)
+	}
+}
