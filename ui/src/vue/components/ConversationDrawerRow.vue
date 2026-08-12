@@ -121,7 +121,7 @@
           </template>
         </div>
         <span
-          v-if="convState.working"
+          v-if="convState.working && runningSubagentCount === 0"
           class="working-indicator drawer-working-indicator"
           :title="ctx.t('agentIsWorking')"
         />
