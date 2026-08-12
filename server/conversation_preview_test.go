@@ -33,6 +33,10 @@ func previewToolBlock(name string) llm.Content {
 	return llm.Content{Type: llm.ContentTypeToolUse, ToolName: name}
 }
 
+func previewThinkingBlock(s string) llm.Content {
+	return llm.Content{Type: llm.ContentTypeThinking, Thinking: s}
+}
+
 // TestConversationListPreview exercises the SQL-side preview extraction that
 // the conversation-list query computes inline (correlated subqueries against
 // messages, see conversations.sql): it must pick the most recent agent
@@ -83,6 +87,26 @@ func TestConversationListPreview(t *testing.T) {
 	longText := strings.Repeat("x", 5000)
 	writeAgentMsg(t, database, convD.ConversationID, []llm.Content{previewTextBlock(longText)})
 
+	// Conversation E: the agent message has only thinking content (no text
+	// blocks). The preview must fall back to the thinking text.
+	convE, err := database.CreateConversation(ctx, nil, true, nil, nil, db.ConversationOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeAgentMsg(t, database, convE.ConversationID, []llm.Content{previewThinkingBlock("thinking only")})
+
+	// Conversation F: the agent message has thinking then text. Within a
+	// message the text block (later in the content array) wins, so the preview
+	// shows the text, not the thinking.
+	convF, err := database.CreateConversation(ctx, nil, true, nil, nil, db.ConversationOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeAgentMsg(t, database, convF.ConversationID, []llm.Content{
+		previewThinkingBlock("thinking first"),
+		previewTextBlock("text wins"),
+	})
+
 	// Drive the actual conversation-list path: the preview/preview_updated_at
 	// columns are computed inside the list query itself, then copied onto each
 	// ConversationWithState by decorateConversations. Reading the list back is
@@ -119,5 +143,13 @@ func TestConversationListPreview(t *testing.T) {
 	}
 	if byID[convD.ConversationID].PreviewUpdatedAt == "" {
 		t.Errorf("convD preview should carry an updatedAt timestamp")
+	}
+	// convE has only thinking content, so the preview shows the thinking text.
+	if got := byID[convE.ConversationID].Preview; got != "thinking only" {
+		t.Errorf("convE preview = %q, want %q", got, "thinking only")
+	}
+	// convF has thinking then text; the text block wins within the message.
+	if got := byID[convF.ConversationID].Preview; got != "text wins" {
+		t.Errorf("convF preview = %q, want %q", got, "text wins")
 	}
 }

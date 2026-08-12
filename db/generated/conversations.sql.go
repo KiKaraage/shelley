@@ -648,14 +648,14 @@ SELECT c.conversation_id, c.slug, c.user_initiated, c.created_at, c.updated_at, 
   -- it back apart.
   CAST(COALESCE((
     SELECT strftime('%Y-%m-%dT%H:%M:%SZ', m.created_at) || substr((
-             SELECT je.value ->> 'Text'
+             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking')
                FROM json_each(m.llm_data, '$.Content') je
-              WHERE je.value ->> 'Type' = 2 AND je.value ->> 'Text' <> ''
+              WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> ''
               ORDER BY je.key DESC LIMIT 1), 1, 300)
       FROM messages m
      WHERE m.conversation_id = c.conversation_id AND m.type = 'agent'
        AND EXISTS (SELECT 1 FROM json_each(m.llm_data, '$.Content') je
-                   WHERE je.value ->> 'Type' = 2 AND je.value ->> 'Text' <> '')
+                   WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> '')
      ORDER BY m.sequence_id DESC LIMIT 1), '') AS TEXT) AS preview_packed,
   CAST(COALESCE((
     SELECT MAX(m.sequence_id) FROM messages m
@@ -796,14 +796,14 @@ SELECT c.conversation_id, c.slug, c.user_initiated, c.created_at, c.updated_at, 
   -- it back apart.
   CAST(COALESCE((
     SELECT strftime('%Y-%m-%dT%H:%M:%SZ', m.created_at) || substr((
-             SELECT je.value ->> 'Text'
+             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking')
                FROM json_each(m.llm_data, '$.Content') je
-              WHERE je.value ->> 'Type' = 2 AND je.value ->> 'Text' <> ''
+              WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> ''
               ORDER BY je.key DESC LIMIT 1), 1, 300)
       FROM messages m
      WHERE m.conversation_id = c.conversation_id AND m.type = 'agent'
        AND EXISTS (SELECT 1 FROM json_each(m.llm_data, '$.Content') je
-                   WHERE je.value ->> 'Type' = 2 AND je.value ->> 'Text' <> '')
+                   WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> '')
      ORDER BY m.sequence_id DESC LIMIT 1), '') AS TEXT) AS preview_packed,
   CAST(COALESCE((
     SELECT MAX(m.sequence_id) FROM messages m
@@ -994,14 +994,14 @@ SELECT c.conversation_id, c.slug, c.user_initiated, c.created_at, c.updated_at, 
   -- it back apart.
   CAST(COALESCE((
     SELECT strftime('%Y-%m-%dT%H:%M:%SZ', m.created_at) || substr((
-             SELECT je.value ->> 'Text'
+             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking')
                FROM json_each(m.llm_data, '$.Content') je
-              WHERE je.value ->> 'Type' = 2 AND je.value ->> 'Text' <> ''
+              WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> ''
               ORDER BY je.key DESC LIMIT 1), 1, 300)
       FROM messages m
      WHERE m.conversation_id = c.conversation_id AND m.type = 'agent'
        AND EXISTS (SELECT 1 FROM json_each(m.llm_data, '$.Content') je
-                   WHERE je.value ->> 'Type' = 2 AND je.value ->> 'Text' <> '')
+                   WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> '')
      ORDER BY m.sequence_id DESC LIMIT 1), '') AS TEXT) AS preview_packed,
   CAST(COALESCE((
     SELECT MAX(m.sequence_id) FROM messages m
@@ -1093,14 +1093,14 @@ SELECT c.conversation_id, c.slug, c.user_initiated, c.created_at, c.updated_at, 
   -- it back apart.
   CAST(COALESCE((
     SELECT strftime('%Y-%m-%dT%H:%M:%SZ', m.created_at) || substr((
-             SELECT je.value ->> 'Text'
+             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking')
                FROM json_each(m.llm_data, '$.Content') je
-              WHERE je.value ->> 'Type' = 2 AND je.value ->> 'Text' <> ''
+              WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> ''
               ORDER BY je.key DESC LIMIT 1), 1, 300)
       FROM messages m
      WHERE m.conversation_id = c.conversation_id AND m.type = 'agent'
        AND EXISTS (SELECT 1 FROM json_each(m.llm_data, '$.Content') je
-                   WHERE je.value ->> 'Type' = 2 AND je.value ->> 'Text' <> '')
+                   WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> '')
      ORDER BY m.sequence_id DESC LIMIT 1), '') AS TEXT) AS preview_packed,
   CAST(COALESCE((
     SELECT MAX(m.sequence_id) FROM messages m
@@ -1254,14 +1254,14 @@ SELECT DISTINCT c.conversation_id, c.slug, c.user_initiated, c.created_at, c.upd
   -- pm here to avoid colliding with the outer LEFT JOIN messages m.
   CAST(COALESCE((
     SELECT strftime('%Y-%m-%dT%H:%M:%SZ', pm.created_at) || substr((
-             SELECT je.value ->> 'Text'
+             SELECT COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking')
                FROM json_each(pm.llm_data, '$.Content') je
-              WHERE je.value ->> 'Type' = 2 AND je.value ->> 'Text' <> ''
+              WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> ''
               ORDER BY je.key DESC LIMIT 1), 1, 300)
       FROM messages pm
      WHERE pm.conversation_id = c.conversation_id AND pm.type = 'agent'
        AND EXISTS (SELECT 1 FROM json_each(pm.llm_data, '$.Content') je
-                   WHERE je.value ->> 'Type' = 2 AND je.value ->> 'Text' <> '')
+                   WHERE je.value ->> 'Type' IN (2, 3) AND COALESCE(NULLIF(je.value ->> 'Text', ''), je.value ->> 'Thinking') <> '')
      ORDER BY pm.sequence_id DESC LIMIT 1), '') AS TEXT) AS preview_packed,
   CAST(COALESCE((
     SELECT MAX(pm.sequence_id) FROM messages pm

@@ -137,7 +137,6 @@ Base: a8e2ee0
 Files: BashTool.vue
 Changes: When a bash tool call produces empty output, the output block is hidden and the label reads "Clean exit" instead of "Output:". When there is output, it still shows "Output" (or "Output (Error)") as before.
 
-
 ## PATCH-014
 Status: active
 Base: 1d4cbe7
@@ -273,3 +272,10 @@ Changes: Block chained `cd <path> && ...` when `<path>` resolves to the current 
   - Error: `permission denied: cd target "<target>" is the same as the current working directory (<cwd>). Run the command directly without chaining cd`
   - Tests: 13 cases covering abs/relative/~/dot-dot/subshell/fallback patterns.
 Watchouts: Only blocks same-dir chains; different-dir chains still get the existing hint from `ChainsCdWithCommand`.
+
+## PATCH-028
+Status: active
+Base: 4a98848
+Files: db/query/conversations.sql, db/generated/conversations.sql.go, server/conversation_preview_test.go
+Changes: Conversation drawer previews now include thinking content. The five preview queries in `conversations.sql` (ListConversations, ListAllConversations, SearchConversations, SearchConversationsWithMessages, SearchConversationsFTSList) previously only extracted Type=2 (text) content blocks. They now also match Type=3 (thinking) blocks via `COALESCE(NULLIF(Text, ''), Thinking)`, so the drawer shows the latest thinking content when no text block follows it. Within a message, text blocks still win over thinking when both are present. Added `previewThinkingBlock` test helper and two new test conversations (E: thinking-only, F: thinking then text) to `conversation_preview_test.go`.
+Watchouts: The `splitPreviewPacked` function in `db/db.go` already strips inline citation markers, which also applies to thinking text — harmless since thinking blocks don't carry citations.
