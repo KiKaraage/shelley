@@ -430,6 +430,7 @@ const { t, locale, setLocale } = useI18n();
 const { conversationViewMode, setConversationViewMode } = useConversationView();
 
 
+
 // Edit File uses Cmd/Ctrl+Shift+P (VS Code parity). Firefox reserves that combo
 // for "New Private Window" and never delivers it to the page, so the shortcut
 // is inert there; explain that on hover rather than silently misleading users.
