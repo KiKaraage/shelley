@@ -936,3 +936,34 @@ func TestAddCoauthorTrailer_NoDuplicates(t *testing.T) {
 		t.Errorf("expected CC: philip preserved\nlog:\n%s", log)
 	}
 }
+
+func TestChainsCdToSameDir(t *testing.T) {
+	tests := []struct {
+		name   string
+		script string
+		cwd    string
+		want   bool
+	}{
+		{"abs same dir", "cd /tmp && make build", "/tmp", true},
+		{"abs different dir", "cd /tmp && ls", "/home/user", false},
+		{"relative same dir dot", "cd . && make build", "/tmp", true},
+		{"relative same dir trailing slash", "cd /tmp/ && make build", "/tmp", true},
+		{"relative same dir cwd trailing slash", "cd /tmp && make build", "/tmp/", true},
+		{"relative path resolves to cwd", "cd ./sub/.. && make", "/tmp/sub", true},
+		{"relative path different", "cd ../other && ls", "/tmp", false},
+		{"tilde to home same", "cd ~ && echo hi", os.Getenv("HOME"), true},
+		{"no cd chained", "ls && make build", "/tmp", false},
+		{"cd no chain", "cd /tmp", "/tmp", false},
+		{"cd different dir chained", "cd /var && ls", "/tmp", false},
+		{"cd in subshell same dir", "(cd /tmp && ls)", "/tmp", false},
+		{"cd or fallback same dir", "cd /tmp || exit 1", "/tmp", false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, _ := ChainsCdToSameDir(tc.script, tc.cwd)
+			if got != tc.want {
+				t.Errorf("ChainsCdToSameDir(%q, %q) = %v, want %v", tc.script, tc.cwd, got, tc.want)
+			}
+		})
+	}
+}

@@ -3,6 +3,8 @@ package bashkit
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -103,6 +105,65 @@ func WillRunGitCommit(bashScript string) (bool, error) {
 	return willCommit, nil
 }
 
+// cdTarget extracts the literal path argument from a `cd <path>` statement,
+// or "" if the statement is not a `cd` with an argument.
+func cdTarget(s *syntax.Stmt) string {
+	if s == nil || s.Cmd == nil {
+		return ""
+	}
+	call, ok := s.Cmd.(*syntax.CallExpr)
+	if !ok || len(call.Args) < 2 {
+		return ""
+	}
+	if call.Args[0].Lit() != "cd" {
+		return ""
+	}
+	return call.Args[1].Lit()
+}
+
+// chainsCd reports whether stmts contain a top-level `cd <path>` chained with
+// a subsequent command via `&&` or `;`. It returns the target path if found.
+func chainsCd(stmts []*syntax.Stmt) string {
+	for i := 0; i+1 < len(stmts); i++ {
+		if t := cdTarget(stmts[i]); t != "" {
+			return t
+		}
+	}
+	for _, s := range stmts {
+		if t := chainsCdStmt(s); t != "" {
+			return t
+		}
+	}
+	return ""
+}
+
+func chainsCdStmt(s *syntax.Stmt) string {
+	if s == nil || s.Cmd == nil {
+		return ""
+	}
+	switch c := s.Cmd.(type) {
+	case *syntax.BinaryCmd:
+		if c.Op == syntax.AndStmt {
+			if t := cdTarget(c.X); t != "" {
+				return t
+			}
+		}
+		if t := chainsCdStmt(c.X); t != "" {
+			return t
+		}
+		if t := chainsCdStmt(c.Y); t != "" {
+			return t
+		}
+	case *syntax.Block:
+		if t := chainsCd(c.Stmts); t != "" {
+			return t
+		}
+	case *syntax.Subshell:
+		// Intentionally do not recurse: `(cd ... && ...)` is scoped.
+	}
+	return ""
+}
+
 // ChainsCdWithCommand reports whether bashScript chains a top-level
 // `cd <path>` with a subsequent command via `&&` or `;`, e.g.
 // `cd /tmp && ls` or `cd /tmp; ls`. Such patterns are better expressed by
@@ -121,56 +182,45 @@ func ChainsCdWithCommand(bashScript string) bool {
 	if err != nil {
 		return false
 	}
-	isCdWithArg := func(s *syntax.Stmt) bool {
-		if s == nil || s.Cmd == nil {
-			return false
-		}
-		call, ok := s.Cmd.(*syntax.CallExpr)
-		if !ok || len(call.Args) < 2 {
-			return false
-		}
-		return call.Args[0].Lit() == "cd"
+	return chainsCd(file.Stmts) != ""
+}
+
+// ChainsCdToSameDir reports whether bashScript chains `cd <path>` with a
+// subsequent command AND the target path resolves to the same directory the
+// command will run in (i.e. the current working directory). This is a
+// pointless no-op for the cd that should just be dropped.
+//
+// cwd is the working directory that will be used for execution.
+func ChainsCdToSameDir(bashScript string, cwd string) (bool, string) {
+	r := strings.NewReader(bashScript)
+	parser := syntax.NewParser()
+	file, err := parser.Parse(r, "")
+	if err != nil {
+		return false, ""
 	}
-	var checkStmts func(stmts []*syntax.Stmt) bool
-	var checkStmt func(s *syntax.Stmt) bool
-	checkStmts = func(stmts []*syntax.Stmt) bool {
-		// `a; b` at the same level: flag if any non-final stmt is `cd <path>`.
-		for i := 0; i+1 < len(stmts); i++ {
-			if isCdWithArg(stmts[i]) {
-				return true
-			}
-		}
-		for _, s := range stmts {
-			if checkStmt(s) {
-				return true
-			}
-		}
-		return false
+	target := chainsCd(file.Stmts)
+	if target == "" {
+		return false, ""
 	}
-	checkStmt = func(s *syntax.Stmt) bool {
-		if s == nil || s.Cmd == nil {
-			return false
-		}
-		switch c := s.Cmd.(type) {
-		case *syntax.BinaryCmd:
-			if c.Op == syntax.AndStmt && isCdWithArg(c.X) {
-				return true
-			}
-			if checkStmt(c.X) || checkStmt(c.Y) {
-				return true
-			}
-		case *syntax.Block:
-			if checkStmts(c.Stmts) {
-				return true
-			}
-		case *syntax.Subshell:
-			// Intentionally do not recurse: `(cd ... && ...)` is scoped
-			// and does not affect the caller's working directory.
-			return false
-		}
-		return false
+	// Resolve target against cwd.
+	var resolved string
+	if filepath.IsAbs(target) {
+		resolved = filepath.Clean(target)
+	} else {
+		resolved = filepath.Clean(filepath.Join(cwd, target))
 	}
-	return checkStmts(file.Stmts)
+	cleanCwd := filepath.Clean(cwd)
+	// Also handle ~ expansion.
+	if strings.HasPrefix(target, "~/") || target == "~" {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			resolved = filepath.Clean(filepath.Join(home, target[1:]))
+		}
+	}
+	if resolved == cleanCwd {
+		return true, target
+	}
+	return false, ""
 }
 
 // noDangerousRmRf checks for rm -rf commands that could delete critical directories.
