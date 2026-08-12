@@ -324,3 +324,10 @@ Changes: Added a tag picker dropdown to the chat header, positioned in `.header-
   - **ChatInterface.vue**: `HeaderTagPicker` inserted after `<h1 class="header-title">` inside `.header-left`. Receives `currentConversation` and `onConversationUpdate` props so tag changes refresh the sidebar.
   - **styles.css**: `.tag-picker-wrapper`, `.tag-picker-active`, `.tag-picker-menu`, `.tag-picker-input`, `.tag-picker-item`, `.tag-picker-check`, `.tag-picker-hash`, `.tag-picker-create`, `.tag-picker-empty` — follows the same design tokens as `.group-by-menu` (border, shadow, radius, hover states). Removed `overflow: hidden` from `.header-left` so the dropdown floats outside the header area instead of being clipped.
 Watchouts: The tag vocabulary is a client-side const (`SUGGESTED_TAGS`), not derived from the server — adding a tag to one conversation won't auto-populate the dropdown for others. The `onConversationUpdate` prop must be wired for tag changes to reflect in the sidebar; without it the button still works but the sidebar won't refresh until a page reload. The `overflow: hidden` removal from `.header-left` means long titles may now push the tag button outward — the `min-width: 0` and `text-overflow: ellipsis` on `.header-title` still prevent title overflow.
+
+## PATCH-028
+Status: active
+Base: 4a98848
+Files: db/query/conversations.sql, db/generated/conversations.sql.go, server/conversation_preview_test.go
+Changes: Conversation drawer previews now include thinking content and user messages. The five preview queries previously only extracted Type=2 (text) blocks from agent messages. They now scan both agent and user messages for Type 2 (text), 3 (thinking), and 5 (tool_use) blocks, extracting the appropriate field via COALESCE. Previews show: agent text > thinking > tool name > user text, depending on which is newest. Added `previewThinkingBlock` helper and `writeUserMsg` helper; added test cases E (thinking-only), F (thinking then text), G (user message).
+Watchouts: ToolName and Thinking fields serialize as empty strings in non-relevant blocks, so each COALESCE leg wraps its field in NULLIF(x, '').
