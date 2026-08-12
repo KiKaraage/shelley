@@ -314,3 +314,13 @@ Base: 4a98848
 Files: ChatInterface.vue, styles.css
 Changes: Added the repo favicon to `.header-left` in the chat header, positioned before `.header-title`. Renders a `1rem × 1rem` `<img>` via `/api/repo-favicon?root=<cwd>`, sized to match the header button icons. The favicon URL falls back through `currentConversation.cwd → selectedCwd`, so it shows whenever any repo context exists — even with no active conversation. Hidden only when no cwd is available at all. Same `/api/repo-favicon` endpoint already used by the drawer rows (PATCH-020). No new server code.
 Watchouts: The base `Conversation` type lacks `git_repo_root` (only present on `ConversationWithState`), so the computed uses `cwd` directly — the server resolves the repo root internally.
+
+## PATCH-032
+Status: active
+Base: 4a98848
+Files: ChatInterface.vue, HeaderTagPicker.vue (new), styles.css
+Changes: Added a tag picker dropdown to the chat header, positioned in `.header-left` after `.header-title`.
+  - **HeaderTagPicker.vue**: `pi pi-tag` icon button (always visible). Active highlight via `.tag-picker-active` (`color: var(--primary)`) when the conversation has tags. Opens a dropdown mirroring the group-by-menu pattern (absolute-positioned `div`, outside-click dismissal via `mousedown` listener). Input at top auto-focused on open, filters the fixed suggested tag list by substring. Tags: `explore`, `plan`, `ongoing`, `check`, `revise`, `done`. Already-applied tags show a `✓` checkmark; click toggles apply/remove via `api.updateConversationTags`. Typed text not matching any suggested tag shows a `+ Create "#text"` row; Enter applies it. No delete buttons — removal lives in the drawer. Escape closes the dropdown.
+  - **ChatInterface.vue**: `HeaderTagPicker` inserted after `<h1 class="header-title">` inside `.header-left`. Receives `currentConversation` and `onConversationUpdate` props so tag changes refresh the sidebar.
+  - **styles.css**: `.tag-picker-wrapper`, `.tag-picker-active`, `.tag-picker-menu`, `.tag-picker-input`, `.tag-picker-item`, `.tag-picker-check`, `.tag-picker-hash`, `.tag-picker-create`, `.tag-picker-empty` — follows the same design tokens as `.group-by-menu` (border, shadow, radius, hover states).
+Watchouts: The tag vocabulary is a client-side const (`SUGGESTED_TAGS`), not derived from the server — adding a tag to one conversation won't auto-populate the dropdown for others. The `onConversationUpdate` prop must be wired for tag changes to reflect in the sidebar; without it the button still works but the sidebar won't refresh until a page reload.
