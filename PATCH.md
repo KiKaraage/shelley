@@ -27,7 +27,7 @@
 
 ## Rules
 
-Keep the changes minimum. Never plain `make build` — only the `build-custom` ldflags stamp; never restart shelley mid-turn — always delayed via `setsid`; never anchor to our own commit SHAs (rewritten on rebase) — use upstream `Base` SHAs; always update PATCH.md in the same commit as the code change; don't edit existing DB migrations/schema — new tables only via new migrations.
+Keep the changes minimum. Never plain `make build` — only the `build-custom` ldflags stamp; never restart shelley mid-turn — always delayed via `setsid`; never anchor to our own commit SHAs (rewritten on rebase) — use upstream `Base` SHAs; minimize DB migrations/schema change when possible
 
 ## PATCH-001
 Status: active
@@ -280,7 +280,7 @@ Files: db/query/conversations.sql, db/generated/conversations.sql.go, server/con
 Changes: Conversation drawer previews now include thinking content. The five preview queries in `conversations.sql` (ListConversations, ListAllConversations, SearchConversations, SearchConversationsWithMessages, SearchConversationsFTSList) previously only extracted Type=2 (text) content blocks. They now also match Type=3 (thinking) blocks via `COALESCE(NULLIF(Text, ''), Thinking)`, so the drawer shows the latest thinking content when no text block follows it. Within a message, text blocks still win over thinking when both are present. Added `previewThinkingBlock` test helper and two new test conversations (E: thinking-only, F: thinking then text) to `conversation_preview_test.go`.
 Watchouts: The `splitPreviewPacked` function in `db/db.go` already strips inline citation markers, which also applies to thinking text — harmless since thinking blocks don't carry citations.
 
-## PATCH-026
+## PATCH-029
 Status: active
 Base: 4a98848
 Files: ui/src/services/settings.ts, ui/src/utils/conversationView.ts, ui/src/utils/conversationView.test.ts, ui/src/vue/components/renderNode.ts, ui/src/i18n/types.ts, ui/src/i18n/en.ts (and other locale files), ui/src/vue/components/ChatOverflowMenu.vue, ui/src/vue/components/ChatInterface.vue, ui/src/vue/components/MessageRenderNode.vue, ui/src/vue/components/TurnBand.vue (new), ui/src/vue/components/tools/ThinkingContent.vue, ui/src/vue/composables/toolDetail.ts, ui/src/styles.css
@@ -301,3 +301,16 @@ Changes: Added "Auto Expand" as a third brevity mode alongside "See All" and "Se
   - **CSS**: Added `.turn-band`, `.turn-toggle`, `.turn-toggle-label`, `.turn-band-body` styles.
   - **Tests**: Added auto-expand assertions to `conversationView.test.ts`.
 Watchouts: The `wrapTurnsInBands` function processes nodes in reverse order to avoid index shifting. `carried-band` nodes within a turn collapse with the turn. Tool pills between messages are also inner content that collapses. The current turn is always expanded regardless of manual toggle state.
+
+## PATCH-030
+Status: active
+Base: 4a98848
+Files: BashTool.vue, styles.css
+Changes: Bash tool summary now splits chained `&&` commands across multiple lines. Each segment after the first gets its own line prefixed with `&&`. Per-line CSS truncation (`text-overflow: ellipsis`) keeps long segments within available width. Single-command inputs render identically to before (one line). No hardcoded max length — CSS handles truncation per line.
+
+## PATCH-031
+Status: active
+Base: 4a98848
+Files: ChatInterface.vue, styles.css
+Changes: Added the repo favicon to `.header-left` in the chat header, positioned before `.header-title`. Renders a `1rem × 1rem` `<img>` via `/api/repo-favicon?root=<cwd>`, sized to match the header button icons. The favicon URL falls back through `currentConversation.cwd → selectedCwd`, so it shows whenever any repo context exists — even with no active conversation. Hidden only when no cwd is available at all. Same `/api/repo-favicon` endpoint already used by the drawer rows (PATCH-020). No new server code.
+Watchouts: The base `Conversation` type lacks `git_repo_root` (only present on `ConversationWithState`), so the computed uses `cwd` directly — the server resolves the repo root internally.
