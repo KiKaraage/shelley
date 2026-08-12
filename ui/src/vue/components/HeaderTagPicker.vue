@@ -23,7 +23,7 @@
         @input="filter = ($event.target as HTMLInputElement).value"
         @keydown="onInputKeydown"
       />
-      <div class="tag-picker-separator" />
+      <!-- Template tags -->
       <template v-for="tag in displayedTags" :key="tag">
         <button
           class="tag-picker-item"
@@ -40,9 +40,22 @@
       >
         + Create "<strong>#{{ filter }}</strong>"
       </button>
-      <div v-if="displayedTags.length === 0 && !createable" class="tag-picker-empty">
+      <div v-if="displayedTags.length === 0 && !createable && customTags.length === 0" class="tag-picker-empty">
         No matches
       </div>
+      <!-- Custom (non-template) tags -->
+      <template v-if="customTags.length > 0">
+        <div class="tag-picker-separator" />
+        <button
+          v-for="tag in customTags"
+          :key="tag"
+          class="tag-picker-item"
+          @click="toggleTag(tag)"
+        >
+          <span class="tag-picker-check">✓</span>
+          <span class="tag-picker-hash">#</span>{{ tag }}
+        </button>
+      </template>
     </div>
   </div>
 </template>
@@ -70,6 +83,10 @@ const wrapperRef = ref<HTMLElement | null>(null);
 const inputRef = ref<HTMLInputElement | null>(null);
 
 const currentTags = computed(() => (props.conversation ? parseTags(props.conversation) : []));
+
+const customTags = computed(() =>
+  currentTags.value.filter((t) => !SUGGESTED_TAGS.includes(t)),
+);
 
 const displayedTags = computed(() => {
   const q = filter.value.trim().toLowerCase();
