@@ -261,3 +261,15 @@ Changes: Added retry for slug-tagged and conversation-model slug generation.
   - Goroutine timeout bumped 15s → 30s in both `handlers.go` call sites to accommodate the additional retry delay.
   - Root cause: provider-level retries (ant/oai/gem) have 15s+ backoffs that blow past the slug goroutine's 10s per-call + 15s outer timeout, making provider retries dead code for slug calls. Slug-level retry with a short delay works within the budget.
 Watchouts: `slugRetries` and `slugRetryDelay` are package-level constants in `slug/slug.go`. The `flakyLLMService` test mock validates recovery on second attempt; `TestGenerateSlugText_TaggedModelWins` now takes ~2s due to the retry delay on the failing tagged model.
+
+## PATCH-027
+Status: active
+Base: 4a98848
+Files: claudetool/bash.go, claudetool/bashkit/bashkit.go, claudetool/bashkit/bashkit_test.go
+Changes: Block chained `cd <path> && ...` when `<path>` resolves to the current working directory — a pointless no-op.
+  - New `ChainsCdToSameDir(bashScript, cwd)` resolves the cd target against cwd (handles absolute, relative, `~`, `.`/`..`) and returns `(true, target)` when they match.
+  - Refactored `ChainsCdWithCommand` to share AST-walking helpers (`cdTarget`, `chainsCd`, `chainsCdStmt`) with the new function.
+  - `bash.go` calls `ChainsCdToSameDir` after `bashkit.Check()` and returns a permission error when the cd target equals cwd.
+  - Error: `permission denied: cd target "<target>" is the same as the current working directory (<cwd>). Run the command directly without chaining cd`
+  - Tests: 13 cases covering abs/relative/~/dot-dot/subshell/fallback patterns.
+Watchouts: Only blocks same-dir chains; different-dir chains still get the existing hint from `ChainsCdWithCommand`.
