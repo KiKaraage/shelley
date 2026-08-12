@@ -8,9 +8,6 @@
       <div class="bash-tool-summary">
         <span class="bash-tool-emoji" :class="{ running: isRunning }">🛠️</span>
         <span class="bash-tool-command" :title="command">{{ displayCommand }}</span>
-        <span v-if="displayData?.workingDir" class="bash-tool-cwd" :title="displayData.workingDir">
-          in {{ displayData.workingDir }}
-        </span>
         <span v-if="isComplete && isCancelled" class="bash-tool-cancelled">✗ cancelled</span>
         <span v-if="isComplete && hasError && !isCancelled" class="bash-tool-error">✗</span>
         <span v-if="isComplete && !hasError" class="bash-tool-success">✓</span>
