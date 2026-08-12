@@ -235,7 +235,7 @@ func (b *BashTool) run(ctx context.Context, req bashInput) llm.ToolOut {
 
 	// Block `cd <path> && ...` when <path> resolves to the cwd — it's a no-op.
 	if blocked, target := bashkit.ChainsCdToSameDir(req.Command, wd); blocked {
-		return llm.ErrorfToolOut("permission denied: cd target %q is the same as the current working directory (%s). Run the command directly without chaining cd", target, wd)
+		return llm.ErrorfToolOut("Permission denied: cd target %q is the same as the current working directory. Run your command directly.", target, wd)
 	}
 
 	// Custom permission callback if set
