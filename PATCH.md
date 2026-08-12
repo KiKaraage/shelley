@@ -243,3 +243,15 @@ Files: ui/src/styles.css
 Changes:
   - `.tool-result-content` now has `max-height: 500px; overflow-y: auto` so long tool outputs scroll instead of stretching the page. Overridden to `max-height: none; overflow-y: visible` in `.tool-detail-modal .tool-result-content` so the detail modal isn't clipped.
   - `.bash-tool-copy-btn` background changed to `var(--gray-800)` in dark mode and gained `transition: background-color 0.15s ease`.
+
+## PATCH-026
+Status: active
+Base: 9c96638
+Files: server/gist_handlers.go, ui/src/services/api_gist.ts, ui/src/vue/components/ChatInterface.vue
+Changes: Fixed five bugs in the gist export/update flow:
+  - **SetGistID used read-only DB transaction**: `db.Queries()` opens an `Rx` (read-only) connection (`query_only=1`). `SetGistID` is a write (UPDATE), so it always failed with `SQLITE_READONLY`. Switched to `db.QueriesTx()` (writer connection). This was the root cause of the 500 on export and the PATCH 404 (gist created on GitHub but `gist_id` never persisted).
+  - **Silent SetGistID failure**: the POST handler swallowed the DB error and returned success to the frontend, leaving stale state where `gistId` was set but the DB had NULL. Now returns 500 on DB write failure.
+  - **Privacy leak in gist export**: `ListMessages` included `excluded_from_context=true` messages (internal reasoning, tool results) leaking into public gists. Switched all three call sites to `ListMessagesForContext`.
+  - **Dead error toasts**: `exportGistAction` catch block checked `msg.includes("gh_not_auth")` but `errorMessage()` returned `data.message` (human text), not `data.error` (code). Both friendly-toast branches never fired. Introduced `GistError` class carrying the error code; catch now matches `err.code` and uses i18n keys (`gistGhNotAuth`, `gistNeedsName`).
+  - **Stale gist status on conversation switch**: the gist status watcher had no request cancellation — switching conversations quickly let a stale `getGistStatus` response overwrite the current conversation's state. Added a generation counter to discard stale responses.
+Watchouts: `db.Queries()` vs `db.QueriesTx()` distinction is critical — always use `QueriesTx` for write operations. The `gh gist edit` push has CDN propagation latency; the gist URL may show stale HTML briefly after updating.
