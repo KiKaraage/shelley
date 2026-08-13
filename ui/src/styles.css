@@ -9874,15 +9874,17 @@ kbd {
 
 /* Per-block wrapper: enables per-block hover and positioning for the action bar */
 .msg-content-block-wrapper {
-  
-  
   position: relative;
+  width: 100%;
+  /* Extend hover zone upward to cover the action bar at top: -16px */
+  padding-top: 20px;
+  margin-top: -20px;
 }
 
 /* MessageActionBar styles */
 .message-action-bar-wrapper {
   position: absolute;
-  top: -16px;
+  top: 4px;
   right: 2px;
   display: flex;
   gap: 2px;
@@ -13440,3 +13442,4 @@ kbd {
   right: 0;
   transform: translateX(0);
 }
+

@@ -160,6 +160,13 @@
             @mouseenter="hoveredBlockIndex = index"
             @mouseleave="hoveredBlockIndex = null"
           >
+            <!-- Per-block action bar: only on thinking and text blocks -->
+            <MessageActionBar
+              v-if="isActionBarBlock(item) && (hoveredBlockIndex === index || showActionBar)"
+              :on-copy="() => handleBlockCopy(item)"
+              :on-show-usage="hasUsageAction ? handleShowUsage : undefined"
+              :on-fork="hasForkAction ? handleFork : undefined"
+            />
             <CitedText
               v-if="item.kind === 'text'"
               :text="item.text"
@@ -182,13 +189,6 @@
           </div>
         </template>
       </div>
-
-      <MessageActionBar
-        v-if="actionBarVisible && hasActionBarContent"
-        :on-copy="activeBlockText ? handleActiveBlockCopy : undefined"
-        :on-show-usage="hasUsageAction ? handleShowUsage : undefined"
-        :on-fork="hasForkAction ? handleFork : undefined"
-      />
     </div>
     <UsageDetailModal
       v-if="showUsageModal && usage"
@@ -390,7 +390,6 @@ const displayedDistillationContent = computed(
 
 // ---- Per-block action bar logic ----
 
-/** Does this block qualify for its own action bar? Only thinking and text blocks. */
 function isActionBarBlock(item: CoalescedItem): boolean {
   if (item.kind === "text") {
     if (item.text.trim() === "[Operation cancelled]") return false;
@@ -415,18 +414,8 @@ function getBlockText(item: CoalescedItem): string {
   return "";
 }
 
-const activeBlockText = computed(() => {
-  const idx = hoveredBlockIndex.value;
-  if (idx === null) return "";
-  const item = coalescedContent.value[idx];
-  if (!item || !isActionBarBlock(item)) return "";
-  return getBlockText(item);
-});
-
-const hasActionBarContent = computed(() => !!activeBlockText.value || hasUsageAction.value || hasForkAction.value);
-
-function handleActiveBlockCopy() {
-  const text = activeBlockText.value;
+function handleBlockCopy(item: CoalescedItem) {
+  const text = getBlockText(item);
   if (text) {
     navigator.clipboard.writeText(text).catch((err) => {
       console.error("Failed to copy text:", err);
