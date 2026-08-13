@@ -44,3 +44,13 @@
     entry that duplicates one of the real choices. Only keep a `default` sentinel when the
     concrete value is genuinely unknowable; even then, spell it out if you can (e.g. `Default
     (on)` for a boolean toggle).
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on the `kikaraage/shelley` fork. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` at the repo root plus `docs/adr/`. See `docs/agents/domain.md`.
