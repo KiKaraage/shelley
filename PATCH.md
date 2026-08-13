@@ -27,7 +27,11 @@
 
 ## Rules
 
-Keep the changes minimum. Never plain `make build` — only the `build-custom` ldflags stamp; never restart shelley mid-turn — always delayed via `setsid`; never anchor to our own commit SHAs (rewritten on rebase) — use upstream `Base` SHAs; minimize DB migrations/schema change when possible
+- Before starting work, assign a patch number first (P123, can be a new patch or an update to existing patch). This will be used as commit prefix
+- Keep the changes minimum, minimize DB migrations/schema change when possible
+- Never plain `make build` — only the `build-custom` ldflags stamp; never restart shelley mid-turn — always delayed via `setsid`
+- Never anchor to our own commit SHAs (rewritten on rebase), use upstream `Base` SHAs
+- Never amend/smash commit if your ongoing patch number is different than the latest previous commit
 
 ## P001
 Status: active
