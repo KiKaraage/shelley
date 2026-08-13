@@ -1294,6 +1294,7 @@ body {
 .message-content {
   display: flex;
   flex-direction: column;
+  width: 100%;
   padding: 1rem;
   border-radius: 0.5rem;
   overflow-wrap: break-word;
