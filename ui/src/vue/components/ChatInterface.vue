@@ -45,9 +45,10 @@
         </Button>
 
         <img
-          v-if="headerFaviconUrl"
+          v-if="headerFaviconUrl && !headerFaviconFailed"
           :src="headerFaviconUrl"
           class="header-favicon"
+          @error="headerFaviconFailed = true"
         />
         <h1 class="app-bar-title header-title" :title="currentConversation?.slug || 'Shelley'">
           {{ displayTitle }}
@@ -1294,11 +1295,13 @@ const conversationThinkingLevel = computed<string | null>(() => {
 });
 
 // Favicon URL derived from the active conversation's cwd.
+const headerFaviconFailed = ref(false);
 const headerFaviconUrl = computed(() => {
   const root = props.currentConversation?.cwd || selectedCwd.value;
   if (!root) return '';
   return `/api/repo-favicon?root=${encodeURIComponent(root)}`;
 });
+watch(headerFaviconUrl, () => { headerFaviconFailed.value = false; });
 
 const displayTitle = computed(() => {
   const title = props.currentConversation?.slug || "Shelley";
