@@ -313,7 +313,7 @@ Changes: Bash tool summary now splits chained `&&` commands across multiple line
 Status: active
 Base: 4a98848
 Files: ChatInterface.vue, styles.css
-Changes: Added the repo favicon to `.header-left` in the chat header, positioned before `.header-title`. Renders a `1.3rem × 1.3rem` `<img>` via `/api/repo-favicon?root=<cwd>`, sized to match the header button icons. The favicon URL falls back through `currentConversation.cwd → selectedCwd`, so it shows whenever any repo context exists — even with no active conversation. Hidden only when no cwd is available at all. Same `/api/repo-favicon` endpoint already used by the drawer rows (PATCH-020). No new server code.
+Changes: Add the repo favicon to `.header-left` in the chat header, positioned before `.header-title`. Renders a `1.3rem × 1.3rem` `<img>` via `/api/repo-favicon?root=<cwd>`, sized to match the header button icons. The favicon URL falls back through `currentConversation.cwd → selectedCwd`, so it shows whenever any repo context exists — even with no active conversation. Hidden only when no cwd is available at all. Same `/api/repo-favicon` endpoint already used by the drawer rows (PATCH-020). No new server code.
 Watchouts: The base `Conversation` type lacks `git_repo_root` (only present on `ConversationWithState`), so the computed uses `cwd` directly — the server resolves the repo root internally.
 
 ## P032
@@ -339,4 +339,15 @@ Merge drawer tag row into meta row (date + preview + tags)
 - Base: 4a98848
 - Files: ConversationDrawerRow.vue, styles.css
 - Changes: Merged the tag row (formerly Row 3) into the timestamp+preview row (Row 4), with tags pushed to the right edge via `margin-left: auto`. The tags `<div>` now lives inside `.conversation-meta` alongside the date and preview spans, using a new `.conversation-tags-inline` class that drops `margin-top` and adds auto-left-margin + `flex-shrink: 0`. Row count for non-draft conversations drops from 4 to 3: [favicon · cwd · branch] / [title · actions · indicators] / [date · preview · tags]. Also fixed `.message-action-button:last-child` tooltip clipping the right edge.
+
+## P035
+Make message blocks full-width; shrink-wrap user bubbles with background
+- Status: active
+- Base: 4a98848
+- Files: styles.css
+- Changes:
+  - `.message-content` is now `display: flex` (column) with `width: 100%` so all blocks stretch to the full container width.
+  - `.message-user` gets `width: auto` and `background: var(--bg-tertiary)` so it shrink-wraps to content and has a visible bubble.
+- Watchouts:
+  - The per-block action-bar changes documented in the original P035 entry are superseded by upstream 8d34550 (see P033); only the width/background CSS remains.
 

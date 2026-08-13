@@ -1306,6 +1306,8 @@ body {
 .message-user .message-content {
   margin-left: auto;
   max-width: 80%;
+  width: auto;
+  background: var(--bg-tertiary);
   color: var(--user-message-text);
 }
 
