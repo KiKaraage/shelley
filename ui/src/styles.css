@@ -13431,9 +13431,10 @@ kbd {
   font-size: 1rem;
 }
 
-/* Prevent the last button's tooltip from clipping the right edge */
-.message-action-button:last-child::after {
+
+/* Action bar tooltips: right-align so they extend leftward and never clip the message edge */
+.message-action-bar-wrapper .message-action-button::after {
   left: auto;
   right: 0;
-  transform: none;
+  transform: translateX(0);
 }
