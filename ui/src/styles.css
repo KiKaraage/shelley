@@ -1119,6 +1119,8 @@ body {
 }
 
 .message-content {
+  display: flex;
+  flex-direction: column;
   padding: 1rem;
   border-radius: 0.5rem;
   overflow-wrap: break-word;
