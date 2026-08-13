@@ -9874,6 +9874,8 @@ kbd {
 
 /* Per-block wrapper: enables per-block hover and positioning for the action bar */
 .msg-content-block-wrapper {
+  
+  
   position: relative;
 }
 
