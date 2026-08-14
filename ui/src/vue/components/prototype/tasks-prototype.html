@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Tasks prototype — wayfinder #13 (PROTOTYPE)</title>
+<title>Tasks prototype v2 — wayfinder #13 (PROTOTYPE)</title>
 <style>
   /* ============================================================
      Shelley design tokens (mirrored from ui/src/styles.css)
@@ -46,281 +46,160 @@
     --blue-bg: rgba(59,130,246,.1); --blue-border: rgba(59,130,246,.3); --blue-text: #93c5fd;
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0; font-family: var(--font); color: var(--text-primary);
-    background: var(--bg-base); font-size: 14px; line-height: 1.5;
-  }
-  /* ---- Shell: header + tabs (as in HomePage.vue) ---- */
+  body { margin: 0; font-family: var(--font); color: var(--text-primary); background: var(--bg-base); font-size: 14px; line-height: 1.5; }
   .shell { display: flex; flex-direction: column; height: 100vh; }
-  .header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0.5rem 1rem; border-bottom: 1px solid var(--border);
-  }
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); }
   .header-title { font-size: 1.1rem; font-weight: 600; margin: 0; }
   .header-actions { display: flex; align-items: center; gap: 0.5rem; }
-  .btn-new {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 2rem; height: 2rem; border-radius: 9999px; border: 1px solid var(--border);
-    background: var(--bg-secondary); color: var(--text-primary); cursor: pointer;
-  }
+  .btn-new { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 9999px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; }
   .btn-new:hover { background: var(--bg-hover); }
   .icon { width: 1rem; height: 1rem; }
   .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 1rem; }
-  .tab {
-    background: none; border: none; border-bottom: 2px solid transparent;
-    color: var(--text-secondary); padding: 0.5rem 1rem; font-size: 0.875rem;
-    cursor: pointer; font-family: var(--font);
-  }
+  .tab { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); padding: 0.5rem 1rem; font-size: 0.875rem; cursor: pointer; font-family: var(--font); }
   .tab:hover { color: var(--text-primary); }
   .tab.active { color: var(--text-primary); border-bottom-color: var(--primary); }
   .content { flex: 1; overflow-y: auto; }
 
-  /* ---- Shared bits ---- */
   button { font-family: var(--font); }
-  .btn {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    border-radius: 0.375rem; border: 1px solid var(--border);
-    background: var(--bg-secondary); color: var(--text-primary);
-    padding: 0.4rem 0.8rem; font-size: 0.8125rem; cursor: pointer;
-  }
+  .btn { display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 0.375rem; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary); padding: 0.4rem 0.8rem; font-size: 0.8125rem; cursor: pointer; }
   .btn:hover { background: var(--bg-hover); }
-  .btn-primary {
-    background: var(--primary); border-color: var(--primary); color: #fff;
-  }
+  .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
   .btn-primary:hover { background: var(--primary-dark); }
-  .btn-danger { color: var(--error-text); }
-  .btn-danger:hover { background: var(--error-bg); border-color: var(--error-border); }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .tag {
-    display: inline-flex; align-items: center; gap: 0.1rem;
-    font-size: 0.75rem; line-height: 1.2; color: var(--blue-text);
-    background: var(--blue-bg); border: 1px solid var(--blue-border);
-    border-radius: 9999px; padding: 0.1rem 0.5rem; white-space: nowrap;
-  }
+  .tag { display: inline-flex; align-items: center; gap: 0.1rem; font-size: 0.75rem; line-height: 1.2; color: var(--blue-text); background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: 9999px; padding: 0.1rem 0.5rem; white-space: nowrap; }
   .tag .hash { opacity: 0.6; }
-  .missing-badge {
-    font-size: 0.6875rem; color: var(--warning-text); background: var(--warning-bg);
-    border: 1px solid var(--warning-border); border-radius: 9999px; padding: 0 0.4rem;
-  }
+  .tag.done-tag { color: var(--success-text); background: var(--success-bg); border-color: var(--success-border); }
+  .missing-badge { font-size: 0.6875rem; color: var(--warning-text); background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 9999px; padding: 0 0.4rem; white-space: nowrap; }
   .mono { font-family: var(--mono); font-size: 0.75rem; color: var(--text-secondary); }
   .dir-name { color: var(--text-secondary); }
   .git-dot { width: 0.5rem; height: 0.5rem; border-radius: 9999px; background: var(--green-600, #16a34a); flex-shrink: 0; }
   .cwd-dot { width: 0.5rem; height: 0.5rem; border-radius: 1px; background: var(--text-tertiary); flex-shrink: 0; }
+  /* Thread badge: handled ≠ done. Subtle link-ish chip, never dims the task. */
+  .thread-badge { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: var(--primary); background: var(--bg-base); border: 1px solid var(--blue-border); border-radius: 9999px; padding: 0.1rem 0.5rem; white-space: nowrap; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; }
+  .thread-badge .arrow { opacity: 0.7; flex-shrink: 0; }
+  .thread-badge .slug { overflow: hidden; text-overflow: ellipsis; }
+  /* "done" (tag) treatment: dim + strikethrough. Orthogonal to handled. */
+  .is-done { opacity: 0.55; }
+  .is-done .task-title, .is-done .card-title { text-decoration: line-through; color: var(--text-tertiary); }
 
-  /* ============================================================
-     Variant A — Dense inbox
-     ============================================================ */
   .v { display: none; }
   .v.on { display: block; }
-  .v-a .toolbar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1rem 1.5rem 0.5rem; gap: 1rem; flex-wrap: wrap;
-  }
+
+  /* ============================================================
+     Variant A — Inbox (full management list)
+     ============================================================ */
+  .v-a .toolbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem 0.5rem; gap: 1rem; flex-wrap: wrap; }
   .v-a .counts { display: flex; gap: 1rem; color: var(--text-secondary); font-size: 0.8125rem; }
   .v-a .filters { display: flex; gap: 0.25rem; }
-  .v-a .filter {
-    border: none; background: none; color: var(--text-secondary);
-    padding: 0.25rem 0.6rem; border-radius: 9999px; cursor: pointer; font-size: 0.8125rem;
-  }
+  .v-a .filter { border: none; background: none; color: var(--text-secondary); padding: 0.25rem 0.6rem; border-radius: 9999px; cursor: pointer; font-size: 0.8125rem; }
   .v-a .filter.active { background: var(--bg-tertiary); color: var(--text-primary); }
   .v-a .list { padding: 0.5rem 1.5rem 2rem; }
-  .v-a .row {
-    display: flex; align-items: center; gap: 0.75rem;
-    padding: 0.6rem 0.75rem; border-radius: 0.375rem; cursor: default;
-    border: 1px solid transparent;
-  }
+  .v-a .row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 0.375rem; border: 1px solid transparent; }
   .v-a .row:hover { background: var(--bg-hover); }
-  .v-a .row.handled .task-title { color: var(--text-tertiary); text-decoration: line-through; }
-  .v-a .check {
-    width: 1.125rem; height: 1.125rem; border-radius: 9999px; border: 1.5px solid var(--gray-300);
-    flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-    color: transparent; font-size: 0.6875rem; background: var(--bg-base);
-  }
-  .v-a .row.handled .check { background: var(--success-text); border-color: var(--success-text); color: #fff; }
   .v-a .main { flex: 1; min-width: 0; }
   .v-a .task-title { font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .v-a .meta { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.15rem; }
+  .v-a .meta { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.15rem; flex-wrap: wrap; }
   .v-a .row-actions { display: none; align-items: center; gap: 0.25rem; }
   .v-a .row:hover .row-actions { display: inline-flex; }
-  .v-a .icon-btn {
-    border: none; background: none; color: var(--text-secondary); cursor: pointer;
-    border-radius: 0.25rem; padding: 0.25rem; display: inline-flex;
-  }
+  .v-a .icon-btn { border: none; background: none; color: var(--text-secondary); cursor: pointer; border-radius: 0.25rem; padding: 0.25rem; display: inline-flex; font-size: 0.8125rem; }
   .v-a .icon-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
-  .v-a .section-label {
-    font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em;
-    color: var(--text-tertiary); padding: 1rem 0.75rem 0.25rem; display: flex; gap: 0.5rem; align-items: center;
-  }
-  .v-a .empty {
-    text-align: center; padding: 4rem 1rem; color: var(--text-secondary);
-    border: 1px dashed var(--gray-300); border-radius: 0.5rem; margin: 1.5rem;
-  }
+  .v-a .section-label { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); padding: 1rem 0.75rem 0.25rem; display: flex; gap: 0.5rem; align-items: center; }
+  .v-a .empty { text-align: center; padding: 4rem 1rem; color: var(--text-secondary); border: 1px dashed var(--gray-300); border-radius: 0.5rem; margin: 1.5rem; }
   .v-a .empty .big { font-size: 1.25rem; margin-bottom: 0.25rem; color: var(--text-primary); }
 
   /* ============================================================
-     Variant B — Card board
+     Variant B — Kanban (columns by stage tag)
      ============================================================ */
   .v-b .board { padding: 1rem 1.5rem 2rem; }
   .v-b .board-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
   .v-b .board-title { font-size: 0.9375rem; font-weight: 600; }
-  .v-b .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; }
-  .v-b .card {
-    border: 1px solid var(--border); border-radius: 0.5rem; background: var(--bg-base);
-    padding: 0.875rem; display: flex; flex-direction: column; gap: 0.6rem;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  }
+  .v-b .kanban { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 0.75rem; align-items: start; }
+  .v-b .kcol { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.625rem; min-height: 12rem; display: flex; flex-direction: column; gap: 0.625rem; }
+  .v-b .kcol-head { display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); padding: 0.1rem 0.25rem; }
+  .v-b .kcol-head .n { color: var(--text-tertiary); font-weight: 500; }
+  .v-b .kcol.empty-col { border-style: dashed; }
+  .v-b .kcol-empty { font-size: 0.75rem; color: var(--text-tertiary); text-align: center; padding: 1.5rem 0.5rem; border: 1px dashed var(--gray-300); border-radius: 0.375rem; }
+  .v-b .card { border: 1px solid var(--border); border-radius: 0.5rem; background: var(--bg-base); padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
   .v-b .card:hover { border-color: var(--gray-400); }
-  .v-b .card.handled { opacity: 0.62; }
   .v-b .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-  .v-b .card-title { font-weight: 600; font-size: 0.875rem; line-height: 1.35; }
-  .v-b .card.handled .card-title { text-decoration: line-through; }
-  .v-b .handled-stamp {
-    flex-shrink: 0; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.04em;
-    color: var(--success-text); border: 1px solid var(--success-border);
-    background: var(--success-bg); border-radius: 0.25rem; padding: 0.05rem 0.35rem;
-    text-transform: uppercase;
-  }
+  .v-b .card-title { font-weight: 600; font-size: 0.8125rem; line-height: 1.35; }
   .v-b .card-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-  .v-b .card-foot {
-    border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: auto;
-    display: flex; align-items: center; gap: 0.375rem; min-width: 0;
-  }
+  .v-b .card-foot { border-top: 1px solid var(--border); padding-top: 0.5rem; display: flex; align-items: center; gap: 0.375rem; min-width: 0; }
   .v-b .card-foot .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .v-b .card-actions { display: none; gap: 0.25rem; margin-left: auto; }
   .v-b .card:hover .card-actions { display: inline-flex; }
-  .v-b .fab {
-    position: sticky; bottom: 1rem; float: right; margin: 0 1.5rem 1.5rem 0;
-    width: 3rem; height: 3rem; border-radius: 9999px; background: var(--primary);
-    border: none; color: #fff; font-size: 1.5rem; cursor: pointer; line-height: 1;
-    box-shadow: 0 4px 12px rgba(37,99,235,0.35);
-  }
+  .v-b .fab { position: sticky; bottom: 1rem; float: right; margin: 0 1.5rem 1.5rem 0; width: 3rem; height: 3rem; border-radius: 9999px; background: var(--primary); border: none; color: #fff; font-size: 1.5rem; cursor: pointer; line-height: 1; box-shadow: 0 4px 12px rgba(37,99,235,0.35); }
   .v-b .fab:hover { background: var(--primary-dark); }
-  .v-b .empty-card {
-    border: 1.5px dashed var(--gray-300); border-radius: 0.5rem; padding: 2.5rem 1rem;
-    text-align: center; color: var(--text-secondary); display: flex; flex-direction: column;
-    align-items: center; gap: 0.75rem;
-  }
+  .v-b .empty-board { border: 1.5px dashed var(--gray-300); border-radius: 0.5rem; padding: 2.5rem 1rem; text-align: center; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
 
   /* ============================================================
-     Variant C — Palette-first / minimal
+     Variant C — Next-up picker (keyboard-driven FIFO queue)
      ============================================================ */
   .v-c { max-width: 44rem; margin: 0 auto; padding: 1rem 1.5rem 2rem; }
   .v-c .search-row { position: sticky; top: 0; background: var(--bg-base); padding: 0.5rem 0 0.75rem; }
-  .v-c .search {
-    width: 100%; border: 1px solid var(--border); border-radius: 0.375rem;
-    background: var(--bg-secondary); padding: 0.5rem 0.75rem; font-size: 0.875rem;
-    color: var(--text-primary); outline: none; font-family: var(--font);
-  }
+  .v-c .search { width: 100%; border: 1px solid var(--border); border-radius: 0.375rem; background: var(--bg-secondary); padding: 0.55rem 0.75rem; font-size: 0.875rem; color: var(--text-primary); outline: none; font-family: var(--font); }
   .v-c .search:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
-  .v-c .kbd-hint { display: flex; justify-content: flex-end; gap: 0.25rem; margin: -1.6rem 0.5rem 0 0; position: relative; pointer-events: none; }
+  .v-c .pick-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0.25rem 0.5rem 0.5rem; }
+  .v-c .pick-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); }
+  .v-c .pick-order { font-size: 0.75rem; color: var(--text-tertiary); }
+  .v-c .pick-list { border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; }
+  .v-c .pick-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .v-c .pick-row:last-child { border-bottom: none; }
+  .v-c .pick-row:hover { background: var(--bg-hover); }
+  .v-c .pick-row.sel { background: var(--blue-bg); box-shadow: inset 3px 0 0 var(--primary); }
+  .v-c .task-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; }
+  .v-c .pick-meta { display: flex; align-items: center; gap: 0.5rem; max-width: 45%; }
+  .v-c .pick-meta .tags { display: flex; gap: 0.3rem; flex-wrap: wrap; justify-content: flex-end; }
+  .v-c .pick-foot { display: flex; gap: 1rem; padding: 0.625rem 0.5rem 0; color: var(--text-tertiary); font-size: 0.75rem; flex-wrap: wrap; }
   .v-c .kbd { font-size: 0.6875rem; color: var(--text-tertiary); border: 1px solid var(--border); border-radius: 0.25rem; padding: 0 0.3rem; background: var(--bg-secondary); font-family: var(--mono); }
-  .v-c .row {
-    display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.5rem;
-    border-bottom: 1px solid var(--border); cursor: default;
-  }
-  .v-c .row:hover { background: var(--bg-secondary); }
-  .v-c .row.handled .task-title { color: var(--text-tertiary); text-decoration: line-through; }
-  .v-c .task-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .v-c .tags { display: flex; gap: 0.3rem; flex-wrap: wrap; justify-content: flex-end; max-width: 40%; }
-  .v-c .row-actions { display: none; gap: 0.2rem; }
-  .v-c .row:hover .row-actions { display: inline-flex; }
-  .v-c .empty { text-align: center; padding: 3.5rem 1rem; color: var(--text-secondary); }
+  .v-c .empty { text-align: center; padding: 3.5rem 1rem; color: var(--text-secondary); border: 1px dashed var(--gray-300); border-radius: 0.5rem; }
   .v-c .empty .kbd { margin: 0 0.1rem; }
 
   /* ============================================================
-     Modals
+     Modal — slide-over panel (all variants)
      ============================================================ */
-  .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 50;
-    display: none; align-items: flex-start; justify-content: center; padding: 8vh 1rem 1rem;
-  }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 50; display: none; justify-content: flex-end; align-items: stretch; }
   .overlay.on { display: flex; }
-  .modal {
-    background: var(--bg-base); border: 1px solid var(--border); border-radius: 0.625rem;
-    width: 100%; max-width: 30rem; box-shadow: 0 20px 50px rgba(0,0,0,0.25);
-    display: flex; flex-direction: column; max-height: 84vh;
-  }
+  .modal { background: var(--bg-base); border: 1px solid var(--border); border-left: none; border-radius: 0.625rem 0 0 0.625rem; width: 100%; max-width: 26rem; box-shadow: -20px 0 50px rgba(0,0,0,0.25); display: flex; flex-direction: column; max-height: 100vh; animation: slidein 0.18s ease-out; }
+  @keyframes slidein { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
   .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem 0.5rem; }
   .modal-title { font-size: 1rem; font-weight: 600; margin: 0; }
   .modal-body { padding: 0.5rem 1.25rem 1rem; overflow-y: auto; }
-  .modal-foot {
-    display: flex; justify-content: flex-end; gap: 0.5rem;
-    padding: 0.75rem 1.25rem; border-top: 1px solid var(--border);
-  }
+  .modal-foot { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.75rem 1.25rem; border-top: 1px solid var(--border); }
   .field { margin-bottom: 0.875rem; }
   .field label { display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
   .field .req { color: var(--error-text); }
-  .input {
-    width: 100%; border: 1px solid var(--border); border-radius: 0.375rem;
-    background: var(--bg-base); color: var(--text-primary); padding: 0.5rem 0.75rem;
-    font-size: 0.875rem; outline: none; font-family: var(--font);
-  }
+  .input { width: 100%; border: 1px solid var(--border); border-radius: 0.375rem; background: var(--bg-base); color: var(--text-primary); padding: 0.5rem 0.75rem; font-size: 0.875rem; outline: none; font-family: var(--font); }
   .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
   .input.err { border-color: var(--error-text); }
   .field-error { color: var(--error-text); font-size: 0.75rem; margin-top: 0.25rem; }
   .select-wrap { position: relative; }
-  .select-wrap select {
-    width: 100%; border: 1px solid var(--border); border-radius: 0.375rem;
-    background: var(--bg-base); color: var(--text-primary); padding: 0.5rem 2rem 0.5rem 0.75rem;
-    font-size: 0.875rem; outline: none; appearance: none; cursor: pointer; font-family: var(--font);
-  }
-  .select-wrap::after {
-    content: "▾"; position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
-    color: var(--text-tertiary); pointer-events: none; font-size: 0.75rem;
-  }
+  .select-wrap select { width: 100%; border: 1px solid var(--border); border-radius: 0.375rem; background: var(--bg-base); color: var(--text-primary); padding: 0.5rem 2rem 0.5rem 0.75rem; font-size: 0.875rem; outline: none; appearance: none; cursor: pointer; font-family: var(--font); }
+  .select-wrap::after { content: "▾"; position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; font-size: 0.75rem; }
   .select-wrap select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
   .browse-row { display: flex; gap: 0.5rem; margin-top: 0.4rem; align-items: center; }
+  .browse-row .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .none-dir { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.4rem; }
   .none-dir a { color: var(--primary); cursor: pointer; }
   .tag-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
-  .tag-toggle {
-    border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary);
-    border-radius: 9999px; font-size: 0.75rem; padding: 0.2rem 0.65rem; cursor: pointer;
-  }
+  .tag-toggle { border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); border-radius: 9999px; font-size: 0.75rem; padding: 0.2rem 0.65rem; cursor: pointer; }
   .tag-toggle.on { background: var(--blue-bg); border-color: var(--blue-border); color: var(--blue-text); }
-  .modal .tag { background: var(--blue-bg); }
 
-  /* Variant B: slide-over panel */
-  .v-b .overlay { padding: 0; justify-content: flex-end; align-items: stretch; }
-  .v-b .modal {
-    max-width: 26rem; max-height: 100vh; border-radius: 0.625rem 0 0 0.625rem;
-    border-right: none; animation: slidein 0.18s ease-out;
-  }
-  @keyframes slidein { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-
-  /* Variant C: palette-style dialog, top-center, compact */
-  .v-c .overlay { align-items: flex-start; padding-top: 12vh; }
-  .v-c .modal { max-width: 34rem; border-radius: 0.5rem; }
-  .v-c .modal-body { padding-top: 0.75rem; }
-  .v-c .field { margin-bottom: 0.75rem; }
-  .v-c .hint-line { font-size: 0.75rem; color: var(--text-tertiary); display: flex; gap: 1rem; padding-bottom: 0.5rem; }
+  /* ---- Toast (placeholder for #14 thread-from-task) ---- */
+  .toast { position: fixed; bottom: 4rem; left: 50%; transform: translateX(-50%); z-index: 110; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.5rem 0.875rem; font-size: 0.8125rem; color: var(--text-primary); box-shadow: 0 6px 24px rgba(0,0,0,0.18); display: none; white-space: nowrap; }
+  .toast.on { display: block; }
 
   /* ---- Floating variant bar ---- */
-  .variant-bar {
-    position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
-    z-index: 100; display: flex; align-items: center; gap: 0.4rem;
-    background: var(--bg-secondary); border: 1px solid var(--border);
-    border-radius: 9999px; padding: 0.35rem 0.6rem; box-shadow: 0 6px 24px rgba(0,0,0,0.18);
-    font-size: 0.75rem; color: var(--text-secondary);
-  }
-  .variant-bar .vbtn {
-    border: none; background: none; cursor: pointer; border-radius: 9999px;
-    padding: 0.3rem 0.7rem; font-size: 0.75rem; color: var(--text-secondary);
-  }
+  .variant-bar { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: 0.4rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 9999px; padding: 0.35rem 0.6rem; box-shadow: 0 6px 24px rgba(0,0,0,0.18); font-size: 0.75rem; color: var(--text-secondary); }
+  .variant-bar .vbtn { border: none; background: none; cursor: pointer; border-radius: 9999px; padding: 0.3rem 0.7rem; font-size: 0.75rem; color: var(--text-secondary); }
   .variant-bar .vbtn.on { background: var(--primary); color: #fff; }
   .variant-bar .sep { width: 1px; height: 1.1rem; background: var(--border); }
-  .prototype-note {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 90;
-    background: var(--warning-bg); color: var(--warning-text);
-    border-bottom: 1px solid var(--warning-border);
-    font-size: 0.6875rem; text-align: center; padding: 0.2rem;
-    font-family: var(--mono);
-  }
+  .prototype-note { position: fixed; top: 0; left: 0; right: 0; z-index: 90; background: var(--warning-bg); color: var(--warning-text); border-bottom: 1px solid var(--warning-border); font-size: 0.6875rem; text-align: center; padding: 0.2rem; font-family: var(--mono); }
   body { padding-top: 1.35rem; }
 </style>
 </head>
 <body class="v-a">
-  <div class="prototype-note">PROTOTYPE · wayfinder #13 · throwaway · switch variants below</div>
+  <div class="prototype-note">PROTOTYPE v2 · wayfinder #13 · throwaway · switch variants below</div>
 
   <div class="shell">
     <header class="header">
@@ -339,37 +218,59 @@
     <main class="content">
       <div id="tasksPane">
 
-        <!-- ================= Variant A ================= -->
+        <!-- ================= Variant A: Inbox ================= -->
         <section class="v v-a on">
           <div class="toolbar">
             <div class="filters" data-a-filters>
               <button class="filter active" data-a-filter="all">All <span data-count-all></span></button>
-              <button class="filter" data-a-filter="active">Active <span data-count-active></span></button>
+              <button class="filter" data-a-filter="idle">Idle <span data-count-idle></span></button>
               <button class="filter" data-a-filter="handled">Handled <span data-count-handled></span></button>
             </div>
-            <button class="btn btn-primary" data-open="a">＋ New task</button>
+            <button class="btn btn-primary" data-open>＋ New task</button>
           </div>
           <div data-a-list class="list"></div>
         </section>
 
-        <!-- ================= Variant B ================= -->
+        <!-- ================= Variant B: Kanban ================= -->
         <section class="v v-b">
           <div class="board">
             <div class="board-head">
-              <div class="board-title">Tasks</div>
-              <button class="btn btn-primary" data-open="b">＋ New task</button>
+              <div class="board-title">Tasks — by stage</div>
+              <button class="btn btn-primary" data-open>＋ New task</button>
             </div>
-            <div class="grid" data-b-grid></div>
+            <div class="kanban" data-b-kanban>
+              <div class="kcol" data-kcol="idle">
+                <div class="kcol-head"><span>Idle</span><span class="n" data-kcount="idle"></span></div>
+                <div class="kcol-cards" data-kcards="idle"></div>
+              </div>
+              <div class="kcol" data-kcol="inprogress">
+                <div class="kcol-head"><span>In progress</span><span class="n" data-kcount="inprogress"></span></div>
+                <div class="kcol-cards" data-kcards="inprogress"></div>
+              </div>
+              <div class="kcol" data-kcol="done">
+                <div class="kcol-head"><span>Done</span><span class="n" data-kcount="done"></span></div>
+                <div class="kcol-cards" data-kcards="done"></div>
+              </div>
+            </div>
           </div>
-          <button class="fab" data-open="b" title="New task">＋</button>
+          <button class="fab" data-open title="New task">＋</button>
         </section>
 
-        <!-- ================= Variant C ================= -->
+        <!-- ================= Variant C: Next-up picker ================= -->
         <section class="v v-c">
           <div class="search-row">
-            <input class="search" data-c-search type="text" placeholder="Filter tasks…  (Ctrl+K to create)" />
+            <input class="search" data-c-search type="text" placeholder="Filter…" />
           </div>
-          <div data-c-list></div>
+          <div class="pick-head">
+            <div class="pick-title">Next up</div>
+            <div class="pick-order">oldest first — ready to pick</div>
+          </div>
+          <div class="pick-list" data-c-list></div>
+          <div class="pick-foot">
+            <span><span class="kbd">↑</span> <span class="kbd">↓</span> move</span>
+            <span><span class="kbd">Enter</span> start thread</span>
+            <span><span class="kbd">Ctrl</span>+<span class="kbd">K</span> new task</span>
+          </div>
         </section>
 
       </div>
@@ -382,7 +283,7 @@
     </main>
   </div>
 
-  <!-- ================= Create/Edit modal ================= -->
+  <!-- ================= Create/Edit modal (slide-over) ================= -->
   <div class="overlay" data-modal>
     <div class="modal">
       <div class="modal-head">
@@ -422,11 +323,13 @@
     </div>
   </div>
 
+  <div class="toast" data-toast></div>
+
   <div class="variant-bar">
     <span>Variant</span>
     <button class="vbtn on" data-v="a">A · inbox</button>
-    <button class="vbtn" data-v="b">B · cards</button>
-    <button class="vbtn" data-v="c">C · palette</button>
+    <button class="vbtn" data-v="b">B · kanban</button>
+    <button class="vbtn" data-v="c">C · picker</button>
     <span class="sep"></span>
     <button class="vbtn" data-theme>☀ / 🌙</button>
   </div>
@@ -441,12 +344,14 @@ const DIRS = [
   { kind: "cwd", label: "~/projects/beads", path: "/home/ki/projects/beads", missing: false },
 ];
 const SUGGESTED_TAGS = ["explore", "plan", "verify-plan", "working", "verify-work", "audit", "revise", "done"];
+const STAGE_IN_PROGRESS = ["working", "verify-plan", "verify-work", "audit", "revise"];
+/* newest-first in the array; created_at desc per #11 */
 let TASKS = [
-  { id: 1, title: "Fix drawer tag menu clipping", cwd: DIRS[0].path, tags: ["working", "revise"], handled: false },
-  { id: 2, title: "Write ADR for task lifecycle", cwd: null, tags: ["plan"], handled: false },
-  { id: 3, title: "Investigate SSE reconnect flake", cwd: DIRS[1].path, tags: ["explore"], handled: false },
-  { id: 4, title: "Ship P037: shared TagPicker", cwd: DIRS[0].path, tags: ["done", "audit"], handled: true },
-  { id: 5, title: "Extract TagPicker constant + task modal reuse", cwd: null, tags: [], handled: true },
+  { id: 1, title: "Fix drawer tag menu clipping", cwd: DIRS[0].path, tags: ["working", "revise"], handled: true, thread: "fix-drawer-tag-clipping" },
+  { id: 2, title: "Write ADR for task lifecycle", cwd: null, tags: ["plan"], handled: false, thread: null },
+  { id: 3, title: "Investigate SSE reconnect flake", cwd: DIRS[1].path, tags: ["explore"], handled: false, thread: null },
+  { id: 4, title: "Ship P037: shared TagPicker", cwd: DIRS[0].path, tags: ["done", "audit"], handled: true, thread: "ship-p037-tagpicker" },
+  { id: 5, title: "Extract TagPicker constant + task modal reuse", cwd: null, tags: [], handled: true, thread: "extract-tagpicker-constant" },
 ];
 let nextId = 6;
 
@@ -455,19 +360,28 @@ let variant = new URLSearchParams(location.search).get("variant") || "a";
 if (!["a","b","c"].includes(variant)) variant = "a";
 let aFilter = "all";
 let cQuery = "";
-let editingId = null; // null = create, number = edit
-let draftDir = "";    // selected directory path ("" = none)
+let cSel = 0;
+let editingId = null;
+let draftDir = "";
 let draftTags = [];
 
 const dirByPath = p => DIRS.find(d => d.path === p) || null;
 const taskById = id => TASKS.find(t => t.id === id);
+const isDone = t => t.tags.includes("done");
+const stageCol = t => {
+  if (isDone(t)) return "done";
+  if (t.tags.some(tg => STAGE_IN_PROGRESS.includes(tg))) return "inprogress";
+  return "idle";
+};
 
 /* ==================== Rendering ==================== */
-function esc(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
 function tagChips(tags) {
-  return tags.map(t => `<span class="tag"><span class="hash">#</span>${esc(t)}</span>`).join("");
+  return tags.map(t => `<span class="tag${t === "done" ? " done-tag" : ""}"><span class="hash">#</span>${esc(t)}</span>`).join("");
+}
+function threadBadge(t) {
+  if (!t.thread) return "";
+  return `<span class="thread-badge" title="Linked conversation"><span class="arrow">➤</span><span class="slug">${esc(t.thread)}</span></span>`;
 }
 function cwdLine(t) {
   if (!t.cwd) return "";
@@ -479,17 +393,18 @@ function cwdLine(t) {
 }
 function rowActions(t) {
   return `<button class="icon-btn" data-act="edit" data-id="${t.id}" title="Edit">✎</button>
-          <button class="icon-btn" data-act="thread" data-id="${t.id}" title="Start thread">➤</button>
+          <button class="icon-btn" data-act="thread" data-id="${t.id}" title="Start thread (deferred to #14)">➤</button>
           <button class="icon-btn" data-act="del" data-id="${t.id}" title="Delete">🗑</button>`;
 }
 
+/* ---- Variant A ---- */
 function renderA() {
-  const list = TASKS.filter(t => aFilter === "all" || (aFilter === "active") === !t.handled);
-  const active = TASKS.filter(t => !t.handled);
+  const list = TASKS.filter(t => aFilter === "all" || (aFilter === "idle") === !t.handled);
+  const idle = TASKS.filter(t => !t.handled);
   const handled = TASKS.filter(t => t.handled);
   const q = sel => document.querySelector(sel);
   q("[data-count-all]").textContent = `(${TASKS.length})`;
-  q("[data-count-active]").textContent = `(${active.length})`;
+  q("[data-count-idle]").textContent = `(${idle.length})`;
   q("[data-count-handled]").textContent = `(${handled.length})`;
   document.querySelectorAll("[data-a-filter]").forEach(b => b.classList.toggle("active", b.dataset.aFilter === aFilter));
 
@@ -497,65 +412,83 @@ function renderA() {
   if (TASKS.length === 0) {
     html = `<div class="empty"><div class="big">No tasks yet</div>
       <div>Tasks you create will show up here.</div>
-      <div style="margin-top:1rem"><button class="btn btn-primary" data-open="a">＋ Create your first task</button></div></div>`;
+      <div style="margin-top:1rem"><button class="btn btn-primary" data-open>＋ Create your first task</button></div></div>`;
   } else {
-    if (active.length) html += `<div class="section-label">Active — ${active.length}</div>` + active.map(rowA).join("");
-    if (handled.length) html += `<div class="section-label">Handled — ${handled.length}</div>` + handled.map(rowA).join("");
+    const shownIdle = list.filter(t => !t.handled);
+    const shownHandled = list.filter(t => t.handled);
+    if (shownIdle.length) html += `<div class="section-label">Idle — ${shownIdle.length} (ready to pick)</div>` + shownIdle.map(rowA).join("");
+    if (shownHandled.length) html += `<div class="section-label">Handled — ${shownHandled.length}</div>` + shownHandled.map(rowA).join("");
+    if (!shownIdle.length && !shownHandled.length) html = `<div class="empty"><div class="big">Nothing ${aFilter === "idle" ? "idle" : "handled"} right now</div></div>`;
   }
   q("[data-a-list]").innerHTML = html;
 }
 function rowA(t) {
-  return `<div class="row ${t.handled ? "handled" : ""}">
-    <span class="check">✓</span>
+  return `<div class="row ${t.handled ? "handled" : ""}${isDone(t) ? " is-done" : ""}">
     <div class="main">
       <div class="task-title">${esc(t.title)}</div>
-      <div class="meta"><span class="mono">${cwdLine(t)}</span>${tagChips(t.tags)}</div>
+      <div class="meta">${cwdLine(t)}${threadBadge(t)}${tagChips(t.tags)}</div>
     </div>
     <div class="row-actions">${rowActions(t)}</div>
   </div>`;
 }
 
+/* ---- Variant B: kanban ---- */
 function renderB() {
   const q = sel => document.querySelector(sel);
-  let html = "";
+  const cols = ["idle", "inprogress", "done"];
   if (TASKS.length === 0) {
-    html = `<div class="empty-card">
-      <div style="font-size:1.5rem">🗂</div>
-      <div><b>No tasks yet</b></div>
-      <div>Your tasks will live here as cards.</div>
-      <button class="btn btn-primary" data-open="b">Create your first task</button>
-    </div>`;
-  } else {
-    html = TASKS.map(t => `<div class="card ${t.handled ? "handled" : ""}">
-      <div class="card-top">
-        <div class="card-title">${esc(t.title)}</div>
-        ${t.handled ? '<span class="handled-stamp">handled</span>' : ""}
-      </div>
-      <div class="card-tags">${tagChips(t.tags)}</div>
-      <div class="card-foot">
-        ${t.cwd ? `<span class="${dirByPath(t.cwd) && dirByPath(t.cwd).kind === "git" ? "git-dot" : "cwd-dot"}"></span><span class="mono">${esc((dirByPath(t.cwd)||{}).label || t.cwd)}</span>${(dirByPath(t.cwd)||{}).missing ? '<span class="missing-badge">missing</span>' : ""}` : '<span class="mono" style="color:var(--text-tertiary)">no directory</span>'}
-        <div class="card-actions">${rowActions(t)}</div>
-      </div>
-    </div>`).join("");
+    q("[data-b-kanban]").innerHTML = `<div class="empty-board" style="grid-column:1/-1">
+      <div style="font-size:1.5rem">🗂</div><div><b>No tasks yet</b></div>
+      <button class="btn btn-primary" data-open>Create your first task</button></div>`;
+    cols.forEach(c => q(`[data-kcount="${c}"]`).textContent = "");
+    return;
   }
-  q("[data-b-grid]").innerHTML = html;
+  cols.forEach(c => {
+    const tasks = TASKS.filter(t => stageCol(t) === c);
+    q(`[data-kcount="${c}"]`).textContent = `(${tasks.length})`;
+    q(`[data-kcards="${c}"]`).innerHTML = tasks.length
+      ? tasks.map(cardB).join("")
+      : `<div class="kcol-empty">Nothing here</div>`;
+  });
+}
+function cardB(t) {
+  return `<div class="card ${isDone(t) ? "is-done" : ""}" data-card-id="${t.id}">
+    <div class="card-top">
+      <div class="card-title">${esc(t.title)}</div>
+    </div>
+    ${threadBadge(t) ? `<div>${threadBadge(t)}</div>` : ""}
+    <div class="card-tags">${tagChips(t.tags)}</div>
+    <div class="card-foot">
+      ${t.cwd ? `<span class="${dirByPath(t.cwd) && dirByPath(t.cwd).kind === "git" ? "git-dot" : "cwd-dot"}"></span><span class="mono">${esc((dirByPath(t.cwd)||{}).label || t.cwd)}</span>${(dirByPath(t.cwd)||{}).missing ? '<span class="missing-badge">missing</span>' : ""}` : '<span class="mono" style="color:var(--text-tertiary)">no directory</span>'}
+      <div class="card-actions">${rowActions(t)}</div>
+    </div>
+  </div>`;
 }
 
+/* ---- Variant C: next-up picker ---- */
+function pickList() {
+  const qq = cQuery.trim().toLowerCase();
+  return TASKS.filter(t => !t.handled && !isDone(t))
+    .filter(t => !qq || t.title.toLowerCase().includes(qq) || t.tags.some(tg => tg.toLowerCase().includes(qq)) || (t.cwd||"").toLowerCase().includes(qq))
+    .reverse(); // FIFO: oldest first
+}
 function renderC() {
   const q = sel => document.querySelector(sel);
-  const qq = cQuery.trim().toLowerCase();
-  const list = TASKS.filter(t => !qq || t.title.toLowerCase().includes(qq) || t.tags.some(tg => tg.toLowerCase().includes(qq)) || (t.cwd||"").toLowerCase().includes(qq));
+  const list = pickList();
+  if (cSel >= list.length) cSel = list.length - 1;
+  if (cSel < 0) cSel = 0;
   let html = "";
   if (list.length === 0) {
-    html = `<div class="empty">${TASKS.length === 0
-      ? 'No tasks yet. <span class="kbd">Ctrl</span>+<span class="kbd">K</span> to create one.'
-      : 'No tasks match <b>' + esc(cQuery) + "</b>."}</div>`;
+    html = `<div class="empty">${TASKS.every(t => t.handled || isDone(t))
+      ? '<b>All picked up!</b> Nothing idle left. <span class="kbd">Ctrl</span>+<span class="kbd">K</span> to add a task.'
+      : "No tasks match <b>" + esc(cQuery) + "</b>."}</div>`;
   } else {
-    html = list.map(t => `<div class="row ${t.handled ? "handled" : ""}">
-      <span class="mono" style="width:4.2rem;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(t.cwd || "no directory")}">${esc((dirByPath(t.cwd)||{}).label || (t.cwd ? t.cwd.split("/").pop() : "—"))}</span>
+    html = list.map((t, i) => `<div class="pick-row ${i === cSel ? "sel" : ""}" data-pick="${t.id}">
       <span class="task-title">${esc(t.title)}</span>
-      <span class="tags">${tagChips(t.tags)}</span>
-      <span class="row-actions">${rowActions(t)}</span>
+      <span class="pick-meta">
+        ${t.cwd ? `<span class="mono" title="${esc(t.cwd)}">${esc((dirByPath(t.cwd)||{}).label || t.cwd)}</span>` : ""}
+        <span class="tags">${tagChips(t.tags)}</span>
+      </span>
     </div>`).join("");
   }
   q("[data-c-list]").innerHTML = html;
@@ -565,7 +498,6 @@ function renderAll() { renderA(); renderB(); renderC(); }
 
 /* ==================== Modal ==================== */
 const modal = document.querySelector("[data-modal]");
-const titleEl = document.querySelector("[data-modal-title]");
 const fTitle = document.querySelector("[data-f-title]");
 const fDir = document.querySelector("[data-f-dir]");
 const saveBtn = document.querySelector("[data-save]");
@@ -586,7 +518,7 @@ function populateTagGrid() {
 }
 function openModal(id, mode) {
   editingId = mode === "edit" ? id : null;
-  titleEl.textContent = editingId ? "Edit task" : "New task";
+  document.querySelector("[data-modal-title]").textContent = editingId ? "Edit task" : "New task";
   saveBtn.textContent = editingId ? "Save changes" : "Create task";
   const t = editingId ? taskById(editingId) : null;
   fTitle.value = t ? t.title : "";
@@ -624,18 +556,26 @@ function save() {
     const t = taskById(editingId);
     t.title = title; t.cwd = draftDir; t.tags = [...draftTags];
   } else {
-    TASKS.unshift({ id: nextId++, title, cwd: draftDir || null, tags: [...draftTags], handled: false });
+    TASKS.unshift({ id: nextId++, title, cwd: draftDir || null, tags: [...draftTags], handled: false, thread: null });
   }
   closeModal(); renderAll();
 }
 
+/* ==================== Toast ==================== */
+let toastTimer;
+function toast(msg) {
+  const el = document.querySelector("[data-toast]");
+  el.textContent = msg;
+  el.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("on"), 2200);
+}
+
 /* ==================== Events ==================== */
 document.addEventListener("click", e => {
-  const open = e.target.closest("[data-open]");
-  if (open) { openModal(null); return; }
+  if (e.target.closest("[data-open]")) { openModal(null); return; }
   if (e.target.closest("[data-close]")) { closeModal(); return; }
-  const save = e.target.closest("[data-save]");
-  if (save) { save(); return; }
+  if (e.target.closest("[data-save]")) { save(); return; }
   const tag = e.target.closest("[data-tag]");
   if (tag) {
     const t = tag.dataset.tag;
@@ -644,7 +584,6 @@ document.addEventListener("click", e => {
   }
   const browse = e.target.closest("[data-browse]");
   if (browse) {
-    // Prototype stand-in for DirectoryPickerModal: cycle to next dir
     const next = DIRS.find(d => !d.missing && d.path !== draftDir) || DIRS[0];
     draftDir = next.path;
     fDir.value = draftDir;
@@ -656,7 +595,16 @@ document.addEventListener("click", e => {
     const id = +act.dataset.id;
     if (act.dataset.act === "edit") openModal(id, "edit");
     if (act.dataset.act === "del") { TASKS = TASKS.filter(t => t.id !== id); renderAll(); }
-    if (act.dataset.act === "thread") { /* placeholder: thread-from-task is #14 */ }
+    if (act.dataset.act === "thread") {
+      const t = taskById(id);
+      toast(`Would open a new thread from "${t.title}" — thread-from-task is deferred to #14`);
+    }
+    return;
+  }
+  const pick = e.target.closest("[data-pick]");
+  if (pick) {
+    cSel = pickList().findIndex(t => t.id === +pick.dataset.pick);
+    renderC();
     return;
   }
   const af = e.target.closest("[data-a-filter]");
@@ -666,9 +614,16 @@ fDir.addEventListener("change", () => {
   draftDir = fDir.value;
   document.querySelector("[data-dir-preview]").textContent = draftDir ? (dirByPath(draftDir)?.label || draftDir) : "";
 });
-document.querySelector("[data-c-search]").addEventListener("input", e => { cQuery = e.target.value; renderC(); });
-document.querySelector("[data-c-search]").addEventListener("keydown", e => {
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openModal(null); }
+const cSearch = document.querySelector("[data-c-search]");
+cSearch.addEventListener("input", e => { cQuery = e.target.value; cSel = 0; renderC(); });
+cSearch.addEventListener("keydown", e => {
+  const list = pickList();
+  if (e.key === "ArrowDown") { e.preventDefault(); cSel = Math.min(cSel + 1, list.length - 1); renderC(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); cSel = Math.max(cSel - 1, 0); renderC(); }
+  else if (e.key === "Enter" && list[cSel]) {
+    const t = list[cSel];
+    toast(`Would start a thread for "${t.title}" — thread-from-task is deferred to #14`);
+  }
 });
 modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
 document.addEventListener("keydown", e => {
@@ -690,8 +645,6 @@ function setVariant(v) {
   document.body.classList.add("v-" + v);
   document.querySelectorAll("[data-v]").forEach(b => b.classList.toggle("on", b.dataset.v === v));
   history.replaceState(null, "", "?variant=" + v);
-  /* variant-specific overlay alignment: toggle a body class the CSS keys off of */
-  modal.closest(".overlay").className = "overlay" + (v === "b" ? " v-b" : v === "c" ? " v-c" : "");
 }
 document.querySelectorAll("[data-v]").forEach(b => b.addEventListener("click", () => setVariant(b.dataset.v)));
 document.querySelector("[data-theme]").addEventListener("click", () => {
