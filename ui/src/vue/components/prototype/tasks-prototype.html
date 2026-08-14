@@ -61,8 +61,6 @@
   .missing-badge { font-size: 0.6875rem; color: var(--warning-text); background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 9999px; padding: 0 0.4rem; white-space: nowrap; }
   .mono { font-family: var(--mono); font-size: 0.75rem; color: var(--text-secondary); }
   .dir-name { color: var(--text-secondary); }
-  .git-dot { width: 0.5rem; height: 0.5rem; border-radius: 9999px; background: var(--green-600, #16a34a); flex-shrink: 0; }
-  .cwd-dot { width: 0.5rem; height: 0.5rem; border-radius: 1px; background: var(--text-tertiary); flex-shrink: 0; }
   .thread-badge { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: var(--primary); background: var(--bg-base); border: 1px solid var(--blue-border); border-radius: 9999px; padding: 0.1rem 0.5rem; white-space: nowrap; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; cursor: pointer; font-family: var(--font); }
   .thread-badge:hover { background: var(--blue-bg); border-color: var(--primary); }
   .thread-badge .arrow { opacity: 0.7; flex-shrink: 0; }
@@ -288,8 +286,7 @@ function cwdLine(t) {
   const d = dirByPath(t.cwd);
   const missing = !d ? true : d.missing;
   const label = d ? d.label : t.cwd.split("/").pop() || t.cwd;
-  const dot = d && d.kind === "git" ? "git-dot" : "cwd-dot";
-  return `<span class="${dot}"></span><span class="dir-name">${esc(label)}</span>${missing ? '<span class="missing-badge">missing</span>' : ""}`;
+  return `<span class="dir-name">${esc(label)}</span>${missing ? '<span class="missing-badge">missing</span>' : ""}`;
 }
 function rowActions(t) {
   return `<button class="icon-btn" data-act="edit" data-id="${t.id}" title="Edit">✎</button>
