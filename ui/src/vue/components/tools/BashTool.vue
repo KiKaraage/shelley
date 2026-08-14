@@ -111,11 +111,19 @@ function splitHeaderComments(cmd: string): { comments: string; body: string } {
   const firstCodeLine = cmd.search(/^[ \t]*[^# \t\n]/m);
   if (firstCodeLine === -1) {
     // Everything is comments (or empty): keep them, minus leading blank lines.
-    return { comments: cmd.replace(/^[ \t]*\n+/, "").replace(/\s+$/, ""), body: "" };
+    return { comments: trimHash(cmd.replace(/^[ \t]*\n+/, "").replace(/\s+$/, "")), body: "" };
   }
   const leading = cmd.slice(0, firstCodeLine);
-  const comments = leading.replace(/^[ \t]*\n+/, "").replace(/\s+$/, "");
+  const comments = trimHash(leading.replace(/^[ \t]*\n+/, "").replace(/\s+$/, ""));
   return { comments, body: cmd.slice(firstCodeLine).replace(/^\n+/, "") };
+}
+
+/** Strip the leading `#` (and one space after it) from each comment line. */
+function trimHash(comments: string): string {
+  return comments
+    .split("\n")
+    .map((line) => line.replace(/^[ \t]*# ?/, ""))
+    .join("\n");
 }
 
 // Details panel — collapsed by default (expanded inside the detail modal).

@@ -464,7 +464,7 @@ Show leading `#` comments in bash tool summary
 - Base: 4a98848
 - Files: BashTool.vue, styles.css
 - Changes:
-  - Bash tool summary now captures the contiguous run of `#` comment lines at the start of the tool call (any leading whitespace or blank lines allowed) and renders them above the command in smaller (0.75rem) dim (`--text-tertiary`) mono text. Only lines before the first non-comment, non-blank line are captured: a `#` comment AFTER the command body stays hidden inside the collapsed card, exactly like the trailing `# Patch for Shelley...` example.
+  - Bash tool summary now captures the contiguous run of `#` comment lines at the start of the tool call (any leading whitespace or blank lines allowed) and renders them above the command in smaller (0.75rem) dim (`--text-tertiary`) mono text. Only lines before the first non-comment, non-blank line are captured: a `#` comment AFTER the command body stays hidden inside the collapsed card, exactly like the trailing `# Patch for Shelley...` example. Each captured line has its leading `#` (and one space after it) trimmed for display, so `# count files` renders as just `count files`.
   - Comment lines are stripped from the command before the existing `&&`-splitting so chained segments still render on separate lines and a command that is only comments degrades to a single empty line.
 - Watchouts:
   - A command consisting solely of comments renders as one empty command line beneath the comments (no crash; title tooltip still holds the full command).
