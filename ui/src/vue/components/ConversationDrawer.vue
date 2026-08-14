@@ -5,7 +5,7 @@
      .conversation-group-label; aria-labels come from i18n t() keys
      ("Open conversations", "Group conversations", closeConversations,
      collapseSidebar, searchConversations, clearSearch, newConversation, plus
-     archive/restore/delete_/rename/editTags/removeTag/cancel). Reuses
+     archive/restore/delete_/rename/editTags/cancel). Reuses
      utils/conversationSort, utils/tildify, vue/utils/openInNewTab.
 
      NOTE: the App-level `.backdrop` element lives in App.tsx / the parent
@@ -485,7 +485,7 @@ import { isImeComposing } from "../../utils/imeComposing";
 import { handleModifiedNavClick } from "../utils/openInNewTab";
 import ConversationRow from "./ConversationDrawerRow.vue";
 import Button from "primevue/button";
-import { DrawerCtxKey, type GroupBy, parseTags } from "./conversationDrawerShared";
+import { DrawerCtxKey, type GroupBy } from "./conversationDrawerShared";
 import type { EphemeralTerminal } from "./terminalTypes";
 import {
   UNTAGGED_TERM,
@@ -568,10 +568,6 @@ let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 let searchSeq = 0;
 const editingId = ref<string | null>(null);
 const editingSlug = ref("");
-const tagEditorId = ref<string | null>(null);
-const tagInput = ref("");
-const tagEditorRef = ref<HTMLElement | null>(null);
-const tagInputRef = ref<HTMLInputElement | null>(null);
 const expandedSubagents = ref<Set<string>>(new Set());
 const groupBy = ref<GroupBy>(
   (() => {
@@ -641,20 +637,6 @@ watch(pendingDeleteId, (id) => {
   else document.removeEventListener("mousedown", onPendingDeleteOutside);
 });
 
-function onTagEditorOutside(e: MouseEvent) {
-  const target = e.target as Node;
-  if (tagEditorRef.value && tagEditorRef.value.contains(target)) return;
-  // The tag-editor suggestion dropdown is teleported to <body>, so it sits
-  // outside tagEditorRef; a click on one of its options must not be read as
-  // "outside" and close the editor.
-  if ((target as Element)?.closest?.(".tag-editor-menu")) return;
-  tagEditorId.value = null;
-  tagInput.value = "";
-}
-watch(tagEditorId, (id) => {
-  if (id) document.addEventListener("mousedown", onTagEditorOutside);
-  else document.removeEventListener("mousedown", onTagEditorOutside);
-});
 
 // Eagerly load archived conversations on mount for the settled preview,
 // and refresh when switching back from the full settled view.
@@ -889,58 +871,9 @@ async function refreshConversationSnapshots(updated: Conversation) {
 }
 
 // --- Tags ---
-function handleOpenTagEditor(e: MouseEvent, conversationId: string) {
-  e.stopPropagation();
-  tagEditorId.value = tagEditorId.value === conversationId ? null : conversationId;
-  tagInput.value = "";
-  setTimeout(() => tagInputRef.value?.focus(), 0);
-}
-async function saveTags(conversationId: string, tags: string[]) {
-  const normalized: string[] = [];
-  const seen = new Set<string>();
-  for (const tag of tags) {
-    const trimmed = tag.trim();
-    if (!trimmed || seen.has(trimmed)) continue;
-    seen.add(trimmed);
-    normalized.push(trimmed);
-  }
-  try {
-    const updated = await api.updateConversationTags(conversationId, normalized);
-    emit("renamed", updated);
-    await refreshConversationSnapshots(updated);
-  } catch (err) {
-    console.error("Failed to update tags:", err);
-  }
-}
-async function handleAddTag(conversation: Conversation, tag?: string) {
-  const value = (tag ?? tagInput.value).trim().replace(/^#+/, "");
-  if (!value) return;
-  const current = parseTags(conversation);
-  if (current.includes(value)) {
-    tagInput.value = "";
-    return;
-  }
-  tagInput.value = "";
-  await saveTags(conversation.conversation_id, [...current, value]);
-}
-// The row tag editor's dropdown: existing tags matching what's typed anywhere
-// in their text, ranked best-first, minus the conversation's own tags. A
-// typed leading `#` is not part of any stored tag, so it's stripped before
-// matching.
-function matchTagOffers(conversation: Conversation, typed: string): OfferedTag[] {
-  const hashes = /^#+/.exec(typed)?.[0] ?? "";
-  return matchTags(
-    [...props.conversations, ...archivedConversations.value],
-    typed.slice(hashes.length),
-    parseTags(conversation),
-  );
-}
-async function handleRemoveTag(conversation: Conversation, tag: string) {
-  const current = parseTags(conversation);
-  await saveTags(
-    conversation.conversation_id,
-    current.filter((tg) => tg !== tag),
-  );
+function handleTagPickerUpdate(conversation: Conversation) {
+  emit("renamed", conversation);
+
 }
 
 // --- Rename ---
@@ -1337,7 +1270,6 @@ onUnmounted(() => {
   document.removeEventListener("mousedown", onGroupMenuOutside);
   document.removeEventListener("mousedown", onTagMenuOutside);
   document.removeEventListener("mousedown", onPendingDeleteOutside);
-  document.removeEventListener("mousedown", onTagEditorOutside);
 });
 onMounted(() => {
   void loadArchivedConversations();
@@ -1366,10 +1298,6 @@ provide(DrawerCtxKey, {
   editingId,
   editingSlug,
   renameInputRef,
-  tagEditorId,
-  tagInput,
-  tagEditorRef,
-  tagInputRef,
   draftLabels,
   groupBy,
   selectedTags,
@@ -1383,10 +1311,8 @@ provide(DrawerCtxKey, {
   handleStartRename,
   handleRename,
   handleRenameKeyDown,
-  handleOpenTagEditor,
-  handleAddTag,
-  matchTagOffers,
-  handleRemoveTag,
+  handleTagPickerUpdate,
+
   handleArchive,
   handleUnarchive,
   handleCopyGitHash,

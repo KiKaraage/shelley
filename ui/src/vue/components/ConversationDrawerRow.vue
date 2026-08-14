@@ -82,24 +82,10 @@
                 />
               </svg>
             </Button>
-            <Button
-              class="btn-icon-sm"
-              text
-              severity="secondary"
-              size="small"
-              v-tooltip.top="ctx.t('editTags')"
-              :aria-label="ctx.t('editTags')"
-              @click="ctx.handleOpenTagEditor($event, conversation.conversation_id)"
-            >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="drawer-icon-size">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  :stroke-width="2"
-                  d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"
-                />
-              </svg>
-            </Button>
+            <DrawerTagPicker
+              :conversation="conversation"
+              @update="ctx.handleTagPickerUpdate"
+            />
             <Button
               class="btn-icon-sm"
               text
@@ -206,100 +192,16 @@
           </svg>
           {{ terminalCount }}
         </span>
-      <!-- Tags / tag editor -->
-      <div
-        v-if="tagsEditing || conversationTags.length > 0"
-        :ref="setTagEditorRefMaybe"
-        :class="`conversation-tags conversation-tags-inline${tagsEditing ? ' conversation-tags-editing' : ''}`"
-        @click="tagsEditing ? $event.stopPropagation() : undefined"
-      >
-        <template v-for="tag in conversationTags" :key="tag">
-          <span v-if="tagsEditing" class="conversation-tag conversation-tag-removable">
-            <span class="conversation-tag-hash">#</span>
-            <span class="conversation-tag-text">{{ tag }}</span>
-            <button
-              type="button"
-              class="conversation-tag-remove"
-              :aria-label="`${ctx.t('removeTag')} ${tag}`"
-              v-tooltip.top="ctx.t('removeTag')"
-              @click="ctx.handleRemoveTag(conversation, tag)"
-            >
-              ×
-            </button>
-          </span>
-          <!-- Not editing: clicking a chip toggles it in the drawer's tag
-               filter. While the editor is open the chips mean "remove". -->
-          <button
-            v-else
-            type="button"
-            :class="`conversation-tag conversation-tag-filterable${tagFiltered(tag) ? ' conversation-tag-filter-on' : ''}`"
-            :title="`#${tag}`"
-            :aria-pressed="tagFiltered(tag)"
-            data-testid="conversation-tag-chip"
-            :data-tag="tag"
-            @click="onTagChipClick($event, tag)"
-          >
-            <span class="conversation-tag-hash">#</span>{{ tag }}
-          </button>
-        </template>
-        <form
-          v-if="tagsEditing"
-          class="conversation-tag-inline-form"
-          @submit.prevent="onTagSubmit"
+        <!-- Tags (merged into meta row, pushed right via margin-left: auto) -->
+        <div
+          v-if="conversationTags.length > 0"
+          :class="`conversation-tags conversation-tags-inline`"
         >
-          <span class="conversation-tag-hash">#</span>
-          <input
-            ref="tagInput"
-            type="text"
-            :value="ctx.tagInput.value"
-            :placeholder="ctx.t('addTagPlaceholder')"
-            class="conversation-tag-inline-input"
-            autocomplete="off"
-            autocapitalize="off"
-            spellcheck="false"
-            role="combobox"
-            aria-autocomplete="list"
-            :aria-expanded="tagMenuOpen"
-            @input="onTagInput"
-            @keydown="onTagInputKeyDown"
-            @focus="onTagInputFocus"
-            @blur="onTagInputBlur"
-          />
-          <!-- Suggestion dropdown, teleported out of the drawer's clipping
-               overflow and pinned under the input. Mirrors the search box's
-               `tag:` menu: substring matches, arrow/Enter selection, counts. -->
-          <Teleport to="body">
-            <div
-              v-if="tagMenuOpen"
-              class="tag-filter-menu tag-editor-menu"
-              :style="tagMenuStyle"
-              data-testid="tag-editor-menu"
-              role="listbox"
-              @mousedown.prevent
-            >
-              <div class="tag-filter-options scrollable">
-                <button
-                  v-for="(offer, i) in tagOffers"
-                  :key="offer.tag"
-                  type="button"
-                  role="option"
-                  :aria-selected="i === tagHighlightIndex"
-                  :class="`tag-filter-option${i === tagHighlightIndex ? ' highlighted' : ''}`"
-                  data-testid="tag-editor-option"
-                  :data-tag="offer.tag"
-                  @mousemove="tagHighlightIndex = i"
-                  @click="chooseTagOffer(offer.tag)"
-                >
-                  <span class="tag-filter-option-name">
-                    <span class="conversation-tag-hash">#</span>{{ offer.tag }}
-                  </span>
-                  <span class="tag-filter-option-count">{{ offer.count }}</span>
-                </button>
-              </div>
-            </div>
-          </Teleport>
-        </form>
-      </div>
+          <span v-for="tag in conversationTags" :key="tag" class="conversation-tag" :title="`#${tag}`">
+            <span class="conversation-tag-hash">#</span>{{ tag }}
+          </span>
+        </div>
+
       </div>
     </div>
 
@@ -374,8 +276,8 @@
 import { computed, defineComponent, h, inject, nextTick, onBeforeUnmount, ref, watch, type VNode } from "vue";
 import Button from "primevue/button";
 import GitBranchIcon from "./GitBranchIcon.vue";
+import DrawerTagPicker from "./DrawerTagPicker.vue";
 import type { Conversation, ConversationWithState } from "../../types";
-import { isImeComposing } from "../../utils/imeComposing";
 import {
   DrawerCtxKey,
   parseTags,
@@ -392,7 +294,6 @@ const props = defineProps<{
 const ctx = inject(DrawerCtxKey)!;
 
 const renameInput = ref<HTMLInputElement | null>(null);
-const tagInput = ref<HTMLInputElement | null>(null);
 
 const convState = computed(() => props.conversation as ConversationWithState);
 const isDraft = computed(() => !!props.conversation.is_draft);
@@ -466,17 +367,7 @@ const conversationTags = computed(() => {
   perfCount("drawerRow.tags");
   return isDraft.value ? [] : parseTags(props.conversation);
 });
-const tagsEditing = computed(
-  () => !isDraft.value && ctx.tagEditorId.value === props.conversation.conversation_id,
-);
-function tagFiltered(tag: string): boolean {
-  return isTagSelected(ctx.selectedTags.value, tag);
-}
-function onTagChipClick(e: MouseEvent, tag: string) {
-  // Don't let the click also select the conversation.
-  e.stopPropagation();
-  ctx.toggleTagFilter(tag);
-}
+
 
 // Track when a conversation finishes working so we can show a "was working" blue dot.
 const wasWorking = computed(() =>
@@ -518,135 +409,12 @@ function onSubClick(e: MouseEvent, sub: Conversation) {
   ctx.selectConversation(sub);
 }
 
-// --- Tag editor dropdown ---------------------------------------------------
-// The row's "Edit tags" input opens a suggestion dropdown, mirroring the
-// search box's `tag:` menu: existing tags matching what's typed anywhere in
-// their text (not just as a prefix), ranked best-first, each with its usage
-// count. Arrow keys move the highlight; Enter commits the highlighted match
-// (the best one, by default), or the typed text when it matches nothing.
-const tagInputFocused = ref(false);
-// Escape closes the menu without closing the editor; latched until the typed
-// text changes so it does not immediately reopen on the next keystroke.
-const tagMenuDismissed = ref(false);
-const tagHighlightIndex = ref(0);
 
-const tagOffers = computed(() =>
-  tagsEditing.value ? ctx.matchTagOffers(props.conversation, ctx.tagInput.value) : [],
-);
-const tagMenuOpen = computed(
-  () =>
-    tagsEditing.value &&
-    tagInputFocused.value &&
-    !tagMenuDismissed.value &&
-    tagOffers.value.length > 0,
-);
-
-// The menu is teleported to <body> (the drawer's overflow would clip it), so
-// it is positioned in viewport coordinates under the input. Recomputed on
-// open and whenever the drawer scrolls or the window resizes.
-const menuRect = ref({ left: 0, top: 0, width: 0 });
-const tagMenuStyle = computed(() => ({
-  left: `${menuRect.value.left}px`,
-  top: `${menuRect.value.top}px`,
-  width: `${menuRect.value.width}px`,
-}));
-function updateMenuRect() {
-  const el = tagInput.value;
-  if (!el) return;
-  const r = el.getBoundingClientRect();
-  menuRect.value = { left: r.left, top: r.bottom + 4, width: Math.max(r.width, 160) };
-}
-watch(tagMenuOpen, (open) => {
-  if (!open) {
-    window.removeEventListener("scroll", updateMenuRect, true);
-    window.removeEventListener("resize", updateMenuRect);
-    return;
-  }
-  void nextTick(updateMenuRect);
-  window.addEventListener("scroll", updateMenuRect, true);
-  window.addEventListener("resize", updateMenuRect);
-});
-onBeforeUnmount(() => {
-  window.removeEventListener("scroll", updateMenuRect, true);
-  window.removeEventListener("resize", updateMenuRect);
-});
-// Keep the highlight in range as the offered set narrows.
-watch(tagOffers, () => {
-  if (tagHighlightIndex.value >= tagOffers.value.length) tagHighlightIndex.value = 0;
-});
-
-function onTagInput(e: Event) {
-  ctx.tagInput.value = (e.target as HTMLInputElement).value;
-  tagMenuDismissed.value = false;
-  tagHighlightIndex.value = 0;
-}
-function onTagInputFocus() {
-  tagInputFocused.value = true;
-}
-// A click on an option keeps focus (its @mousedown.prevent), so blurring means
-// the field really lost focus: close the menu.
-function onTagInputBlur() {
-  tagInputFocused.value = false;
-}
-async function commitTag(tag: string) {
-  await ctx.handleAddTag(props.conversation, tag);
-  tagMenuDismissed.value = false;
-  tagHighlightIndex.value = 0;
-  await nextTick();
-  tagInput.value?.focus();
-}
-function chooseTagOffer(tag: string) {
-  void commitTag(tag);
-}
-// The form's submit path: Enter with the menu open commits the highlighted
-// offer; otherwise it commits exactly what was typed (a brand-new tag).
-async function onTagSubmit() {
-  const best = tagMenuOpen.value ? tagOffers.value[tagHighlightIndex.value] : undefined;
-  await commitTag(best ? best.tag : ctx.tagInput.value);
-}
-function onTagInputKeyDown(e: KeyboardEvent) {
-  if (isImeComposing(e)) return;
-  if (tagMenuOpen.value) {
-    const n = tagOffers.value.length;
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      tagHighlightIndex.value = (tagHighlightIndex.value + 1) % n;
-      return;
-    }
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      tagHighlightIndex.value = (tagHighlightIndex.value - 1 + n) % n;
-      return;
-    }
-  }
-  if (e.key === "Escape") {
-    e.preventDefault();
-    // Peel one layer: first the open menu, then the editor.
-    if (tagMenuOpen.value) {
-      tagMenuDismissed.value = true;
-      return;
-    }
-    ctx.tagEditorId.value = null;
-    ctx.tagInput.value = "";
-  }
-}
-
-// Forward the active rename/tag-editor DOM refs up to the parent so its
-// focus/select/outside-click logic can reach them (mirrors the React refs,
-// which are bound only on the active row).
-function setTagEditorRef(el: Element | null) {
-  ctx.tagEditorRef.value = (el as HTMLElement) ?? null;
-}
-// Bound unconditionally; only writes the shared ref while this row is the
-// active tag editor (and clears it back to null otherwise via the v-if).
-const setTagEditorRefMaybe = (el: unknown) => {
-  if (tagsEditing.value) setTagEditorRef((el as Element) ?? null);
-};
+// Forward the active rename-editor DOM ref up to the parent so its
+// focus/select logic can reach it (mirrors the React ref, which is bound only
+// on the active row).
 watch(renameInput, (el) => {
   if (el) ctx.renameInputRef.value = el;
-});
-watch(tagInput, (el) => {
-  if (el) ctx.tagInputRef.value = el;
 });
 
 // Inline delete button (mirrors renderDeleteButton). Defined as a render

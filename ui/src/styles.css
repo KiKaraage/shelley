@@ -799,6 +799,14 @@ body {
   position: relative;
 }
 
+/* Drawer variant: the trigger sits inside a conversation row, so the popover
+   opens above the row (the list body clips anything below the viewport edge). */
+.drawer-tag-picker .tag-picker-menu {
+  top: auto;
+  bottom: 100%;
+  left: auto;
+  right: 0;
+}
 
 .tag-picker-menu {
   position: absolute;
@@ -12375,59 +12383,6 @@ kbd {
   margin-right: 0.05rem;
 }
 
-.conversation-tag-remove {
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  font-size: 0.85rem;
-  line-height: 1;
-  padding: 0 0.15rem;
-  margin-left: 0.1rem;
-  opacity: 0;
-  transition: opacity 0.1s ease;
-}
-
-.conversation-tag-removable:hover .conversation-tag-remove,
-.conversation-tag-remove:focus {
-  opacity: 0.7;
-}
-
-.conversation-tag-remove:hover {
-  opacity: 1 !important;
-}
-
-/* While editing, chips and the inline text input share one flex row, so
-   the experience is "the tag list grows another chip" rather than a
-   separate popover under the row. */
-.conversation-tag-inline-form {
-  display: inline-flex;
-  flex: 1;
-  min-width: 4rem;
-  font-size: 0.75rem;
-  line-height: 1.4;
-}
-
-.conversation-tag-inline-input {
-  position: relative;
-  width: 100%;
-  min-width: 4rem;
-  padding: 0 0.15rem;
-  font: inherit;
-  border: none;
-  border-radius: 0;
-  background-color: transparent;
-  color: inherit;
-}
-
-.conversation-tag-inline-input:focus {
-  outline: none;
-}
-
-.conversation-tag-inline-input::placeholder {
-  opacity: 0.5;
-}
 
 /* ============================================================
  * Tool pills (iOS-style)

@@ -73,10 +73,6 @@ export interface DrawerCtx {
   editingId: Ref<string | null>;
   editingSlug: Ref<string>;
   renameInputRef: Ref<HTMLInputElement | null>;
-  tagEditorId: Ref<string | null>;
-  tagInput: Ref<string>;
-  tagEditorRef: Ref<HTMLElement | null>;
-  tagInputRef: Ref<HTMLInputElement | null>;
   draftLabels: ComputedRef<Record<string, string>>;
   groupBy: Ref<GroupBy>;
   // Tag filter: the selection is derived from the search query (`tag:foo`),
@@ -92,11 +88,7 @@ export interface DrawerCtx {
   handleStartRename: (e: MouseEvent, conversation: Conversation) => void;
   handleRename: (conversationId: string) => void;
   handleRenameKeyDown: (e: KeyboardEvent, conversationId: string) => void;
-  handleOpenTagEditor: (e: MouseEvent, conversationId: string) => void;
-  handleAddTag: (conversation: Conversation, tag?: string) => Promise<void>;
-  // Tag-editor dropdown: existing tags matching `typed` anywhere, best-first.
-  matchTagOffers: (conversation: Conversation, typed: string) => OfferedTag[];
-  handleRemoveTag: (conversation: Conversation, tag: string) => void;
+  handleTagPickerUpdate: (conversation: Conversation) => void;
   handleArchive: (e: MouseEvent, conversationId: string) => void;
   handleUnarchive: (e: MouseEvent, conversationId: string) => void;
   handleCopyGitHash: (e: MouseEvent, hash: string, convId: string) => void;
