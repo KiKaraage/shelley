@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tasks prototype — wayfinder #13 (PROTOTYPE)</title>
+<style>
+  /* ============================================================
+     Shelley design tokens (mirrored from ui/src/styles.css)
+     ============================================================ */
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --bg-base: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+    --bg-hover: #f3f4f6;
+    --border: #e5e7eb;
+    --code-bg: #eceef2;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --text-tertiary: #9ca3af;
+    --success-bg: #f0fdf4; --success-border: #bbf7d0; --success-text: #166534;
+    --error-bg: #fef2f2;   --error-border: #fecaca;   --error-text: #991b1b;
+    --warning-bg: #fffbeb; --warning-border: #fcd34d; --warning-text: #92400e;
+    --blue-bg: #eff6ff; --blue-border: #bfdbfe; --blue-text: #1e40af;
+    --gray-50:#f9fafb; --gray-100:#f3f4f6; --gray-200:#e5e7eb; --gray-300:#d1d5db;
+    --gray-400:#9ca3af; --gray-500:#6b7280; --gray-600:#4b5563; --gray-700:#374151;
+    --surface-border: rgba(255,255,255,0.08);
+    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  }
+  html.dark {
+    --bg-base: #1f2937;
+    --bg-secondary: #111827;
+    --bg-tertiary: #374151;
+    --bg-hover: #374151;
+    --border: #374151;
+    --code-bg: #414a59;
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --text-tertiary: #6b7280;
+    --success-bg: rgba(34,197,94,.1); --success-border: rgba(34,197,94,.3); --success-text: #86efac;
+    --error-bg: rgba(239,68,68,.1);   --error-border: rgba(239,68,68,.3);   --error-text: #fca5a5;
+    --warning-bg: rgba(251,191,36,.15); --warning-border: #fbbf24; --warning-text: #fcd34d;
+    --blue-bg: rgba(59,130,246,.1); --blue-border: rgba(59,130,246,.3); --blue-text: #93c5fd;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: var(--font); color: var(--text-primary);
+    background: var(--bg-base); font-size: 14px; line-height: 1.5;
+  }
+  /* ---- Shell: header + tabs (as in HomePage.vue) ---- */
+  .shell { display: flex; flex-direction: column; height: 100vh; }
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.5rem 1rem; border-bottom: 1px solid var(--border);
+  }
+  .header-title { font-size: 1.1rem; font-weight: 600; margin: 0; }
+  .header-actions { display: flex; align-items: center; gap: 0.5rem; }
+  .btn-new {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2rem; height: 2rem; border-radius: 9999px; border: 1px solid var(--border);
+    background: var(--bg-secondary); color: var(--text-primary); cursor: pointer;
+  }
+  .btn-new:hover { background: var(--bg-hover); }
+  .icon { width: 1rem; height: 1rem; }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 1rem; }
+  .tab {
+    background: none; border: none; border-bottom: 2px solid transparent;
+    color: var(--text-secondary); padding: 0.5rem 1rem; font-size: 0.875rem;
+    cursor: pointer; font-family: var(--font);
+  }
+  .tab:hover { color: var(--text-primary); }
+  .tab.active { color: var(--text-primary); border-bottom-color: var(--primary); }
+  .content { flex: 1; overflow-y: auto; }
+
+  /* ---- Shared bits ---- */
+  button { font-family: var(--font); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    border-radius: 0.375rem; border: 1px solid var(--border);
+    background: var(--bg-secondary); color: var(--text-primary);
+    padding: 0.4rem 0.8rem; font-size: 0.8125rem; cursor: pointer;
+  }
+  .btn:hover { background: var(--bg-hover); }
+  .btn-primary {
+    background: var(--primary); border-color: var(--primary); color: #fff;
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-danger { color: var(--error-text); }
+  .btn-danger:hover { background: var(--error-bg); border-color: var(--error-border); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 0.1rem;
+    font-size: 0.75rem; line-height: 1.2; color: var(--blue-text);
+    background: var(--blue-bg); border: 1px solid var(--blue-border);
+    border-radius: 9999px; padding: 0.1rem 0.5rem; white-space: nowrap;
+  }
+  .tag .hash { opacity: 0.6; }
+  .missing-badge {
+    font-size: 0.6875rem; color: var(--warning-text); background: var(--warning-bg);
+    border: 1px solid var(--warning-border); border-radius: 9999px; padding: 0 0.4rem;
+  }
+  .mono { font-family: var(--mono); font-size: 0.75rem; color: var(--text-secondary); }
+  .dir-name { color: var(--text-secondary); }
+  .git-dot { width: 0.5rem; height: 0.5rem; border-radius: 9999px; background: var(--green-600, #16a34a); flex-shrink: 0; }
+  .cwd-dot { width: 0.5rem; height: 0.5rem; border-radius: 1px; background: var(--text-tertiary); flex-shrink: 0; }
+
+  /* ============================================================
+     Variant A — Dense inbox
+     ============================================================ */
+  .v { display: none; }
+  .v.on { display: block; }
+  .v-a .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem 0.5rem; gap: 1rem; flex-wrap: wrap;
+  }
+  .v-a .counts { display: flex; gap: 1rem; color: var(--text-secondary); font-size: 0.8125rem; }
+  .v-a .filters { display: flex; gap: 0.25rem; }
+  .v-a .filter {
+    border: none; background: none; color: var(--text-secondary);
+    padding: 0.25rem 0.6rem; border-radius: 9999px; cursor: pointer; font-size: 0.8125rem;
+  }
+  .v-a .filter.active { background: var(--bg-tertiary); color: var(--text-primary); }
+  .v-a .list { padding: 0.5rem 1.5rem 2rem; }
+  .v-a .row {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 0.75rem; border-radius: 0.375rem; cursor: default;
+    border: 1px solid transparent;
+  }
+  .v-a .row:hover { background: var(--bg-hover); }
+  .v-a .row.handled .task-title { color: var(--text-tertiary); text-decoration: line-through; }
+  .v-a .check {
+    width: 1.125rem; height: 1.125rem; border-radius: 9999px; border: 1.5px solid var(--gray-300);
+    flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+    color: transparent; font-size: 0.6875rem; background: var(--bg-base);
+  }
+  .v-a .row.handled .check { background: var(--success-text); border-color: var(--success-text); color: #fff; }
+  .v-a .main { flex: 1; min-width: 0; }
+  .v-a .task-title { font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .v-a .meta { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.15rem; }
+  .v-a .row-actions { display: none; align-items: center; gap: 0.25rem; }
+  .v-a .row:hover .row-actions { display: inline-flex; }
+  .v-a .icon-btn {
+    border: none; background: none; color: var(--text-secondary); cursor: pointer;
+    border-radius: 0.25rem; padding: 0.25rem; display: inline-flex;
+  }
+  .v-a .icon-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .v-a .section-label {
+    font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-tertiary); padding: 1rem 0.75rem 0.25rem; display: flex; gap: 0.5rem; align-items: center;
+  }
+  .v-a .empty {
+    text-align: center; padding: 4rem 1rem; color: var(--text-secondary);
+    border: 1px dashed var(--gray-300); border-radius: 0.5rem; margin: 1.5rem;
+  }
+  .v-a .empty .big { font-size: 1.25rem; margin-bottom: 0.25rem; color: var(--text-primary); }
+
+  /* ============================================================
+     Variant B — Card board
+     ============================================================ */
+  .v-b .board { padding: 1rem 1.5rem 2rem; }
+  .v-b .board-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .v-b .board-title { font-size: 0.9375rem; font-weight: 600; }
+  .v-b .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; }
+  .v-b .card {
+    border: 1px solid var(--border); border-radius: 0.5rem; background: var(--bg-base);
+    padding: 0.875rem; display: flex; flex-direction: column; gap: 0.6rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .v-b .card:hover { border-color: var(--gray-400); }
+  .v-b .card.handled { opacity: 0.62; }
+  .v-b .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+  .v-b .card-title { font-weight: 600; font-size: 0.875rem; line-height: 1.35; }
+  .v-b .card.handled .card-title { text-decoration: line-through; }
+  .v-b .handled-stamp {
+    flex-shrink: 0; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--success-text); border: 1px solid var(--success-border);
+    background: var(--success-bg); border-radius: 0.25rem; padding: 0.05rem 0.35rem;
+    text-transform: uppercase;
+  }
+  .v-b .card-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .v-b .card-foot {
+    border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: auto;
+    display: flex; align-items: center; gap: 0.375rem; min-width: 0;
+  }
+  .v-b .card-foot .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .v-b .card-actions { display: none; gap: 0.25rem; margin-left: auto; }
+  .v-b .card:hover .card-actions { display: inline-flex; }
+  .v-b .fab {
+    position: sticky; bottom: 1rem; float: right; margin: 0 1.5rem 1.5rem 0;
+    width: 3rem; height: 3rem; border-radius: 9999px; background: var(--primary);
+    border: none; color: #fff; font-size: 1.5rem; cursor: pointer; line-height: 1;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.35);
+  }
+  .v-b .fab:hover { background: var(--primary-dark); }
+  .v-b .empty-card {
+    border: 1.5px dashed var(--gray-300); border-radius: 0.5rem; padding: 2.5rem 1rem;
+    text-align: center; color: var(--text-secondary); display: flex; flex-direction: column;
+    align-items: center; gap: 0.75rem;
+  }
+
+  /* ============================================================
+     Variant C — Palette-first / minimal
+     ============================================================ */
+  .v-c { max-width: 44rem; margin: 0 auto; padding: 1rem 1.5rem 2rem; }
+  .v-c .search-row { position: sticky; top: 0; background: var(--bg-base); padding: 0.5rem 0 0.75rem; }
+  .v-c .search {
+    width: 100%; border: 1px solid var(--border); border-radius: 0.375rem;
+    background: var(--bg-secondary); padding: 0.5rem 0.75rem; font-size: 0.875rem;
+    color: var(--text-primary); outline: none; font-family: var(--font);
+  }
+  .v-c .search:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+  .v-c .kbd-hint { display: flex; justify-content: flex-end; gap: 0.25rem; margin: -1.6rem 0.5rem 0 0; position: relative; pointer-events: none; }
+  .v-c .kbd { font-size: 0.6875rem; color: var(--text-tertiary); border: 1px solid var(--border); border-radius: 0.25rem; padding: 0 0.3rem; background: var(--bg-secondary); font-family: var(--mono); }
+  .v-c .row {
+    display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.5rem;
+    border-bottom: 1px solid var(--border); cursor: default;
+  }
+  .v-c .row:hover { background: var(--bg-secondary); }
+  .v-c .row.handled .task-title { color: var(--text-tertiary); text-decoration: line-through; }
+  .v-c .task-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .v-c .tags { display: flex; gap: 0.3rem; flex-wrap: wrap; justify-content: flex-end; max-width: 40%; }
+  .v-c .row-actions { display: none; gap: 0.2rem; }
+  .v-c .row:hover .row-actions { display: inline-flex; }
+  .v-c .empty { text-align: center; padding: 3.5rem 1rem; color: var(--text-secondary); }
+  .v-c .empty .kbd { margin: 0 0.1rem; }
+
+  /* ============================================================
+     Modals
+     ============================================================ */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 50;
+    display: none; align-items: flex-start; justify-content: center; padding: 8vh 1rem 1rem;
+  }
+  .overlay.on { display: flex; }
+  .modal {
+    background: var(--bg-base); border: 1px solid var(--border); border-radius: 0.625rem;
+    width: 100%; max-width: 30rem; box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    display: flex; flex-direction: column; max-height: 84vh;
+  }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem 0.5rem; }
+  .modal-title { font-size: 1rem; font-weight: 600; margin: 0; }
+  .modal-body { padding: 0.5rem 1.25rem 1rem; overflow-y: auto; }
+  .modal-foot {
+    display: flex; justify-content: flex-end; gap: 0.5rem;
+    padding: 0.75rem 1.25rem; border-top: 1px solid var(--border);
+  }
+  .field { margin-bottom: 0.875rem; }
+  .field label { display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+  .field .req { color: var(--error-text); }
+  .input {
+    width: 100%; border: 1px solid var(--border); border-radius: 0.375rem;
+    background: var(--bg-base); color: var(--text-primary); padding: 0.5rem 0.75rem;
+    font-size: 0.875rem; outline: none; font-family: var(--font);
+  }
+  .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+  .input.err { border-color: var(--error-text); }
+  .field-error { color: var(--error-text); font-size: 0.75rem; margin-top: 0.25rem; }
+  .select-wrap { position: relative; }
+  .select-wrap select {
+    width: 100%; border: 1px solid var(--border); border-radius: 0.375rem;
+    background: var(--bg-base); color: var(--text-primary); padding: 0.5rem 2rem 0.5rem 0.75rem;
+    font-size: 0.875rem; outline: none; appearance: none; cursor: pointer; font-family: var(--font);
+  }
+  .select-wrap::after {
+    content: "▾"; position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
+    color: var(--text-tertiary); pointer-events: none; font-size: 0.75rem;
+  }
+  .select-wrap select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+  .browse-row { display: flex; gap: 0.5rem; margin-top: 0.4rem; align-items: center; }
+  .none-dir { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.4rem; }
+  .none-dir a { color: var(--primary); cursor: pointer; }
+  .tag-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
+  .tag-toggle {
+    border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary);
+    border-radius: 9999px; font-size: 0.75rem; padding: 0.2rem 0.65rem; cursor: pointer;
+  }
+  .tag-toggle.on { background: var(--blue-bg); border-color: var(--blue-border); color: var(--blue-text); }
+  .modal .tag { background: var(--blue-bg); }
+
+  /* Variant B: slide-over panel */
+  .v-b .overlay { padding: 0; justify-content: flex-end; align-items: stretch; }
+  .v-b .modal {
+    max-width: 26rem; max-height: 100vh; border-radius: 0.625rem 0 0 0.625rem;
+    border-right: none; animation: slidein 0.18s ease-out;
+  }
+  @keyframes slidein { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* Variant C: palette-style dialog, top-center, compact */
+  .v-c .overlay { align-items: flex-start; padding-top: 12vh; }
+  .v-c .modal { max-width: 34rem; border-radius: 0.5rem; }
+  .v-c .modal-body { padding-top: 0.75rem; }
+  .v-c .field { margin-bottom: 0.75rem; }
+  .v-c .hint-line { font-size: 0.75rem; color: var(--text-tertiary); display: flex; gap: 1rem; padding-bottom: 0.5rem; }
+
+  /* ---- Floating variant bar ---- */
+  .variant-bar {
+    position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
+    z-index: 100; display: flex; align-items: center; gap: 0.4rem;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 9999px; padding: 0.35rem 0.6rem; box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+    font-size: 0.75rem; color: var(--text-secondary);
+  }
+  .variant-bar .vbtn {
+    border: none; background: none; cursor: pointer; border-radius: 9999px;
+    padding: 0.3rem 0.7rem; font-size: 0.75rem; color: var(--text-secondary);
+  }
+  .variant-bar .vbtn.on { background: var(--primary); color: #fff; }
+  .variant-bar .sep { width: 1px; height: 1.1rem; background: var(--border); }
+  .prototype-note {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 90;
+    background: var(--warning-bg); color: var(--warning-text);
+    border-bottom: 1px solid var(--warning-border);
+    font-size: 0.6875rem; text-align: center; padding: 0.2rem;
+    font-family: var(--mono);
+  }
+  body { padding-top: 1.35rem; }
+</style>
+</head>
+<body class="v-a">
+  <div class="prototype-note">PROTOTYPE · wayfinder #13 · throwaway · switch variants below</div>
+
+  <div class="shell">
+    <header class="header">
+      <h1 class="header-title">Shelley</h1>
+      <div class="header-actions">
+        <button class="btn-new" title="New conversation" aria-label="New conversation">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        </button>
+      </div>
+    </header>
+    <nav class="tabs">
+      <button class="tab active" data-tab="tasks">Tasks</button>
+      <button class="tab" data-tab="timeline">Timeline</button>
+      <button class="tab" data-tab="stats">Stats</button>
+    </nav>
+    <main class="content">
+      <div id="tasksPane">
+
+        <!-- ================= Variant A ================= -->
+        <section class="v v-a on">
+          <div class="toolbar">
+            <div class="filters" data-a-filters>
+              <button class="filter active" data-a-filter="all">All <span data-count-all></span></button>
+              <button class="filter" data-a-filter="active">Active <span data-count-active></span></button>
+              <button class="filter" data-a-filter="handled">Handled <span data-count-handled></span></button>
+            </div>
+            <button class="btn btn-primary" data-open="a">＋ New task</button>
+          </div>
+          <div data-a-list class="list"></div>
+        </section>
+
+        <!-- ================= Variant B ================= -->
+        <section class="v v-b">
+          <div class="board">
+            <div class="board-head">
+              <div class="board-title">Tasks</div>
+              <button class="btn btn-primary" data-open="b">＋ New task</button>
+            </div>
+            <div class="grid" data-b-grid></div>
+          </div>
+          <button class="fab" data-open="b" title="New task">＋</button>
+        </section>
+
+        <!-- ================= Variant C ================= -->
+        <section class="v v-c">
+          <div class="search-row">
+            <input class="search" data-c-search type="text" placeholder="Filter tasks…  (Ctrl+K to create)" />
+          </div>
+          <div data-c-list></div>
+        </section>
+
+      </div>
+      <div id="timelinePane" style="display:none">
+        <p style="color:var(--text-secondary);text-align:center;padding:3rem">Timeline coming soon.</p>
+      </div>
+      <div id="statsPane" style="display:none">
+        <p style="color:var(--text-secondary);text-align:center;padding:3rem">Stats coming soon.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- ================= Create/Edit modal ================= -->
+  <div class="overlay" data-modal>
+    <div class="modal">
+      <div class="modal-head">
+        <h2 class="modal-title" data-modal-title>New task</h2>
+        <button class="icon-btn" data-close style="border:none;background:none;color:var(--text-secondary);cursor:pointer">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Title <span class="req">*</span></label>
+          <input class="input" data-f-title type="text" placeholder="What needs doing?" maxlength="140" />
+          <div class="field-error" data-e-title></div>
+        </div>
+        <div class="field">
+          <label>Target directory</label>
+          <div class="select-wrap">
+            <select data-f-dir>
+              <option value="">— No directory —</option>
+              <optgroup label="Git roots"></optgroup>
+              <optgroup label="Recent directories"></optgroup>
+            </select>
+          </div>
+          <div class="browse-row">
+            <button class="btn" data-browse>🗁 Browse…</button>
+            <span class="mono" data-dir-preview></span>
+          </div>
+          <div class="field-error" data-e-dir></div>
+        </div>
+        <div class="field">
+          <label>Tags</label>
+          <div class="tag-grid" data-tags></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" data-close>Cancel</button>
+        <button class="btn btn-primary" data-save>Create task</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="variant-bar">
+    <span>Variant</span>
+    <button class="vbtn on" data-v="a">A · inbox</button>
+    <button class="vbtn" data-v="b">B · cards</button>
+    <button class="vbtn" data-v="c">C · palette</button>
+    <span class="sep"></span>
+    <button class="vbtn" data-theme>☀ / 🌙</button>
+  </div>
+
+<script>
+"use strict";
+/* ==================== Sample data (mirrors #2/#10/#11 resolutions) ==================== */
+const DIRS = [
+  { kind: "git", label: "kikaraage/shelley", path: "/var/home/ki/.config/shelley/shelley-customization", missing: false },
+  { kind: "git", label: "boldsoftware/shelley", path: "/work/boldsoftware/shelley", missing: true },
+  { kind: "cwd", label: "~/notes", path: "/home/ki/notes", missing: false },
+  { kind: "cwd", label: "~/projects/beads", path: "/home/ki/projects/beads", missing: false },
+];
+const SUGGESTED_TAGS = ["explore", "plan", "verify-plan", "working", "verify-work", "audit", "revise", "done"];
+let TASKS = [
+  { id: 1, title: "Fix drawer tag menu clipping", cwd: DIRS[0].path, tags: ["working", "revise"], handled: false },
+  { id: 2, title: "Write ADR for task lifecycle", cwd: null, tags: ["plan"], handled: false },
+  { id: 3, title: "Investigate SSE reconnect flake", cwd: DIRS[1].path, tags: ["explore"], handled: false },
+  { id: 4, title: "Ship P037: shared TagPicker", cwd: DIRS[0].path, tags: ["done", "audit"], handled: true },
+  { id: 5, title: "Extract TagPicker constant + task modal reuse", cwd: null, tags: [], handled: true },
+];
+let nextId = 6;
+
+/* ==================== State ==================== */
+let variant = new URLSearchParams(location.search).get("variant") || "a";
+if (!["a","b","c"].includes(variant)) variant = "a";
+let aFilter = "all";
+let cQuery = "";
+let editingId = null; // null = create, number = edit
+let draftDir = "";    // selected directory path ("" = none)
+let draftTags = [];
+
+const dirByPath = p => DIRS.find(d => d.path === p) || null;
+const taskById = id => TASKS.find(t => t.id === id);
+
+/* ==================== Rendering ==================== */
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+function tagChips(tags) {
+  return tags.map(t => `<span class="tag"><span class="hash">#</span>${esc(t)}</span>`).join("");
+}
+function cwdLine(t) {
+  if (!t.cwd) return "";
+  const d = dirByPath(t.cwd);
+  const missing = !d ? true : d.missing;
+  const label = d ? d.label : t.cwd.split("/").pop() || t.cwd;
+  const dot = d && d.kind === "git" ? "git-dot" : "cwd-dot";
+  return `<span class="${dot}"></span><span class="dir-name">${esc(label)}</span>${missing ? '<span class="missing-badge">missing</span>' : ""}`;
+}
+function rowActions(t) {
+  return `<button class="icon-btn" data-act="edit" data-id="${t.id}" title="Edit">✎</button>
+          <button class="icon-btn" data-act="thread" data-id="${t.id}" title="Start thread">➤</button>
+          <button class="icon-btn" data-act="del" data-id="${t.id}" title="Delete">🗑</button>`;
+}
+
+function renderA() {
+  const list = TASKS.filter(t => aFilter === "all" || (aFilter === "active") === !t.handled);
+  const active = TASKS.filter(t => !t.handled);
+  const handled = TASKS.filter(t => t.handled);
+  const q = sel => document.querySelector(sel);
+  q("[data-count-all]").textContent = `(${TASKS.length})`;
+  q("[data-count-active]").textContent = `(${active.length})`;
+  q("[data-count-handled]").textContent = `(${handled.length})`;
+  document.querySelectorAll("[data-a-filter]").forEach(b => b.classList.toggle("active", b.dataset.aFilter === aFilter));
+
+  let html = "";
+  if (TASKS.length === 0) {
+    html = `<div class="empty"><div class="big">No tasks yet</div>
+      <div>Tasks you create will show up here.</div>
+      <div style="margin-top:1rem"><button class="btn btn-primary" data-open="a">＋ Create your first task</button></div></div>`;
+  } else {
+    if (active.length) html += `<div class="section-label">Active — ${active.length}</div>` + active.map(rowA).join("");
+    if (handled.length) html += `<div class="section-label">Handled — ${handled.length}</div>` + handled.map(rowA).join("");
+  }
+  q("[data-a-list]").innerHTML = html;
+}
+function rowA(t) {
+  return `<div class="row ${t.handled ? "handled" : ""}">
+    <span class="check">✓</span>
+    <div class="main">
+      <div class="task-title">${esc(t.title)}</div>
+      <div class="meta"><span class="mono">${cwdLine(t)}</span>${tagChips(t.tags)}</div>
+    </div>
+    <div class="row-actions">${rowActions(t)}</div>
+  </div>`;
+}
+
+function renderB() {
+  const q = sel => document.querySelector(sel);
+  let html = "";
+  if (TASKS.length === 0) {
+    html = `<div class="empty-card">
+      <div style="font-size:1.5rem">🗂</div>
+      <div><b>No tasks yet</b></div>
+      <div>Your tasks will live here as cards.</div>
+      <button class="btn btn-primary" data-open="b">Create your first task</button>
+    </div>`;
+  } else {
+    html = TASKS.map(t => `<div class="card ${t.handled ? "handled" : ""}">
+      <div class="card-top">
+        <div class="card-title">${esc(t.title)}</div>
+        ${t.handled ? '<span class="handled-stamp">handled</span>' : ""}
+      </div>
+      <div class="card-tags">${tagChips(t.tags)}</div>
+      <div class="card-foot">
+        ${t.cwd ? `<span class="${dirByPath(t.cwd) && dirByPath(t.cwd).kind === "git" ? "git-dot" : "cwd-dot"}"></span><span class="mono">${esc((dirByPath(t.cwd)||{}).label || t.cwd)}</span>${(dirByPath(t.cwd)||{}).missing ? '<span class="missing-badge">missing</span>' : ""}` : '<span class="mono" style="color:var(--text-tertiary)">no directory</span>'}
+        <div class="card-actions">${rowActions(t)}</div>
+      </div>
+    </div>`).join("");
+  }
+  q("[data-b-grid]").innerHTML = html;
+}
+
+function renderC() {
+  const q = sel => document.querySelector(sel);
+  const qq = cQuery.trim().toLowerCase();
+  const list = TASKS.filter(t => !qq || t.title.toLowerCase().includes(qq) || t.tags.some(tg => tg.toLowerCase().includes(qq)) || (t.cwd||"").toLowerCase().includes(qq));
+  let html = "";
+  if (list.length === 0) {
+    html = `<div class="empty">${TASKS.length === 0
+      ? 'No tasks yet. <span class="kbd">Ctrl</span>+<span class="kbd">K</span> to create one.'
+      : 'No tasks match <b>' + esc(cQuery) + "</b>."}</div>`;
+  } else {
+    html = list.map(t => `<div class="row ${t.handled ? "handled" : ""}">
+      <span class="mono" style="width:4.2rem;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(t.cwd || "no directory")}">${esc((dirByPath(t.cwd)||{}).label || (t.cwd ? t.cwd.split("/").pop() : "—"))}</span>
+      <span class="task-title">${esc(t.title)}</span>
+      <span class="tags">${tagChips(t.tags)}</span>
+      <span class="row-actions">${rowActions(t)}</span>
+    </div>`).join("");
+  }
+  q("[data-c-list]").innerHTML = html;
+}
+
+function renderAll() { renderA(); renderB(); renderC(); }
+
+/* ==================== Modal ==================== */
+const modal = document.querySelector("[data-modal]");
+const titleEl = document.querySelector("[data-modal-title]");
+const fTitle = document.querySelector("[data-f-title]");
+const fDir = document.querySelector("[data-f-dir]");
+const saveBtn = document.querySelector("[data-save]");
+
+function populateDirOptions() {
+  const git = DIRS.filter(d => d.kind === "git");
+  const cwd = DIRS.filter(d => d.kind === "cwd");
+  const g = fDir.querySelector('optgroup[label="Git roots"]');
+  const c = fDir.querySelector('optgroup[label="Recent directories"]');
+  g.innerHTML = git.map(d => `<option value="${esc(d.path)}" ${d.missing ? "disabled" : ""}>${esc(d.label)}${d.missing ? "  (missing on disk)" : ""}</option>`).join("");
+  c.innerHTML = cwd.map(d => `<option value="${esc(d.path)}">${esc(d.label)}</option>`).join("");
+}
+function populateTagGrid() {
+  const grid = document.querySelector("[data-tags]");
+  grid.innerHTML = SUGGESTED_TAGS.map(t =>
+    `<button class="tag-toggle ${draftTags.includes(t) ? "on" : ""}" data-tag="${esc(t)}">#${esc(t)}</button>`
+  ).join("");
+}
+function openModal(id, mode) {
+  editingId = mode === "edit" ? id : null;
+  titleEl.textContent = editingId ? "Edit task" : "New task";
+  saveBtn.textContent = editingId ? "Save changes" : "Create task";
+  const t = editingId ? taskById(editingId) : null;
+  fTitle.value = t ? t.title : "";
+  draftDir = t && t.cwd ? t.cwd : "";
+  draftTags = t ? [...t.tags] : [];
+  fDir.value = draftDir;
+  document.querySelector("[data-dir-preview]").textContent = draftDir ? dirByPath(draftDir)?.label || draftDir : "";
+  document.querySelector("[data-e-title]").textContent = "";
+  document.querySelector("[data-e-dir]").textContent = "";
+  fTitle.classList.remove("err"); fDir.classList.remove("err");
+  populateTagGrid();
+  modal.classList.add("on");
+  setTimeout(() => fTitle.focus(), 30);
+}
+function closeModal() { modal.classList.remove("on"); editingId = null; }
+
+function validate() {
+  let ok = true;
+  const eT = document.querySelector("[data-e-title]");
+  const eD = document.querySelector("[data-e-dir]");
+  const title = fTitle.value.trim();
+  fTitle.classList.remove("err"); fDir.classList.remove("err");
+  eT.textContent = ""; eD.textContent = "";
+  if (!title) { eT.textContent = "Title is required."; fTitle.classList.add("err"); ok = false; }
+  if (draftDir) {
+    const d = dirByPath(draftDir);
+    if (!d || d.missing) { eD.textContent = "Directory is missing on disk — pick another."; fDir.classList.add("err"); ok = false; }
+  }
+  return ok;
+}
+function save() {
+  if (!validate()) return;
+  const title = fTitle.value.trim();
+  if (editingId) {
+    const t = taskById(editingId);
+    t.title = title; t.cwd = draftDir; t.tags = [...draftTags];
+  } else {
+    TASKS.unshift({ id: nextId++, title, cwd: draftDir || null, tags: [...draftTags], handled: false });
+  }
+  closeModal(); renderAll();
+}
+
+/* ==================== Events ==================== */
+document.addEventListener("click", e => {
+  const open = e.target.closest("[data-open]");
+  if (open) { openModal(null); return; }
+  if (e.target.closest("[data-close]")) { closeModal(); return; }
+  const save = e.target.closest("[data-save]");
+  if (save) { save(); return; }
+  const tag = e.target.closest("[data-tag]");
+  if (tag) {
+    const t = tag.dataset.tag;
+    draftTags = draftTags.includes(t) ? draftTags.filter(x => x !== t) : [...draftTags, t];
+    populateTagGrid(); return;
+  }
+  const browse = e.target.closest("[data-browse]");
+  if (browse) {
+    // Prototype stand-in for DirectoryPickerModal: cycle to next dir
+    const next = DIRS.find(d => !d.missing && d.path !== draftDir) || DIRS[0];
+    draftDir = next.path;
+    fDir.value = draftDir;
+    document.querySelector("[data-dir-preview]").textContent = next.label;
+    return;
+  }
+  const act = e.target.closest("[data-act]");
+  if (act) {
+    const id = +act.dataset.id;
+    if (act.dataset.act === "edit") openModal(id, "edit");
+    if (act.dataset.act === "del") { TASKS = TASKS.filter(t => t.id !== id); renderAll(); }
+    if (act.dataset.act === "thread") { /* placeholder: thread-from-task is #14 */ }
+    return;
+  }
+  const af = e.target.closest("[data-a-filter]");
+  if (af) { aFilter = af.dataset.aFilter; renderA(); return; }
+});
+fDir.addEventListener("change", () => {
+  draftDir = fDir.value;
+  document.querySelector("[data-dir-preview]").textContent = draftDir ? (dirByPath(draftDir)?.label || draftDir) : "";
+});
+document.querySelector("[data-c-search]").addEventListener("input", e => { cQuery = e.target.value; renderC(); });
+document.querySelector("[data-c-search]").addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openModal(null); }
+});
+modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && modal.classList.contains("on")) closeModal();
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openModal(null); }
+});
+
+/* ==================== Tabs / variant / theme ==================== */
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x === b));
+  const tab = b.dataset.tab;
+  document.querySelector("#tasksPane").style.display = tab === "tasks" ? "" : "none";
+  document.querySelector("#timelinePane").style.display = tab === "timeline" ? "" : "none";
+  document.querySelector("#statsPane").style.display = tab === "stats" ? "" : "none";
+}));
+function setVariant(v) {
+  variant = v;
+  document.body.classList.remove("v-a","v-b","v-c");
+  document.body.classList.add("v-" + v);
+  document.querySelectorAll("[data-v]").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  history.replaceState(null, "", "?variant=" + v);
+  /* variant-specific overlay alignment: toggle a body class the CSS keys off of */
+  modal.closest(".overlay").className = "overlay" + (v === "b" ? " v-b" : v === "c" ? " v-c" : "");
+}
+document.querySelectorAll("[data-v]").forEach(b => b.addEventListener("click", () => setVariant(b.dataset.v)));
+document.querySelector("[data-theme]").addEventListener("click", () => {
+  document.documentElement.classList.toggle("dark");
+});
+
+/* ==================== Init ==================== */
+populateDirOptions();
+renderAll();
+setVariant(variant);
+</script>
+</body>
+</html>
