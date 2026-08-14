@@ -359,3 +359,9 @@ Changes:
 - Action bar tooltips right-aligned to prevent right-edge clipping. Action bar right margin reduced to 2px.
 - .message-content is now display:flex (column) with width:100% so all blocks stretch to the full container width.
 - .message-user gets width:auto and bg-tertiary background so it shrink-wraps to content and has a visible bubble.
+
+## P036
+Status: active
+Base: 4a98848
+Files: skills/builtin/previous-conversations/SKILL.md
+Changes: Rewrote the skill to query conversations through `shelley client` (list, read, search) instead of guessing the SQLite path. Kept the `sqlite3` queries as a raw-SQL fallback for when the server is down or direct DB access is needed.
