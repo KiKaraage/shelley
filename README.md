@@ -4,8 +4,6 @@ Here's some patches I've made on top of Shelley:
 
 | Patch | Status | Description |
 |-------|--------|-------------|
-| Patch | Status | Description |
-|-------|--------|-------------|
 | [P001](PATCH.md#p001) (S · Aug 7) | active | Moved Diffs, Git Graph, Terminal into always-visible header buttons |
 | [P002](PATCH.md#p002) (S · Aug 7) | active | Added tooltips to New Thread, overflow menu, hamburger, and drawer buttons |
 | [P003](PATCH.md#p003) (S · Aug 7) | active | In-app terminal launches zsh instead of bash |
@@ -33,6 +31,15 @@ Here's some patches I've made on top of Shelley:
 | [P025](PATCH.md#p025) (M · Aug 12) | active | Fixed gist export: DB writes, privacy leak, error toasts, stale status |
 | [P026](PATCH.md#p026) (S · Aug 12) | active | Slug generation retry for tagged/conversation models |
 | [P027](PATCH.md#p027) (M · Aug 12) | active | Block chained `cd <path> && ...` when path equals cwd |
+| [P028](PATCH.md#p028) (M · Aug 12) | active | Conversation previews include thinking, user, and tool-use content |
+| [P029](PATCH.md#p029) (L · Aug 12) | active | "Auto Expand" brevity mode with turn-level collapse bands |
+| [P030](PATCH.md#p030) (S · Aug 12) | active | Split chained `&&` bash commands across lines in tool summary |
+| [P031](PATCH.md#p031) (S · Aug 12) | active | Repo favicon in chat header |
+| [P032](PATCH.md#p032) (M · Aug 12) | active | Tag picker dropdown in chat header |
+| [P033](PATCH.md#p033) (M · Aug 13) | active | Per-block action bars on thinking and text blocks |
+| [P034](PATCH.md#p034) (S · Aug 13) | active | Merged drawer tag row into timestamp+preview row |
+| [P035](PATCH.md#p035) (M · Aug 13) | active | Full-width message blocks; user bubbles shrink-wrap with background |
+| [P036](PATCH.md#p036) (S · Aug 14) | active | Rewrote previous-conversations skill to use `shelley client` |
 
 ---
 
