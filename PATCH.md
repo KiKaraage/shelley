@@ -462,3 +462,14 @@ Use shared TagPicker for drawer tag editing
 - Watchouts:
   - Drawer tag editing is now a popover, not an inline input; typing applies via the picker's Enter/create path.
   - `handleTagPickerUpdate` is required on the ctx so row updates refresh the sidebar without a reload.
+
+## P038
+Show leading `#` comments in bash tool summary
+- Status: active
+- Base: 4a98848
+- Files: BashTool.vue, styles.css
+- Changes:
+  - Bash tool summary now captures leading `#` comment lines from the tool call and renders them above the command, in smaller (0.75rem) dim (`--text-tertiary`) mono text. Only the first line(s) that start with `#` (any leading whitespace allowed) are captured; mid-command comments are ignored.
+  - Comment lines are stripped from the command before the existing `&&`-splitting so chained segments still render on separate lines and a command that is only comments degrades to a single empty line.
+- Watchouts:
+  - A command consisting solely of comments renders as one empty command line beneath the comments (no crash; title tooltip still holds the full command).

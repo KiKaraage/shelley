@@ -1749,6 +1749,15 @@ body {
   text-overflow: ellipsis;
 }
 
+.bash-tool-header-comments {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .bash-tool-cwd {
   font-family: var(--font-mono);
   font-size: 0.75rem;
