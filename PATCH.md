@@ -453,7 +453,7 @@ Use shared TagPicker for drawer tag editing
   - New `DrawerTagPicker.vue` wraps `TagPicker` in the row's existing `editTags` icon button and forwards its `update` event.
   - `ConversationDrawer.vue` adds `handleTagPickerUpdate` to the row ctx; it emits `renamed` so tag changes refresh the sidebar.
   - Removed the inline editor: `tagsEditing`, the `#…` input form, per-chip remove buttons, `handleOpenTagEditor`/`handleAddTag`/`handleRemoveTag`, `saveTags`, and the tag-editor refs/outside-click watcher.
-  - `TagPicker.vue` accepts an optional `className`; the drawer variant repositions the popover via `.drawer-tag-picker .tag-picker-menu` (opens above the row, right-aligned).
+  - `TagPicker.vue` accepts an optional `className` and `teleport`; the drawer variant teleports the menu to body with fixed trigger-rect coordinates so it escapes the row's overflow-clipped action container.
 - Watchouts:
   - Drawer tag editing is now a popover, not an inline input; typing applies via the picker's Enter/create path.
   - `handleTagPickerUpdate` is required on the ctx so row updates refresh the sidebar without a reload.

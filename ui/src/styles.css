@@ -799,13 +799,15 @@ body {
   position: relative;
 }
 
-/* Drawer variant: the trigger sits inside a conversation row, so the popover
-   opens above the row (the list body clips anything below the viewport edge). */
-.drawer-tag-picker .tag-picker-menu {
+/* Drawer variant: the trigger sits inside a conversation row whose action
+   container is overflow-clipped, so the menu is teleported to body and
+   positioned with fixed coordinates from the trigger rect (see TagPicker.vue). */
+.tag-picker-menu-teleported {
   top: auto;
-  bottom: 100%;
+  bottom: auto;
   left: auto;
-  right: 0;
+  right: auto;
+  margin-top: 0;
 }
 
 .tag-picker-menu {
