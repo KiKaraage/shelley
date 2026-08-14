@@ -102,8 +102,21 @@ const props = defineProps<{
 /** Max lines shown in the streaming preview before "Show more" is needed. */
 const PREVIEW_LINES = 5;
 
-/** Leading `#` comment lines at the start of a command (any leading whitespace allowed). */
-const COMMENT_LINE_RE = /^[ \t]*#.*(?:\n|$)/gm;
+/**
+ * Capture only the contiguous run of `#` comment lines at the start of the
+ * command. Anything after the first non-comment line stays in the command
+ * body. Returns { comments, body }.
+ */
+function splitHeaderComments(cmd: string): { comments: string; body: string } {
+  const firstCodeLine = cmd.search(/^[ \t]*[^# \t\n]/m);
+  if (firstCodeLine === -1) {
+    // Everything is comments (or empty): keep them, minus leading blank lines.
+    return { comments: cmd.replace(/^[ \t]*\n+/, "").replace(/\s+$/, ""), body: "" };
+  }
+  const leading = cmd.slice(0, firstCodeLine);
+  const comments = leading.replace(/^[ \t]*\n+/, "").replace(/\s+$/, "");
+  return { comments, body: cmd.slice(firstCodeLine).replace(/^\n+/, "") };
+}
 
 // Details panel — collapsed by default (expanded inside the detail modal).
 const isExpanded = useToolExpanded();
@@ -170,20 +183,15 @@ const output = computed(() =>
 const isCancelled = computed(() => props.hasError && isCancelledToolResult(output.value));
 
 const displayCommandLines = computed(() => {
-  const cmd = command.value;
-  const body = cmd.replace(COMMENT_LINE_RE, "").replace(/^\n+/, "");
+  const { body } = splitHeaderComments(command.value);
   if (!body.includes(" && ")) return [body];
   return body.split(" && ").flatMap((part, i) =>
     i === 0 ? [part] : [`&& ${part}`],
   );
 });
 
-/** Leading comment lines (starting with #) inside the command, joined. */
-const headerComments = computed(() => {
-  const matches = command.value.match(COMMENT_LINE_RE);
-  if (!matches) return "";
-  return matches.join("\n");
-});
+/** Contiguous `#` comment lines at the start of the command, joined. */
+const headerComments = computed(() => splitHeaderComments(command.value).comments);
 
 const isComplete = computed(() => !props.isRunning && props.toolResult !== undefined);
 
