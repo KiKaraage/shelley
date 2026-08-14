@@ -5,47 +5,55 @@
 <template>
   <div ref="wrapperRef" :class="`tag-picker-wrapper${className ? ' ' + className : ''}`">
     <slot name="trigger" :open="open" :toggle="toggleOpen" />
-    <div v-if="open" class="tag-picker-menu">
-      <input
-        ref="inputRef"
-        type="text"
-        class="tag-picker-input"
-        :placeholder="t('addTagPlaceholder')"
-        :value="filter"
-        @input="filter = ($event.target as HTMLInputElement).value"
-        @keydown="onInputKeydown"
-      />
-      <!-- Template tags -->
-      <template v-for="tag in displayedTags" :key="tag">
-        <button class="tag-picker-item" @click="toggleTag(tag)">
-          <span class="tag-picker-check">{{ currentTags.includes(tag) ? '✓' : '' }}</span>
-          <span class="tag-picker-hash">#</span>{{ tag }}
-        </button>
-      </template>
-      <button
-        v-if="createable"
-        class="tag-picker-item tag-picker-create"
-        @click="applyCustomTag"
+    <Teleport to="body" :disabled="!teleport">
+      <div
+        v-if="open"
+        ref="menuRef"
+        class="tag-picker-menu"
+        :class="{ 'tag-picker-menu-teleported': teleport }"
+        :style="teleport ? menuStyle : undefined"
       >
-        + <strong>#{{ filter }}</strong>
-      </button>
-      <div v-if="displayedTags.length === 0 && !createable && customTags.length === 0" class="tag-picker-empty">
-        No matches
-      </div>
-      <!-- Custom (non-template) tags -->
-      <template v-if="customTags.length > 0">
-        <div class="tag-picker-separator" />
+        <input
+          ref="inputRef"
+          type="text"
+          class="tag-picker-input"
+          :placeholder="t('addTagPlaceholder')"
+          :value="filter"
+          @input="filter = ($event.target as HTMLInputElement).value"
+          @keydown="onInputKeydown"
+        />
+        <!-- Template tags -->
+        <template v-for="tag in displayedTags" :key="tag">
+          <button class="tag-picker-item" @click="toggleTag(tag)">
+            <span class="tag-picker-check">{{ currentTags.includes(tag) ? '✓' : '' }}</span>
+            <span class="tag-picker-hash">#</span>{{ tag }}
+          </button>
+        </template>
         <button
-          v-for="tag in customTags"
-          :key="tag"
-          class="tag-picker-item"
-          @click="toggleTag(tag)"
+          v-if="createable"
+          class="tag-picker-item tag-picker-create"
+          @click="applyCustomTag"
         >
-          <span class="tag-picker-check">✓</span>
-          <span class="tag-picker-hash">#</span>{{ tag }}
+          + <strong>#{{ filter }}</strong>
         </button>
-      </template>
-    </div>
+        <div v-if="displayedTags.length === 0 && !createable && customTags.length === 0" class="tag-picker-empty">
+          No matches
+        </div>
+        <!-- Custom (non-template) tags -->
+        <template v-if="customTags.length > 0">
+          <div class="tag-picker-separator" />
+          <button
+            v-for="tag in customTags"
+            :key="tag"
+            class="tag-picker-item"
+            @click="toggleTag(tag)"
+          >
+            <span class="tag-picker-check">✓</span>
+            <span class="tag-picker-hash">#</span>{{ tag }}
+          </button>
+        </template>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -63,6 +71,7 @@ const { t } = useI18n();
 const props = defineProps<{
   conversation: Conversation | undefined;
   className?: string;
+  teleport?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -72,7 +81,9 @@ const emit = defineEmits<{
 const open = ref(false);
 const filter = ref("");
 const wrapperRef = ref<HTMLElement | null>(null);
+const menuRef = ref<HTMLElement | null>(null);
 const inputRef = ref<HTMLInputElement | null>(null);
+const menuStyle = ref<Record<string, string>>({});
 
 const currentTags = computed(() => (props.conversation ? parseTags(props.conversation) : []));
 
@@ -95,8 +106,43 @@ function toggleOpen() {
   open.value = !open.value;
   if (open.value) {
     filter.value = "";
+    positionMenu();
     nextTick(() => inputRef.value?.focus());
   }
+}
+
+function positionMenu() {
+  if (!props.teleport) {
+    menuStyle.value = {};
+    return;
+  }
+  const anchor = wrapperRef.value;
+  if (!anchor) return;
+  const rect = anchor.getBoundingClientRect();
+  const gap = 4;
+  const style: Record<string, string> = {
+    position: "fixed",
+    left: "auto",
+    // Right-align to the trigger so the menu never runs off the viewport's
+    // right edge (the drawer trigger sits near the drawer's right edge).
+    right: `${Math.max(0, window.innerWidth - rect.right)}px`,
+  };
+  // Open below the trigger unless the trigger is in the bottom half of the
+  // viewport; then open above it. Using top/bottom (rather than a measured
+  // height) keeps this cheap and avoids a first-paint flip.
+  if (rect.top + rect.height / 2 > window.innerHeight / 2) {
+    style.top = "auto";
+    style.bottom = `${window.innerHeight - rect.top + gap}px`;
+  } else {
+    style.top = `${rect.bottom + gap}px`;
+    style.bottom = "auto";
+  }
+  menuStyle.value = style;
+}
+
+// Keep a teleported menu glued to the trigger as the drawer scrolls.
+function onScrollOrResize() {
+  if (props.teleport && open.value) positionMenu();
 }
 
 function toggleTag(tag: string) {
@@ -150,12 +196,19 @@ function onInputKeydown(e: KeyboardEvent) {
 
 // --- Outside-click ---
 function onOutside(e: MouseEvent) {
-  if (wrapperRef.value && !wrapperRef.value.contains(e.target as Node)) {
+  if (wrapperRef.value && !wrapperRef.value.contains(e.target as Node) && !menuRef.value?.contains(e.target as Node)) {
     open.value = false;
   }
 }
 watch(open, (isOpen) => {
-  if (isOpen) document.addEventListener("mousedown", onOutside);
-  else document.removeEventListener("mousedown", onOutside);
+  if (isOpen) {
+    document.addEventListener("mousedown", onOutside);
+    window.addEventListener("scroll", onScrollOrResize, true);
+    window.addEventListener("resize", onScrollOrResize);
+  } else {
+    document.removeEventListener("mousedown", onOutside);
+    window.removeEventListener("scroll", onScrollOrResize, true);
+    window.removeEventListener("resize", onScrollOrResize);
+  }
 });
 </script>

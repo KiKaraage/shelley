@@ -1,11 +1,12 @@
 <!-- Drawer-row wrapper around the reusable TagPicker. Keeps the row's
      edit-tags icon button; the picker popover and tag logic live in
-     TagPicker. The drawer-tag-picker class positions the popover inside the
-     row instead of the default below-the-trigger header position. -->
+     TagPicker. Teleported to body so the menu escapes the row's
+     overflow-clipped action container. -->
 <template>
   <TagPicker
     :conversation="conversation"
     class-name="drawer-tag-picker"
+    teleport
     @click.stop
     @update="$emit('update', $event)"
   >
