@@ -123,10 +123,8 @@
   .modal-wrap.on { display: block; animation: drop 0.15s ease-out; }
   @keyframes drop { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
   .modal { width: 24rem; max-width: calc(100vw - 1.5rem); background: var(--bg-base); border: 1px solid var(--border); border-radius: 0.625rem; box-shadow: 0 12px 40px rgba(0,0,0,0.25); display: flex; flex-direction: column; max-height: calc(100vh - 4rem); }
-  .modal-title { font-size: 0.9375rem; font-weight: 600; margin: 0; }
   .modal-body { padding: 0.875rem 1rem; overflow-y: auto; }
-  .modal-body .modal-title { font-size: 0.9375rem; font-weight: 600; margin: 0 0 0.75rem; }
-  .modal-foot { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.625rem 1rem; border-top: 1px solid var(--border); }
+  .modal-foot { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.5rem 1rem 0.875rem; }
   .field { margin-bottom: 0.75rem; }
   .field label { display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
   .field .req { color: var(--error-text); }
@@ -198,7 +196,6 @@
   <div class="modal-wrap" data-modal>
     <div class="modal">
       <div class="modal-body">
-        <h2 class="modal-title" data-modal-title>New task</h2>
         <div class="field">
           <label for="f-title">Title <span class="req">*</span></label>
           <input id="f-title" class="input" data-f-title type="text" placeholder="What needs doing?  e.g. Fix flaky test #working" maxlength="140" />
@@ -382,7 +379,6 @@ function renderDerived() {
 }
 function openModal(id, mode) {
   editingId = mode === "edit" ? id : null;
-  document.querySelector("[data-modal-title]").textContent = editingId ? "Edit task" : "New task";
   saveBtn.textContent = editingId ? "Save changes" : "Create task";
   const t = editingId ? taskById(editingId) : null;
   fTitle.value = t ? t.title : "";
