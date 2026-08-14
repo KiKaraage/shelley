@@ -34,11 +34,11 @@
 - Never amend/smash commit if your ongoing patch number is different than the latest previous commit
 
 ## P001
-Status: active
+Status: reverted
 Base: 5c2cce3
-Files: ChatInterface.vue, ChatOverflowMenu.vue, styles.css
-Changes: Moved Diffs, Git Graph, Terminal from the overflow menu into always-visible header buttons, ordered [+, Diffs, Git Graph, Terminal, ⋮]; removed the menu items, their emits, and the now-unused hasCwd prop. Also removed the separators around Archive Conversation and put the theme and notification switches on one row in the overflow menu (split 60:40 — theme has 3 options, notifications 2).
-Watchouts: Keep the header buttons as the only entry points for Diffs/Git Graph/Terminal; don't restore the open-diffs/open-git-graph/open-terminal emits or menu items while the header buttons exist.
+Files: ChatInterface.vue, ChatOverflowMenu.vue
+Changes: Moved Diffs, Git Graph, Terminal from the overflow menu into always-visible header buttons, ordered [+, Diffs, Git Graph, Terminal, ⋮]; removed the menu items, their emits, and the now-unused hasCwd prop.
+Reverted: The Diffs/Git Graph/Terminal header buttons were moved back into the overflow menu (with their emits and hasCwd prop restored).
 
 ## P002
 Status: active

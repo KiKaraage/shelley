@@ -4,7 +4,7 @@ Here's some patches I've made on top of Shelley:
 
 | Patch | Scope | Status | Description |
 |-------|-------|--------|-------------|
-| [P001](PATCH.md#p001) (S · Aug 7) | ui | active | Moved Diffs, Git Graph, Terminal into always-visible header buttons |
+| [P001](PATCH.md#p001) (S · Aug 7) | ui | reverted | Moved Diffs, Git Graph, Terminal into always-visible header buttons |
 | [P002](PATCH.md#p002) (S · Aug 7) | ui | active | Added tooltips to New Thread, overflow menu, hamburger, and drawer buttons |
 | [P003](PATCH.md#p003) (S · Aug 7) | ui | active | In-app terminal launches zsh instead of bash |
 | [P004](PATCH.md#p004) (M · Aug 7) | ui | active | Hid working directory/command sections in BashTool; added Copy Command/Results buttons |

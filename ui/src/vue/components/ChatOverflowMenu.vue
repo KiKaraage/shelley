@@ -53,6 +53,60 @@
       @show="open = true"
       @hide="open = false"
     >
+      <!-- Conversation / workspace actions -->
+      <button v-if="hasCwd" class="overflow-menu-item" @click="onDiffs">
+        <!-- Diffs: two rows of +/- changes -->
+        <svg
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          viewBox="0 0 24 24"
+          class="chat-menu-icon"
+          aria-hidden="true"
+        >
+          <path d="M4 7h4M6 5v4" />
+          <path d="M14 7h6" />
+          <path d="M4 17h6" />
+          <path d="M14 17h6M17 15v4" />
+        </svg>
+        {{ t("diffs") }}
+        <span class="overflow-menu-shortcut"
+          ><kbd>{{ menuShortcutLabel("diffs") }}</kbd></span
+        >
+      </button>
+      <button v-if="hasCwd" class="overflow-menu-item" @click="onGitGraph">
+        <!-- Git graph: commits A (top) and B (top-right) branching from C (bottom) -->
+        <svg
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          viewBox="0 0 24 24"
+          class="chat-menu-icon"
+          aria-hidden="true"
+        >
+          <path d="M6 16.6V7.4" />
+          <path d="M6 16.6C8 11 12 6 14.6 5" />
+          <circle cx="6" cy="5" r="2.4" />
+          <circle cx="17" cy="5" r="2.4" />
+          <circle cx="6" cy="19" r="2.4" />
+        </svg>
+        {{ t("gitGraph") }}
+        <span class="overflow-menu-shortcut"
+          ><kbd>{{ menuShortcutLabel("gitGraph") }}</kbd></span
+        >
+      </button>
+      <button class="overflow-menu-item" @click="onTerminal">
+        <i class="pi pi-desktop chat-menu-icon" aria-hidden="true" />
+        {{ t("terminal") }}
+        <span class="overflow-menu-shortcut"
+          ><kbd>{{ menuShortcutLabel("terminal") }}</kbd></span
+        >
+      </button>
+
       <!-- Custom server-provided links (icon is a raw SVG path) -->
       <button
         v-for="(link, index) in links"
@@ -330,6 +384,7 @@ import {
 import { api } from "../../services/api";
 
 defineProps<{
+  hasCwd: boolean;
   links: Link[];
   canArchive: boolean;
   canExport: boolean;
@@ -339,6 +394,9 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
+  (e: "open-diffs"): void;
+  (e: "open-git-graph"): void;
+  (e: "open-terminal"): void;
   (e: "open-external-link", url: string): void;
   (e: "archive"): void;
   (e: "export"): void;
@@ -386,6 +444,9 @@ function hide() {
 // Each action emits its event, then closes the Popover. Kept as explicit
 // one-liners (rather than a union-typed helper) so defineEmits' per-event
 // overloads type-check cleanly.
+const onDiffs = () => (emit("open-diffs"), hide());
+const onGitGraph = () => (emit("open-git-graph"), hide());
+const onTerminal = () => (emit("open-terminal"), hide());
 const onArchive = () => (emit("archive"), hide());
 const onExport = () => (emit("export"), hide());
 const onExportGist = () => (emit("export-gist"), hide());

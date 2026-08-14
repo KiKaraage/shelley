@@ -76,60 +76,9 @@
           </svg>
         </button>
 
-        <!-- Diffs -->
-        <Button
-          v-if="hasCwd"
-          class="btn-icon"
-          text
-          severity="secondary"
-          :aria-label="t('diffs')"
-          v-tooltip.top="t('diffs')"
-          @click="showDiffViewer = true"
-        >
-          <svg
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            viewBox="0 0 24 24"
-            class="chat-icon-1rem"
-            aria-hidden="true"
-          >
-            <path d="M4 7h4M6 5v4" />
-            <path d="M14 7h6" />
-            <path d="M4 17h6" />
-            <path d="M14 17h6M17 15v4" />
-          </svg>
-        </Button>
-
-        <!-- Git Graph -->
-        <Button
-          v-if="hasCwd"
-          class="btn-icon"
-          text
-          severity="secondary"
-          :aria-label="t('gitGraph')"
-          v-tooltip.top="t('gitGraph')"
-          @click="showGitGraph = true"
-        >
-          <GitBranchIcon class="chat-icon-1rem" />
-        </Button>
-
-        <!-- Terminal -->
-        <Button
-          class="btn-icon"
-          text
-          severity="secondary"
-          :aria-label="t('terminal')"
-          v-tooltip.top="t('terminal')"
-          @click="openInAppTerminal"
-        >
-          <i class="pi pi-desktop chat-icon-1rem" aria-hidden="true" />
-        </Button>
-
         <!-- Overflow menu (PrimeVue Popover + SelectButton/Select) -->
         <ChatOverflowMenu
+          :has-cwd="hasCwd"
           :links="links"
           :can-archive="
             !!(conversationId && onArchiveConversation && !currentConversation?.archived)
@@ -138,6 +87,9 @@
           :has-update="hasUpdate"
           :gist-id="gistId"
           :gist-url="gistUrl"
+          @open-diffs="showDiffViewer = true"
+          @open-git-graph="showGitGraph = true"
+          @open-terminal="openInAppTerminal"
           @open-external-link="openExternalLink"
           @archive="archiveFromMenu"
           @export="openExport"
@@ -515,7 +467,6 @@ import MessageSelectionToolbar from "./MessageSelectionToolbar.vue";
 import DiffViewer from "./DiffViewer.vue";
 import ImageCommentModal from "./ImageCommentModal.vue";
 import GitGraphViewer from "./GitGraphViewer.vue";
-import GitBranchIcon from "./GitBranchIcon.vue";
 import AgentsMdEditorModal from "./AgentsMdEditorModal.vue";
 import TerminalPanel from "./TerminalPanel.vue";
 import VersionChecker from "./VersionChecker.vue";
