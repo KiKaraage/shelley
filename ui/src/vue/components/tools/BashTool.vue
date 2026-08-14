@@ -8,6 +8,7 @@
       <div class="bash-tool-summary">
         <span class="bash-tool-emoji" :class="{ running: isRunning }">🛠️</span>
         <div class="bash-tool-command" :title="command">
+          <span v-if="headerComments.length" class="bash-tool-header-comments">{{ headerComments }}</span>
           <span v-for="(line, i) in displayCommandLines" :key="i" class="bash-tool-command-line">{{ line }}</span>
         </div>
         <span v-if="isComplete && isCancelled" class="bash-tool-cancelled">✗ cancelled</span>
@@ -101,6 +102,9 @@ const props = defineProps<{
 /** Max lines shown in the streaming preview before "Show more" is needed. */
 const PREVIEW_LINES = 5;
 
+/** Leading `#` comment lines at the start of a command (any leading whitespace allowed). */
+const COMMENT_LINE_RE = /^[ \t]*#.*(?:\n|$)/gm;
+
 // Details panel — collapsed by default (expanded inside the detail modal).
 const isExpanded = useToolExpanded();
 // Streaming preview — expanded to show full streaming output.
@@ -167,10 +171,18 @@ const isCancelled = computed(() => props.hasError && isCancelledToolResult(outpu
 
 const displayCommandLines = computed(() => {
   const cmd = command.value;
-  if (!cmd.includes(" && ")) return [cmd];
-  return cmd.split(" && ").flatMap((part, i) =>
+  const body = cmd.replace(COMMENT_LINE_RE, "").replace(/^\n+/, "");
+  if (!body.includes(" && ")) return [body];
+  return body.split(" && ").flatMap((part, i) =>
     i === 0 ? [part] : [`&& ${part}`],
   );
+});
+
+/** Leading comment lines (starting with #) inside the command, joined. */
+const headerComments = computed(() => {
+  const matches = command.value.match(COMMENT_LINE_RE);
+  if (!matches) return "";
+  return matches.join("\n");
 });
 
 const isComplete = computed(() => !props.isRunning && props.toolResult !== undefined);

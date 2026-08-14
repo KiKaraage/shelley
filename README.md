@@ -42,6 +42,7 @@ Here's some patches I've made on top of Shelley:
 | [P035](PATCH.md#p035) (M · Aug 13) | ui | active | Make message blocks full-width; shrink-wrap user bubbles with background |
 | [P036](PATCH.md#p036) (S · Aug 14) | skills | active | Rewrite previous-conversations skill to use `shelley client` |
 | [P037](PATCH.md#p037) (M · Aug 14) | ui | active | Use shared TagPicker for drawer tag editing |
+| [P038](PATCH.md#p038) (S · Aug 14) | ui | active | Show leading `#` comments in bash tool summary |
 
 Scope: `ui` (frontend only) · `go` (backend only) · `full` (UI + Go/DB) · `build` · `skills`
 
