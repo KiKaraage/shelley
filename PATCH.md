@@ -32,6 +32,7 @@
 - Never plain `make build`: only the `build-custom` ldflags stamp; never restart shelley mid-turn: always delayed via `setsid`
 - Never anchor to our own commit SHAs (rewritten on rebase), use upstream `Base` SHAs
 - Never amend/smash commit if your ongoing patch number is different than the latest previous commit
+- Update table in README.md everytime there's new patch or new summary/status updates
 
 ## P001
 Move Diffs, Git Graph, Terminal into always-visible header buttons
@@ -446,3 +447,18 @@ Rewrite previous-conversations skill to use `shelley client`
 - Files: skills/builtin/previous-conversations/SKILL.md
 - Changes:
   - Rewrote the skill to query conversations through `shelley client` (list, read, search) instead of guessing the SQLite path. Kept the `sqlite3` queries as a raw-SQL fallback for when the server is down or direct DB access is needed.
+
+## P037
+Use shared TagPicker for drawer tag editing
+- Status: active
+- Base: 4a98848
+- Files: ConversationDrawerRow.vue, ConversationDrawer.vue, conversationDrawerShared.ts, DrawerTagPicker.vue (new), TagPicker.vue, styles.css
+- Changes:
+  - Drawer rows now edit tags through the shared `TagPicker.vue` popover instead of the inline chip editor.
+  - New `DrawerTagPicker.vue` wraps `TagPicker` in the row's existing `editTags` icon button and forwards its `update` event.
+  - `ConversationDrawer.vue` adds `handleTagPickerUpdate` to the row ctx; it emits `renamed` so tag changes refresh the sidebar.
+  - Removed the inline editor: `tagsEditing`, the `#…` input form, per-chip remove buttons, `handleOpenTagEditor`/`handleAddTag`/`handleRemoveTag`, `saveTags`, and the tag-editor refs/outside-click watcher.
+  - `TagPicker.vue` accepts an optional `className`; the drawer variant repositions the popover via `.drawer-tag-picker .tag-picker-menu` (opens above the row, right-aligned).
+- Watchouts:
+  - Drawer tag editing is now a popover, not an inline input; typing applies via the picker's Enter/create path.
+  - `handleTagPickerUpdate` is required on the ctx so row updates refresh the sidebar without a reload.

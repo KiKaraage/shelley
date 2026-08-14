@@ -40,6 +40,7 @@ Here's some patches I've made on top of Shelley:
 | [P034](PATCH.md#p034) (S · Aug 13) | ui | active | Merge drawer tag row into timestamp+preview row |
 | [P035](PATCH.md#p035) (M · Aug 13) | ui | active | Make message blocks full-width; shrink-wrap user bubbles with background |
 | [P036](PATCH.md#p036) (S · Aug 14) | skills | active | Rewrite previous-conversations skill to use `shelley client` |
+| [P037](PATCH.md#p037) (M · Aug 14) | ui | active | Use shared TagPicker for drawer tag editing |
 
 Scope: `ui` (frontend only) · `go` (backend only) · `full` (UI + Go/DB) · `build` · `skills`
 

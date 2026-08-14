@@ -3,7 +3,7 @@
      by the parent via the #trigger slot, so the picker can sit in a header,
      drawer, or any other surface. -->
 <template>
-  <div ref="wrapperRef" class="tag-picker-wrapper">
+  <div ref="wrapperRef" :class="`tag-picker-wrapper${className ? ' ' + className : ''}`">
     <slot name="trigger" :open="open" :toggle="toggleOpen" />
     <div v-if="open" class="tag-picker-menu">
       <input
@@ -62,6 +62,7 @@ const { t } = useI18n();
 
 const props = defineProps<{
   conversation: Conversation | undefined;
+  className?: string;
 }>();
 
 const emit = defineEmits<{

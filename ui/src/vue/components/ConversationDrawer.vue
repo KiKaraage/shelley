@@ -5,7 +5,7 @@
      .conversation-group-label; aria-labels come from i18n t() keys
      ("Open conversations", "Group conversations", closeConversations,
      collapseSidebar, searchConversations, clearSearch, newConversation, plus
-     archive/restore/delete_/rename/editTags/removeTag/cancel). Reuses
+     archive/restore/delete_/rename/editTags/cancel). Reuses
      utils/conversationSort, utils/tildify, vue/utils/openInNewTab.
 
      NOTE: the App-level `.backdrop` element lives in App.tsx / the parent
@@ -432,7 +432,7 @@ import { isImeComposing } from "../../utils/imeComposing";
 import { handleModifiedNavClick } from "../utils/openInNewTab";
 import ConversationRow from "./ConversationDrawerRow.vue";
 import Button from "primevue/button";
-import { DrawerCtxKey, type GroupBy, parseTags } from "./conversationDrawerShared";
+import { DrawerCtxKey, type GroupBy } from "./conversationDrawerShared";
 import { perfCount } from "../../utils/perf";
 
 const props = defineProps<{
@@ -493,10 +493,6 @@ let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 let searchSeq = 0;
 const editingId = ref<string | null>(null);
 const editingSlug = ref("");
-const tagEditorId = ref<string | null>(null);
-const tagInput = ref("");
-const tagEditorRef = ref<HTMLElement | null>(null);
-const tagInputRef = ref<HTMLInputElement | null>(null);
 const expandedSubagents = ref<Set<string>>(new Set());
 const groupBy = ref<GroupBy>(
   (() => {
@@ -556,17 +552,6 @@ function onPendingDeleteOutside(e: MouseEvent) {
 watch(pendingDeleteId, (id) => {
   if (id) document.addEventListener("mousedown", onPendingDeleteOutside);
   else document.removeEventListener("mousedown", onPendingDeleteOutside);
-});
-
-function onTagEditorOutside(e: MouseEvent) {
-  if (tagEditorRef.value && !tagEditorRef.value.contains(e.target as Node)) {
-    tagEditorId.value = null;
-    tagInput.value = "";
-  }
-}
-watch(tagEditorId, (id) => {
-  if (id) document.addEventListener("mousedown", onTagEditorOutside);
-  else document.removeEventListener("mousedown", onTagEditorOutside);
 });
 
 // Eagerly load archived conversations on mount for the settled preview,
@@ -776,45 +761,8 @@ function sanitizeSlug(input: string): string {
 }
 
 // --- Tags ---
-function handleOpenTagEditor(e: MouseEvent, conversationId: string) {
-  e.stopPropagation();
-  tagEditorId.value = tagEditorId.value === conversationId ? null : conversationId;
-  tagInput.value = "";
-  setTimeout(() => tagInputRef.value?.focus(), 0);
-}
-async function saveTags(conversationId: string, tags: string[]) {
-  const normalized: string[] = [];
-  const seen = new Set<string>();
-  for (const tag of tags) {
-    const trimmed = tag.trim();
-    if (!trimmed || seen.has(trimmed)) continue;
-    seen.add(trimmed);
-    normalized.push(trimmed);
-  }
-  try {
-    const updated = await api.updateConversationTags(conversationId, normalized);
-    emit("renamed", updated);
-  } catch (err) {
-    console.error("Failed to update tags:", err);
-  }
-}
-async function handleAddTag(conversation: Conversation) {
-  const value = tagInput.value.trim().replace(/^#+/, "");
-  if (!value) return;
-  const current = parseTags(conversation);
-  if (current.includes(value)) {
-    tagInput.value = "";
-    return;
-  }
-  tagInput.value = "";
-  await saveTags(conversation.conversation_id, [...current, value]);
-}
-async function handleRemoveTag(conversation: Conversation, tag: string) {
-  const current = parseTags(conversation);
-  await saveTags(
-    conversation.conversation_id,
-    current.filter((tg) => tg !== tag),
-  );
+function handleTagPickerUpdate(conversation: Conversation) {
+  emit("renamed", conversation);
 }
 
 // --- Rename ---
@@ -1046,7 +994,6 @@ onUnmounted(() => {
   if (copyTimeout) clearTimeout(copyTimeout);
   document.removeEventListener("mousedown", onGroupMenuOutside);
   document.removeEventListener("mousedown", onPendingDeleteOutside);
-  document.removeEventListener("mousedown", onTagEditorOutside);
 });
 onMounted(() => {
   void loadArchivedConversations();
@@ -1066,10 +1013,6 @@ provide(DrawerCtxKey, {
   editingId,
   editingSlug,
   renameInputRef,
-  tagEditorId,
-  tagInput,
-  tagEditorRef,
-  tagInputRef,
   draftLabels,
   groupBy,
   formatDate,
@@ -1081,9 +1024,7 @@ provide(DrawerCtxKey, {
   handleStartRename,
   handleRename,
   handleRenameKeyDown,
-  handleOpenTagEditor,
-  handleAddTag,
-  handleRemoveTag,
+  handleTagPickerUpdate,
   handleArchive,
   handleUnarchive,
   handleCopyGitHash,

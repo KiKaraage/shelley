@@ -82,24 +82,10 @@
                 />
               </svg>
             </Button>
-            <Button
-              class="btn-icon-sm"
-              text
-              severity="secondary"
-              size="small"
-              v-tooltip.top="ctx.t('editTags')"
-              :aria-label="ctx.t('editTags')"
-              @click="ctx.handleOpenTagEditor($event, conversation.conversation_id)"
-            >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="drawer-icon-size">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  :stroke-width="2"
-                  d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"
-                />
-              </svg>
-            </Button>
+            <DrawerTagPicker
+              :conversation="conversation"
+              @update="ctx.handleTagPickerUpdate"
+            />
             <Button
               class="btn-icon-sm"
               text
@@ -185,44 +171,12 @@
         </span>
         <!-- Tags (merged into meta row, pushed right via margin-left: auto) -->
         <div
-          v-if="tagsEditing || conversationTags.length > 0"
-          :ref="setTagEditorRefMaybe"
-          :class="`conversation-tags conversation-tags-inline${tagsEditing ? ' conversation-tags-editing' : ''}`"
-          @click="tagsEditing ? $event.stopPropagation() : undefined"
+          v-if="conversationTags.length > 0"
+          :class="`conversation-tags conversation-tags-inline`"
         >
-          <template v-for="tag in conversationTags" :key="tag">
-            <span v-if="tagsEditing" class="conversation-tag conversation-tag-removable">
-              <span class="conversation-tag-hash">#</span>{{ tag }}
-              <button
-                type="button"
-                class="conversation-tag-remove"
-                :aria-label="`${ctx.t('removeTag')} ${tag}`"
-                v-tooltip.top="ctx.t('removeTag')"
-                @click="ctx.handleRemoveTag(conversation, tag)"
-              >
-                ×
-              </button>
-            </span>
-            <span v-else class="conversation-tag" :title="`#${tag}`">
-              <span class="conversation-tag-hash">#</span>{{ tag }}
-            </span>
-          </template>
-          <form
-            v-if="tagsEditing"
-            class="conversation-tag-inline-form"
-            @submit.prevent="ctx.handleAddTag(conversation)"
-          >
-            <span class="conversation-tag-hash">#</span>
-            <input
-              ref="tagInput"
-              type="text"
-              :value="ctx.tagInput.value"
-              :placeholder="ctx.t('addTagPlaceholder')"
-              class="conversation-tag-inline-input"
-              @input="ctx.tagInput.value = ($event.target as HTMLInputElement).value"
-              @keydown="onTagInputKeyDown"
-            />
-          </form>
+          <span v-for="tag in conversationTags" :key="tag" class="conversation-tag" :title="`#${tag}`">
+            <span class="conversation-tag-hash">#</span>{{ tag }}
+          </span>
         </div>
       </div>
     </div>
@@ -298,8 +252,8 @@
 import { computed, defineComponent, h, inject, ref, watch, type VNode } from "vue";
 import Button from "primevue/button";
 import GitBranchIcon from "./GitBranchIcon.vue";
+import DrawerTagPicker from "./DrawerTagPicker.vue";
 import type { Conversation, ConversationWithState } from "../../types";
-import { isImeComposing } from "../../utils/imeComposing";
 import {
   DrawerCtxKey,
   parseTags,
@@ -315,7 +269,6 @@ const props = defineProps<{
 const ctx = inject(DrawerCtxKey)!;
 
 const renameInput = ref<HTMLInputElement | null>(null);
-const tagInput = ref<HTMLInputElement | null>(null);
 
 const convState = computed(() => props.conversation as ConversationWithState);
 const isDraft = computed(() => !!props.conversation.is_draft);
@@ -385,9 +338,6 @@ const conversationTags = computed(() => {
   perfCount("drawerRow.tags");
   return isDraft.value ? [] : parseTags(props.conversation);
 });
-const tagsEditing = computed(
-  () => !isDraft.value && ctx.tagEditorId.value === props.conversation.conversation_id,
-);
 
 // Track when a conversation finishes working so we can show a "was working" blue dot.
 const wasWorking = computed(() =>
@@ -428,35 +378,12 @@ function onSubClick(e: MouseEvent, sub: Conversation) {
   if (ctx.handleModifiedClick(e, sub)) return;
   ctx.selectConversation(sub);
 }
-function onTagInputKeyDown(e: KeyboardEvent) {
-  if (isImeComposing(e)) {
-    // Stop the Enter that confirms an IME conversion from submitting the form.
-    if (e.key === "Enter") e.preventDefault();
-    return;
-  }
-  if (e.key === "Escape") {
-    e.preventDefault();
-    ctx.tagEditorId.value = null;
-    ctx.tagInput.value = "";
-  }
-}
 
-// Forward the active rename/tag-editor DOM refs up to the parent so its
-// focus/select/outside-click logic can reach them (mirrors the React refs,
-// which are bound only on the active row).
-function setTagEditorRef(el: Element | null) {
-  ctx.tagEditorRef.value = (el as HTMLElement) ?? null;
-}
-// Bound unconditionally; only writes the shared ref while this row is the
-// active tag editor (and clears it back to null otherwise via the v-if).
-const setTagEditorRefMaybe = (el: unknown) => {
-  if (tagsEditing.value) setTagEditorRef((el as Element) ?? null);
-};
+// Forward the active rename-editor DOM ref up to the parent so its
+// focus/select logic can reach it (mirrors the React ref, which is bound only
+// on the active row).
 watch(renameInput, (el) => {
   if (el) ctx.renameInputRef.value = el;
-});
-watch(tagInput, (el) => {
-  if (el) ctx.tagInputRef.value = el;
 });
 
 // Inline delete button (mirrors renderDeleteButton). Defined as a render
