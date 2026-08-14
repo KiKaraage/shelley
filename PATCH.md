@@ -355,3 +355,10 @@ Make message blocks full-width; shrink-wrap user bubbles with background
 - Watchouts:
   - The per-block action-bar changes documented in the original P035 entry are superseded by upstream 8d34550 (see P033); only the width/background CSS remains.
 
+## P036
+Rewrite previous-conversations skill to use `shelley client`
+- Status: active
+- Base: 4a98848
+- Files: skills/builtin/previous-conversations/SKILL.md
+- Changes: Rewrote the skill to query conversations through `shelley client` (list, read, search) instead of guessing the SQLite path. Kept the `sqlite3` queries as a raw-SQL fallback for when the server is down or direct DB access is needed.
+
