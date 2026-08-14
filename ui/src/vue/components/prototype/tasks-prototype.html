@@ -221,11 +221,7 @@
         <!-- ================= Variant A: Inbox ================= -->
         <section class="v v-a on">
           <div class="toolbar">
-            <div class="filters" data-a-filters>
-              <button class="filter active" data-a-filter="all">All <span data-count-all></span></button>
-              <button class="filter" data-a-filter="idle">Idle <span data-count-idle></span></button>
-              <button class="filter" data-a-filter="handled">Handled <span data-count-handled></span></button>
-            </div>
+            <div class="filters" data-a-filters></div>
             <button class="btn btn-primary" data-open>＋ New task</button>
           </div>
           <div data-a-list class="list"></div>
@@ -352,13 +348,16 @@ let TASKS = [
   { id: 3, title: "Investigate SSE reconnect flake", cwd: DIRS[1].path, tags: ["explore"], handled: false, thread: null },
   { id: 4, title: "Ship P037: shared TagPicker", cwd: DIRS[0].path, tags: ["done", "audit"], handled: true, thread: "ship-p037-tagpicker" },
   { id: 5, title: "Extract TagPicker constant + task modal reuse", cwd: null, tags: [], handled: true, thread: "extract-tagpicker-constant" },
+  { id: 6, title: "Organize notes on Beads research", cwd: DIRS[2].path, tags: ["explore"], handled: false, thread: null },
+  { id: 7, title: "Sketch Beads storage API", cwd: DIRS[3].path, tags: ["plan"], handled: false, thread: null },
+  { id: 8, title: "Review queue-main-crawshaw PR", cwd: DIRS[0].path, tags: ["done"], handled: false, thread: null },
 ];
-let nextId = 6;
+let nextId = 9;
 
 /* ==================== State ==================== */
 let variant = new URLSearchParams(location.search).get("variant") || "a";
 if (!["a","b","c"].includes(variant)) variant = "a";
-let aFilter = "all";
+let aFilter = "all"; // "all" | dir path | "none" 
 let cQuery = "";
 let cSel = 0;
 let editingId = null;
@@ -398,27 +397,38 @@ function rowActions(t) {
 }
 
 /* ---- Variant A ---- */
+function aFilterLabel(key) {
+  if (key === "all") return "all tasks";
+  if (key === "none") return "no directory";
+  const d = dirByPath(key);
+  return d ? d.label : key;
+}
 function renderA() {
-  const list = TASKS.filter(t => aFilter === "all" || (aFilter === "idle") === !t.handled);
-  const idle = TASKS.filter(t => !t.handled);
-  const handled = TASKS.filter(t => t.handled);
   const q = sel => document.querySelector(sel);
-  q("[data-count-all]").textContent = `(${TASKS.length})`;
-  q("[data-count-idle]").textContent = `(${idle.length})`;
-  q("[data-count-handled]").textContent = `(${handled.length})`;
-  document.querySelectorAll("[data-a-filter]").forEach(b => b.classList.toggle("active", b.dataset.aFilter === aFilter));
+  // Filter pills: repo/dir-based (git roots first, then cwds), per #2.
+  const dirs = [{ key: "all", label: "All" }, ...DIRS.map(d => ({ key: d.path, label: d.label })), { key: "none", label: "No dir" }];
+  const counts = { all: TASKS.length, none: TASKS.filter(t => !t.cwd).length };
+  DIRS.forEach(d => { counts[d.path] = TASKS.filter(t => t.cwd === d.path).length; });
+  q("[data-a-filters]").innerHTML = dirs.map(d =>
+    `<button class="filter ${aFilter === d.key ? "active" : ""}" data-a-filter="${esc(d.key)}">${esc(d.label)} (${counts[d.key] ?? 0})</button>`
+  ).join("");
+
+  const list = TASKS.filter(t => aFilter === "all" || (aFilter === "none" ? !t.cwd : t.cwd === aFilter));
+  const idle = list.filter(t => !t.handled && !isDone(t));
+  const handled = list.filter(t => t.handled && !isDone(t));
+  const done = list.filter(t => isDone(t));
 
   let html = "";
   if (TASKS.length === 0) {
     html = `<div class="empty"><div class="big">No tasks yet</div>
       <div>Tasks you create will show up here.</div>
       <div style="margin-top:1rem"><button class="btn btn-primary" data-open>＋ Create your first task</button></div></div>`;
+  } else if (list.length === 0) {
+    html = `<div class="empty"><div class="big">Nothing here</div><div>No tasks in ${esc(aFilterLabel(aFilter))}.</div></div>`;
   } else {
-    const shownIdle = list.filter(t => !t.handled);
-    const shownHandled = list.filter(t => t.handled);
-    if (shownIdle.length) html += `<div class="section-label">Idle — ${shownIdle.length} (ready to pick)</div>` + shownIdle.map(rowA).join("");
-    if (shownHandled.length) html += `<div class="section-label">Handled — ${shownHandled.length}</div>` + shownHandled.map(rowA).join("");
-    if (!shownIdle.length && !shownHandled.length) html = `<div class="empty"><div class="big">Nothing ${aFilter === "idle" ? "idle" : "handled"} right now</div></div>`;
+    if (idle.length) html += `<div class="section-label">${idle.length} idle</div>` + idle.map(rowA).join("");
+    if (handled.length) html += `<div class="section-label">${handled.length} handled</div>` + handled.map(rowA).join("");
+    if (done.length) html += `<div class="section-label">${done.length} done</div>` + done.map(rowA).join("");
   }
   q("[data-a-list]").innerHTML = html;
 }
