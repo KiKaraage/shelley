@@ -104,7 +104,8 @@
   .row { display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 0.75rem; border-radius: 0.375rem; border: 1px solid transparent; }
   .row:hover { background: var(--bg-hover); }
   .row .main { flex: 1; min-width: 0; }
-  .row .task-title { font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .title-row { display: flex; align-items: center; gap: 0.5rem; }
+  .title-row .task-title { flex: 1; min-width: 0; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .row .meta { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.15rem; flex-wrap: wrap; }
   .row .row-actions { display: none; align-items: center; gap: 0.25rem; }
   .row:hover .row-actions { display: inline-flex; }
@@ -298,10 +299,12 @@ function rowActions(t) {
 function rowHTML(t) {
   return `<div class="row ${isDone(t) ? "is-done" : ""}">
     <div class="main">
-      <div class="task-title">${esc(displayTitle(t))}</div>
+      <div class="title-row">
+        <span class="task-title">${esc(displayTitle(t))}</span>
+        <span class="row-actions">${rowActions(t)}</span>
+      </div>
       <div class="meta">${cwdLine(t)}${threadBadge(t)}${tagChips(t)}</div>
     </div>
-    <div class="row-actions">${rowActions(t)}</div>
   </div>`;
 }
 
