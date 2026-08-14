@@ -4,42 +4,43 @@ Here's some patches I've made on top of Shelley:
 
 | Patch | Scope | Status | Description |
 |-------|-------|--------|-------------|
-| [P001](PATCH.md#p001) (S · Aug 7) | ui | active | Moved Diffs, Git Graph, Terminal into always-visible header buttons |
-| [P002](PATCH.md#p002) (S · Aug 7) | ui | active | Added tooltips to New Thread, overflow menu, hamburger, and drawer buttons |
-| [P003](PATCH.md#p003) (S · Aug 7) | ui | active | In-app terminal launches zsh instead of bash |
-| [P004](PATCH.md#p004) (M · Aug 7) | ui | active | Hid working directory/command sections in BashTool; added Copy Command/Results buttons |
-| [P005](PATCH.md#p005) (S · Aug 7) | go | active | Added `~/.agents/skills/` to skill discovery paths |
-| [P006](PATCH.md#p006) (L · Aug 7) | full | active | Git commit attribution is now a user-configurable dropdown (co-author, assisted-by, off) |
-| [P007](PATCH.md#p007) (L · Aug 9) | full | active | Custom model enable/disable, import from /v1/models, context window fix |
+| [P001](PATCH.md#p001) (S · Aug 7) | ui | superseded | Move Diffs, Git Graph, Terminal into always-visible header buttons (upstream moved them into the header itself) |
+| [P002](PATCH.md#p002) (S · Aug 7) | ui | active | Add tooltips to New Thread, overflow menu, hamburger, and drawer buttons |
+| [P003](PATCH.md#p003) (S · Aug 7) | ui | active | Launch zsh instead of bash in the in-app terminal |
+| [P004](PATCH.md#p004) (M · Aug 7) | ui | active | Hide working directory/command sections in BashTool; add Copy Command/Results buttons |
+| [P005](PATCH.md#p005) (S · Aug 7) | go | active | Add `~/.agents/skills/` to skill discovery paths |
+| [P006](PATCH.md#p006) (L · Aug 7) | full | active | Make git commit attribution a user-configurable dropdown (co-author, assisted-by, off) |
+| [P007](PATCH.md#p007) (L · Aug 9) | full | active | Add custom model enable/disable, import from /v1/models, and context window fix |
+
 | [P008](PATCH.md#p008) (M · Aug 9) | go | active | Import pricing from /v1/models into DB |
-| [P009](PATCH.md#p009) (M · Aug 9) | ui | active | ModelsModal optimistic toggle/delete + checkpoint selection bar |
-| [P010](PATCH.md#p010) (M · Aug 9) | ui | active | Use 24h for all time display |
+| [P009](PATCH.md#p009) (M · Aug 9) | ui | active | Add optimistic toggle/delete + checkpoint selection bar to ModelsModal |
+| [P010](PATCH.md#p010) (M · Aug 9) | ui | active | Use 24h for all time displays |
 | [P011](PATCH.md#p011) (S · Aug 9) | ui | active | Show repo basename in conversation drawer CWD |
-| [P012](PATCH.md#p012) (S · Aug 10) | ui | active | Switched 10 UI selectors from monospace to sans-serif font |
-| [P013](PATCH.md#p013) (S · Aug 10) | ui | active | Hid bash tool output block when output is empty |
+| [P012](PATCH.md#p012) (S · Aug 10) | ui | active | Switch 10 UI selectors from monospace to sans-serif font |
+| [P013](PATCH.md#p013) (S · Aug 10) | ui | active | Hide bash tool output block when output is empty |
 | [P014](PATCH.md#p014) (L · Aug 10) | full | active | Export session as self-contained HTML to GitHub Gist |
-| [P015](PATCH.md#p015) (S · Aug 10) | ui | superseded | Context warning threshold relative to model context window |
-| [P016](PATCH.md#p016) (M · Aug 10) | ui | active | Settled thread preview in sidebar + auto-unarchive on send |
-| [P017](PATCH.md#p017) (M · Aug 10) | ui | active | Moved collapse/close buttons to drawer header left; renamed title to "Shelley" |
-| [P018](PATCH.md#p018) (M · Aug 11) | full | active | Git branch + owner/repo slug in drawer meta row |
-| [P019](PATCH.md#p019) (S · Aug 11) | build | active | `build-custom` installs to `~/.local/bin/shelley` |
-| [P020](PATCH.md#p020) (M · Aug 11) | full | active | Repo favicon in drawer meta row |
-| [P021](PATCH.md#p021) (M · Aug 11) | ui | active | Blue "was working" unread indicator in conversation drawer |
-| [P022](PATCH.md#p022) (S · Aug 11) | ui | active | Seamless status bar + message input container |
-| [P023](PATCH.md#p023) (S · Aug 11) | ui | active | Subagent preview/date share same flex row |
-| [P024](PATCH.md#p024) (S · Aug 11) | ui | active | Favicon on settled rows + tooltips + preview limit reduced |
-| [P025](PATCH.md#p025) (M · Aug 12) | full | active | Fixed gist export: DB writes, privacy leak, error toasts, stale status |
-| [P026](PATCH.md#p026) (S · Aug 12) | go | active | Slug generation retry for tagged/conversation models |
+| [P015](PATCH.md#p015) (S · Aug 10) | ui | superseded | Make context warning threshold relative to model context window |
+| [P016](PATCH.md#p016) (M · Aug 10) | ui | active | Add settled thread preview in sidebar + auto-unarchive on send |
+| [P017](PATCH.md#p017) (M · Aug 10) | ui | active | Move collapse/close buttons to drawer header left; rename title to "Shelley" |
+| [P018](PATCH.md#p018) (M · Aug 11) | full | active | Show git branch + owner/repo slug in drawer meta row |
+| [P019](PATCH.md#p019) (S · Aug 11) | build | active | Install `build-custom` output to `~/.local/bin/shelley` |
+| [P020](PATCH.md#p020) (M · Aug 11) | full | active | Show repo favicon in drawer meta row |
+| [P021](PATCH.md#p021) (M · Aug 11) | ui | active | Add blue "was working" unread indicator to conversation drawer |
+| [P022](PATCH.md#p022) (S · Aug 11) | ui | active | Make status bar + message input container seamless |
+| [P023](PATCH.md#p023) (S · Aug 11) | ui | active | Put subagent preview/date on the same flex row |
+| [P024](PATCH.md#p024) (S · Aug 11) | ui | active | Add favicon to settled rows + tooltips; reduce preview limit |
+| [P025](PATCH.md#p025) (M · Aug 12) | full | active | Fix gist export: DB writes, privacy leak, error toasts, stale status |
+| [P026](PATCH.md#p026) (S · Aug 12) | go | active | Add slug generation retry for tagged/conversation models |
 | [P027](PATCH.md#p027) (M · Aug 12) | go | active | Block chained `cd <path> && ...` when path equals cwd |
-| [P028](PATCH.md#p028) (M · Aug 12) | go | active | Conversation previews include thinking, user, and tool-use content |
-| [P029](PATCH.md#p029) (L · Aug 12) | ui | active | "Auto Expand" brevity mode with turn-level collapse bands |
+| [P028](PATCH.md#p028) (M · Aug 12) | go | active | Include thinking, user, and tool-use content in conversation previews |
+| [P029](PATCH.md#p029) (L · Aug 12) | ui | active | Add "Auto Expand" brevity mode with turn-level collapse bands |
 | [P030](PATCH.md#p030) (S · Aug 12) | ui | active | Split chained `&&` bash commands across lines in tool summary |
-| [P031](PATCH.md#p031) (S · Aug 12) | ui | active | Repo favicon in chat header |
-| [P032](PATCH.md#p032) (M · Aug 12) | ui | active | Tag picker dropdown in chat header |
-| [P033](PATCH.md#p033) (M · Aug 13) | ui | active | Per-block action bars on thinking and text blocks |
-| [P034](PATCH.md#p034) (S · Aug 13) | ui | active | Merged drawer tag row into timestamp+preview row |
-| [P035](PATCH.md#p035) (M · Aug 13) | ui | active | Full-width message blocks; user bubbles shrink-wrap with background |
-| [P036](PATCH.md#p036) (S · Aug 14) | skills | active | Rewrote previous-conversations skill to use `shelley client` |
+| [P031](PATCH.md#p031) (S · Aug 12) | ui | active | Show repo favicon in chat header |
+| [P032](PATCH.md#p032) (M · Aug 12) | ui | active | Add tag picker dropdown to chat header |
+| [P033](PATCH.md#p033) (M · Aug 13) | ui | active | Add per-block action bars to thinking and text blocks |
+| [P034](PATCH.md#p034) (S · Aug 13) | ui | active | Merge drawer tag row into timestamp+preview row |
+| [P035](PATCH.md#p035) (M · Aug 13) | ui | active | Make message blocks full-width; shrink-wrap user bubbles with background |
+| [P036](PATCH.md#p036) (S · Aug 14) | skills | active | Rewrite previous-conversations skill to use `shelley client` |
 
 Scope: `ui` (frontend only) · `go` (backend only) · `full` (UI + Go/DB) · `build` · `skills`
 
