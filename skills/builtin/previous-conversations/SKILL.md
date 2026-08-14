@@ -3,51 +3,34 @@ name: previous-conversations
 description: Use when the user references a previous conversation, asks you to continue earlier work, or you need to look up what was discussed before.
 ---
 
-Shelley stores conversation history in a SQLite database, but the database
-location is not fixed. It defaults to `shelley.db` relative to the server's
-working directory, or whatever the server was started with via the global
-`-db` flag. Prefer the CLI client, which talks to the running server and never
-guesses the path. If a server is not running (or you need raw SQL), fall back
-to the `sqlite3` examples below.
-
-## Locate the database
-
-```bash
-# The socket path is the reliable way to reach the running server.
-# If it isn't at the default location, pass -url explicitly.
-SOCKET="$HOME/.config/shelley/shelley.sock"
-```
+Prefer the CLI client — it talks to the running server, so you never need to
+know where the SQLite DB lives. Fall back to `sqlite3` only if the server is
+down or you need raw SQL.
 
 ## List recent conversations
 
 ```bash
-shelley client -url "unix://$SOCKET" list -limit 20
+shelley client list -limit 20
 ```
 
 ## Get messages from a conversation
 
-Replace CONVERSATION_ID with the actual ID:
-
 ```bash
-shelley client -url "unix://$SOCKET" read CONVERSATION_ID
+shelley client read CONVERSATION_ID
 ```
 
-To stream until the agent turn finishes, use `read -wait CONVERSATION_ID`.
+Use `read -wait CONVERSATION_ID` to stream until the agent turn ends.
 
 ## Search conversations
 
 ```bash
-shelley client -url "unix://$SOCKET" search SEARCH_TERM
+shelley client search SEARCH_TERM
 ```
 
-Search covers both slugs and message content. To list archived
-conversations, use `shelley client list -archived`.
+Searches slugs and message content. Use `list -archived` for archived
+conversations.
 
 ## Raw SQL fallback
-
-Use this only when no server is running or you need database access the client
-doesn't expose. Point `DB` at the actual database file; it is NOT reliably at
-`~/.config/shelley/shelley.db`.
 
 ```bash
 DB="${SHELLEY_DB:-$HOME/.config/shelley/shelley.db}"
