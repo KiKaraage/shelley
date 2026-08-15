@@ -2035,6 +2035,320 @@ func (a *SubagentDBAdapter) GetOrCreateSubagentConversation(ctx context.Context,
 	return "", "", fmt.Errorf("failed to create unique subagent slug after 100 attempts")
 }
 
+// Task is a work item with its derived handled state.
+type Task struct {
+	TaskID     string    `json:"task_id"`
+	Title      string    `json:"title"`
+	Cwd        *string   `json:"cwd"`
+	Tags       []string  `json:"tags"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	Handled    bool      `json:"handled"`
+	HandledAt  *time.Time `json:"handled_at"`
+	ThreadSlug *string   `json:"thread_slug"`
+}
+
+// TaskSummary is the minimal agent payload for a task.
+type TaskSummary struct {
+	TaskID    string    `json:"task_id"`
+	Title     string    `json:"title"`
+	Cwd       *string   `json:"cwd"`
+	Tags      []string  `json:"tags"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// parseTagsJSON unmarshals a stored JSON tags array, tolerating empty/absent.
+func parseTagsJSON(s string) []string {
+	if s == "" {
+		return []string{}
+	}
+	var tags []string
+	if err := json.Unmarshal([]byte(s), &tags); err != nil {
+		return []string{}
+	}
+	if tags == nil {
+		return []string{}
+	}
+	return tags
+}
+
+// CreateTask creates a task and returns it. If taskID is empty, a UUID is
+// generated (matching the message-ID convention).
+func (db *DB) CreateTask(ctx context.Context, taskID, title string, cwd *string, tags []string) (*Task, error) {
+	if taskID == "" {
+		taskID = uuid.New().String()
+	}
+	if tags == nil {
+		tags = []string{}
+	}
+	tagsJSON, err := json.Marshal(tags)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal tags: %w", err)
+	}
+	var t generated.Task
+	err = db.pool.Tx(ctx, func(ctx context.Context, tx *Tx) error {
+		q := generated.New(tx.Conn())
+		var err error
+		t, err = q.CreateTask(ctx, generated.CreateTaskParams{
+			TaskID: taskID,
+			Title:  title,
+			Cwd:    cwd,
+			Tags:   string(tagsJSON),
+		})
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &Task{
+		TaskID:    t.TaskID,
+		Title:     t.Title,
+		Cwd:       t.Cwd,
+		Tags:      parseTagsJSON(t.Tags),
+		CreatedAt: t.CreatedAt,
+		UpdatedAt: t.UpdatedAt,
+	}, nil
+}
+
+// GetTask returns a single task by ID, including its derived handled state.
+func (db *DB) GetTask(ctx context.Context, taskID string) (*Task, error) {
+	var t generated.Task
+	err := db.Queries(ctx, func(q *generated.Queries) error {
+		var err error
+		t, err = q.GetTask(ctx, taskID)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	task := &Task{
+		TaskID:    t.TaskID,
+		Title:     t.Title,
+		Cwd:       t.Cwd,
+		Tags:      parseTagsJSON(t.Tags),
+		CreatedAt: t.CreatedAt,
+		UpdatedAt: t.UpdatedAt,
+	}
+	links, err := db.ListTaskConversations(ctx, taskID)
+	if err != nil {
+		return nil, err
+	}
+	if len(links) > 0 {
+		task.Handled = true
+		ha := links[0].HandledAt
+		task.HandledAt = &ha
+	}
+	return task, nil
+}
+
+// ListTasks returns all tasks (active and handled) with derived handled state.
+func (db *DB) ListTasks(ctx context.Context) ([]*Task, error) {
+	var rows []generated.ListAllTasksRow
+	err := db.Queries(ctx, func(q *generated.Queries) error {
+		var err error
+		rows, err = q.ListAllTasks(ctx)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*Task, 0, len(rows))
+	for _, r := range rows {
+		t := &Task{
+			TaskID:    r.TaskID,
+			Title:     r.Title,
+			Cwd:       r.Cwd,
+			Tags:      parseTagsJSON(r.Tags),
+			CreatedAt: r.CreatedAt,
+			UpdatedAt: r.UpdatedAt,
+			Handled:   r.HandledAt != nil,
+		}
+		if r.HandledAt != nil {
+			t.HandledAt = r.HandledAt
+		}
+		out = append(out, t)
+	}
+	return out, nil
+}
+
+// ListTaskSummaries returns the minimal payload for active (unhandled) tasks.
+func (db *DB) ListTaskSummaries(ctx context.Context) ([]*TaskSummary, error) {
+	var rows []generated.ListTaskSummariesRow
+	err := db.Queries(ctx, func(q *generated.Queries) error {
+		var err error
+		rows, err = q.ListTaskSummaries(ctx)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*TaskSummary, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, &TaskSummary{
+			TaskID:    r.TaskID,
+			Title:     r.Title,
+			Cwd:       r.Cwd,
+			Tags:      parseTagsJSON(r.Tags),
+			CreatedAt: r.CreatedAt,
+		})
+	}
+	return out, nil
+}
+
+// UpdateTask updates a task's title and cwd, bumping updated_at.
+func (db *DB) UpdateTask(ctx context.Context, taskID, title string, cwd *string) (*Task, error) {
+	var t generated.Task
+	err := db.pool.Tx(ctx, func(ctx context.Context, tx *Tx) error {
+		q := generated.New(tx.Conn())
+		var err error
+		t, err = q.UpdateTask(ctx, generated.UpdateTaskParams{
+			Title:  title,
+			Cwd:    cwd,
+			TaskID: taskID,
+		})
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &Task{
+		TaskID:    t.TaskID,
+		Title:     t.Title,
+		Cwd:       t.Cwd,
+		Tags:      parseTagsJSON(t.Tags),
+		CreatedAt: t.CreatedAt,
+		UpdatedAt: t.UpdatedAt,
+	}, nil
+}
+
+// UpdateTaskTags replaces a task's tags (metadata-only, no updated_at bump).
+func (db *DB) UpdateTaskTags(ctx context.Context, taskID string, tags []string) (*Task, error) {
+	if tags == nil {
+		tags = []string{}
+	}
+	tagsJSON, err := json.Marshal(tags)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal tags: %w", err)
+	}
+	var t generated.Task
+	err = db.pool.Tx(ctx, func(ctx context.Context, tx *Tx) error {
+		q := generated.New(tx.Conn())
+		var err error
+		t, err = q.UpdateTaskTags(ctx, generated.UpdateTaskTagsParams{
+			Tags:   string(tagsJSON),
+			TaskID: taskID,
+		})
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &Task{
+		TaskID:    t.TaskID,
+		Title:     t.Title,
+		Cwd:       t.Cwd,
+		Tags:      parseTagsJSON(t.Tags),
+		CreatedAt: t.CreatedAt,
+		UpdatedAt: t.UpdatedAt,
+	}, nil
+}
+
+// MarkTaskHandled links a task to a conversation, deriving the handled state.
+func (db *DB) MarkTaskHandled(ctx context.Context, taskID, conversationID string) error {
+	return db.pool.Tx(ctx, func(ctx context.Context, tx *Tx) error {
+		q := generated.New(tx.Conn())
+		return q.MarkTaskHandled(ctx, generated.MarkTaskHandledParams{
+			TaskID:         taskID,
+			ConversationID: conversationID,
+		})
+	})
+}
+
+// DeleteTask removes a task (and its conversation links via cascade).
+func (db *DB) DeleteTask(ctx context.Context, taskID string) error {
+	return db.pool.Tx(ctx, func(ctx context.Context, tx *Tx) error {
+		q := generated.New(tx.Conn())
+		return q.DeleteTask(ctx, taskID)
+	})
+}
+
+// ListTaskConversations returns the conversation links for a task, newest first.
+func (db *DB) ListTaskConversations(ctx context.Context, taskID string) ([]generated.TaskConversation, error) {
+	var rows []generated.TaskConversation
+	err := db.Queries(ctx, func(q *generated.Queries) error {
+		var err error
+		rows, err = q.ListTaskConversations(ctx, taskID)
+		return err
+	})
+	return rows, err
+}
+
+// ListDistinctCwds returns distinct non-empty cwds across tasks and
+// conversations, most recently used first.
+func (db *DB) ListDistinctCwds(ctx context.Context) ([]string, error) {
+	var cwds []*string
+	err := db.Queries(ctx, func(q *generated.Queries) error {
+		var err error
+		cwds, err = q.ListDistinctCwds(ctx)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(cwds))
+	for _, c := range cwds {
+		if c != nil && *c != "" {
+			out = append(out, *c)
+		}
+	}
+	return out, nil
+}
+
+// TaskDBAdapter adapts *DB to the claudetool.TaskDB interface.
+type TaskDBAdapter struct {
+	DB *DB
+}
+
+// List implements claudetool.TaskDB.
+func (a *TaskDBAdapter) List(ctx context.Context) ([]*TaskSummary, error) {
+	return a.DB.ListTaskSummaries(ctx)
+}
+
+// Create implements claudetool.TaskDB.
+func (a *TaskDBAdapter) Create(ctx context.Context, taskID, title string, cwd *string, tags []string) (*TaskSummary, error) {
+	t, err := a.DB.CreateTask(ctx, taskID, title, cwd, tags)
+	if err != nil {
+		return nil, err
+	}
+	return &TaskSummary{TaskID: t.TaskID, Title: t.Title, Cwd: t.Cwd, Tags: t.Tags, CreatedAt: t.CreatedAt}, nil
+}
+
+// Update implements claudetool.TaskDB.
+func (a *TaskDBAdapter) Update(ctx context.Context, taskID, title string, cwd *string, tags []string, conversationID string) (*TaskSummary, error) {
+	if conversationID != "" {
+		if err := a.DB.MarkTaskHandled(ctx, taskID, conversationID); err != nil {
+			return nil, err
+		}
+	}
+	t, err := a.DB.UpdateTask(ctx, taskID, title, cwd)
+	if err != nil {
+		return nil, err
+	}
+	if tags != nil {
+		t, err = a.DB.UpdateTaskTags(ctx, taskID, tags)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &TaskSummary{TaskID: t.TaskID, Title: t.Title, Cwd: t.Cwd, Tags: t.Tags, CreatedAt: t.CreatedAt}, nil
+}
+
+// Delete implements claudetool.TaskDB.
+func (a *TaskDBAdapter) Delete(ctx context.Context, taskID string) error {
+	return a.DB.DeleteTask(ctx, taskID)
+}
+
+
 // GetModels returns all models from the database
 func (db *DB) GetModels(ctx context.Context) ([]generated.Model, error) {
 	var models []generated.Model

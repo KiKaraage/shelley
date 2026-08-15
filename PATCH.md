@@ -468,3 +468,14 @@ Show leading `#` comments in bash tool summary
   - Comment lines are stripped from the command before the existing `&&`-splitting so chained segments still render on separate lines and a command that is only comments degrades to a single empty line.
 - Watchouts:
   - A command consisting solely of comments renders as one empty command line beneath the comments (no crash; title tooltip still holds the full command).
+## P039
+Shelley Tasks homepage
+- Status: active
+- Base: 4a98848
+- Files: db/schema/042-tasks.sql, db/query/tasks.sql, db/generated/tasks.sql.go, db/db.go, claudetool/task.go, claudetool/task_test.go, claudetool/toolset.go, claudetool/registry.go, server/server.go, server/tasks.go, server/tasks_test.go, ui/src/services/api_tasks.ts, ui/src/vue/components/HomePage.vue, ui/src/vue/components/NewTaskModal.vue, ui/src/vue/App.vue, ui/src/vue/components/CommandPalette.vue, ui/src/styles.css, ui/src/i18n/types.ts, ui/src/i18n/en.ts (and other locale files)
+- Changes:
+  - Tasks homepage: a list where each task has a title, a target directory (chosen from git roots + past cwds), and tags derived from `#hashtags` in the title. Users create/edit/delete tasks via a modal (keyboard shortcut Ctrl+Shift+K + command palette + homepage header), filter by repo/dir, mark done via the `#done` tag, and start a new conversation from a task with its title inserted as the first message.
+  - Storage: new `tasks` + `task_conversations` tables (migration 042); handled is derived from the many-to-many link table (no FK on conversation_id so deleting a conversation keeps the handled tombstone).
+  - Agent tool: single Go tool `task` (claudetool/task.go) with actions list/create/update/delete; update folds "handle" via conversation_id; wired via TaskDBAdapter like SubagentDBAdapter.
+  - REST: task CRUD endpoints + a directories endpoint (git roots + distinct past cwds) for the modal dropdown.
+  - UI: HomePage Tasks tab renders the list (two-line rows, idle | handled+done columns, repo/dir filter pills with favicons, split header button); NewTaskModal floating dropdown; global shortcuts Ctrl+Shift+K (new task) and Ctrl+Alt+H (homepage); command palette entry.

@@ -22,6 +22,7 @@ var ToolRegistry = []ToolInfo{
 	{Name: "change_dir", Summary: "Change the working directory.", DefaultOn: true},
 	{Name: "output_iframe", Summary: "Show HTML/visualizations to the user.", DefaultOn: true},
 	{Name: "subagent", Summary: "Spawn a subagent conversation.", DefaultOn: true},
+	{Name: "task", Summary: "Manage work-item tasks (list, create, update, delete).", DefaultOn: true},
 	{Name: "llm_one_shot", Summary: "One-shot prompt to another LLM.", DefaultOn: true},
 	{Name: "browser", Summary: "Browser automation (navigate, eval, screenshot, emulate, network, accessibility, profile).", DefaultOn: true},
 	{Name: "read_image", Summary: "Read an image file for the model.", DefaultOn: true},

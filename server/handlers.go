@@ -1072,6 +1072,9 @@ type ChatRequest struct {
 	Cwd                 string                  `json:"cwd,omitempty"`
 	ConversationOptions *db.ConversationOptions `json:"conversation_options,omitempty"`
 	Queue               bool                    `json:"queue,omitempty"`
+	// TaskID, when set, marks the referenced task handled (linked to the
+	// newly created conversation) once the conversation is created.
+	TaskID string `json:"task_id,omitempty"`
 }
 
 // handleChatConversation handles POST /conversation/<id>/chat
@@ -1485,6 +1488,14 @@ func (s *Server) handleNewConversation(w http.ResponseWriter, r *http.Request) {
 		Type:         "update",
 		Conversation: conversation,
 	})
+
+	// If this conversation was started from a task, mark the task handled by
+	// linking it to the newly created conversation.
+	if req.TaskID != "" {
+		if err := s.db.MarkTaskHandled(ctx, req.TaskID, conversationID); err != nil {
+			s.logger.Error("Failed to mark task handled", "taskID", req.TaskID, "conversationID", conversationID, "error", err)
+		}
+	}
 
 	userEmail := r.Header.Get("X-ExeDev-Email")
 	// Attribute the user turn to its author; see handleChatConversation for why

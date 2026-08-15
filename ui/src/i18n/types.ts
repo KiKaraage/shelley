@@ -305,4 +305,38 @@ export interface TranslationKeys {
   coAuthoredByShelley: string;
   assistedByModelInShelley: string;
   noAgentAttribution: string;
+
+  // Tasks
+  newTask: string;
+  newTaskShortcut: string;
+  createTask: string;
+  saveChanges: string;
+  taskTitlePlaceholder: string;
+  taskTitleLabel: string;
+  tagsLabel: string;
+  taskTitleRequired: string;
+  targetDirectory: string;
+  noDirectory: string;
+  gitRoots: string;
+  recentDirectories: string;
+  browse: string;
+  missingOnDisk: string;
+  idleItems: string;
+  currentlyHandled: string;
+  tasksDone: string;
+  nothingIdle: string;
+  nothingHandled: string;
+  nothingDone: string;
+  noTasksYet: string;
+  noTasksYetHint: string;
+  createFirstTask: string;
+  nothingHere: string;
+  noTasksIn: string;
+  all: string;
+  noDir: string;
+  editTask: string;
+  startThread: string;
+  deleteTask: string;
+  openLinkedConversation: string;
+  typeTagInTitle: string;
 }

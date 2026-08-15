@@ -1125,6 +1125,15 @@ func (s *PredictableService) makeToolSmorgasbordResponse(inputTokens uint64) *ll
 		ToolInput: json.RawMessage(shellInput),
 	})
 
+	// task tool (list action)
+	taskInput, _ := json.Marshal(map[string]string{"action": "list"})
+	content = append(content, llm.Content{
+		ID:        fmt.Sprintf("tool_task_%d", (baseNano+16)%1000),
+		Type:      llm.ContentTypeToolUse,
+		ToolName:  "task",
+		ToolInput: json.RawMessage(taskInput),
+	})
+
 	return &llm.Response{
 		ID:         fmt.Sprintf("pred-smorgasbord-%d", baseNano),
 		Type:       "message",

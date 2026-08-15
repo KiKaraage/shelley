@@ -512,6 +512,7 @@ const props = withDefaults(
       cwd?: string,
       toolOverrides?: Record<string, "on" | "off">,
       thinkingLevel?: Exclude<ThinkingLevel, "default">,
+      taskId?: string,
     ) => Promise<void>;
     onDistillNewGeneration?: (
       sourceConversationId: string,
@@ -544,6 +545,8 @@ const props = withDefaults(
     /** Comment block from the standalone file editor (App-level modal) to
      *  inject into the message input. Fresh object per submit. */
     externalCommentText?: { text: string } | null;
+    /** Task ID to mark handled when a thread is started from a task. */
+    taskId?: string | null;
   }>(),
   {
     streamStatus: "connected",
@@ -2195,6 +2198,7 @@ async function sendFirstMessage(prompt: string) {
     selectedCwd.value || undefined,
     Object.keys(toolOverrides.value).length > 0 ? { ...toolOverrides.value } : undefined,
     thinkingLevel.value === "default" ? undefined : thinkingLevel.value,
+    props.taskId || undefined,
   );
 }
 

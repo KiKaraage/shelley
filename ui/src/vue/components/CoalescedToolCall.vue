@@ -137,6 +137,7 @@ import ChangeDirTool from "./tools/ChangeDirTool.vue";
 import SubagentTool from "./tools/SubagentTool.vue";
 import LLMOneShotTool from "./tools/LLMOneShotTool.vue";
 import OutputIframeTool from "./tools/OutputIframeTool.vue";
+import TaskTool from "./tools/TaskTool.vue";
 import WebSearchTool from "./tools/WebSearchTool.vue";
 import { toolCardPlaceholderKind } from "./toolCardMount";
 
@@ -188,6 +189,7 @@ const TOOL_COMPONENTS: Record<string, any> = {
   keyword_search: KeywordSearchTool,
   change_dir: ChangeDirTool,
   subagent: SubagentTool,
+  task: TaskTool,
   output_iframe: OutputIframeTool,
   llm_one_shot: LLMOneShotTool,
   browser_emulate: BrowserEmulateTool,

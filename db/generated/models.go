@@ -86,3 +86,18 @@ type NotificationChannel struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
+
+type Task struct {
+	TaskID    string    `json:"task_id"`
+	Title     string    `json:"title"`
+	Cwd       *string   `json:"cwd"`
+	Tags      string    `json:"tags"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type TaskConversation struct {
+	TaskID         string    `json:"task_id"`
+	ConversationID string    `json:"conversation_id"`
+	HandledAt      time.Time `json:"handled_at"`
+}

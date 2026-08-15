@@ -458,6 +458,9 @@ func NewServer(database *db.DB, llmManager LLMProvider, toolSetConfig claudetool
 	s.toolSetConfig.SubagentDB = &db.SubagentDBAdapter{DB: database}
 	s.toolSetConfig.MaxSubagentDepth = 1 // Only top-level conversations can spawn subagents
 
+	// Set up task support
+	s.toolSetConfig.TaskDB = &db.TaskDBAdapter{DB: database}
+
 	return s
 }
 
@@ -530,6 +533,11 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /api/models/refresh", compressionHandler(http.HandlerFunc(s.handleModelRefresh)))
 	mux.Handle("/api/models", compressionHandler(http.HandlerFunc(s.handleModels)))
 	mux.Handle("/api/tools", http.HandlerFunc(s.handleTools))
+
+	// Tasks API
+	mux.Handle("/api/tasks", http.HandlerFunc(s.handleTasks))
+	mux.Handle("/api/tasks/", http.HandlerFunc(s.handleTask))
+	mux.Handle("GET /api/tasks/directories", http.HandlerFunc(s.handleTaskDirectories))
 
 	// Version endpoints
 	mux.Handle("GET /version", http.HandlerFunc(s.handleVersion))

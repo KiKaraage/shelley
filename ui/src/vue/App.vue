@@ -49,9 +49,16 @@
         <HomePage
           v-if="showHomePage"
           :is-drawer-collapsed="drawerCollapsed"
+          :tasks="tasks"
+          :directories="taskDirectories"
           @open-drawer="() => (drawerOpen = true)"
           @toggle-drawer-collapse="toggleDrawerCollapsed"
           @new-conversation="startNewConversation"
+          @open-create="openNewTaskModal"
+          @edit="openEditTask"
+          @start-thread="startThreadFromTask"
+          @delete="deleteTask"
+          @open-thread="openLinkedThread"
         />
         <ChatInterface
           v-else
@@ -85,7 +92,8 @@
           :on-terminal-close="handleTerminalClose"
           :navigate-user-message-trigger="navigateUserMessageTrigger"
           :on-conversation-unarchived="handleConversationUnarchived"
-          :external-comment-text="editorCommentText"
+          :external-comment-text="editorCommentText || taskThreadText"
+          :task-id="pendingTaskId"
         />
       </div>
 
@@ -157,6 +165,12 @@
             commandPaletteOpen = false;
           }
         "
+        @open-new-task-modal="
+          () => {
+            openNewTaskModal();
+            commandPaletteOpen = false;
+          }
+        "
         @next-conversation="navigateToNextConversation"
         @previous-conversation="navigateToPreviousConversation"
         @next-user-message="navigateToNextUserMessage"
@@ -192,6 +206,15 @@
             focusMessageInputIfUnfocused();
           }
         "
+      />
+
+      <NewTaskModal
+        :is-open="newTaskModalOpen"
+        :task="editingTask"
+        :git-roots="taskDirectories.git_roots"
+        :cwds="taskDirectories.cwds"
+        @close="newTaskModalOpen = false"
+        @save="saveTaskFromModal"
       />
 
       <FileFinderModal
@@ -231,6 +254,7 @@ import NotificationsModal from "./components/NotificationsModal.vue";
 import FeatureFlagsModal from "./components/FeatureFlagsModal.vue";
 import FileFinderModal from "./components/FileFinderModal.vue";
 import EditableFileModal from "./components/EditableFileModal.vue";
+import NewTaskModal from "./components/NewTaskModal.vue";
 import Button from "primevue/button";
 import type { EphemeralTerminal } from "./components/terminalTypes";
 import { focusMessageInputIfUnfocused } from "../utils/focusMessageInput";
@@ -253,6 +277,7 @@ import { loadCachedDraft } from "../services/draftCache";
 import { initialDrawerCollapsed, saveDrawerCollapsedPreference } from "../utils/drawerStartup";
 import { perfCount } from "../utils/perf";
 import { useI18n } from "./composables/i18n";
+import { tasksApi, type Task, type TaskDirectories } from "../services/api_tasks";
 import { ConversationsListKey, CurrentConversationIdKey } from "./composables/subagentLive";
 import { provideOpenFileEditor } from "./composables/fileEditor";
 import { useFeatureFlag } from "./composables/featureFlags";
@@ -360,6 +385,16 @@ const ephemeralTerminals = ref<EphemeralTerminal[]>([]);
 const streamStatus = ref<StreamStatus>("connected");
 const reconnectNonce = ref(0);
 const showActiveTrigger = ref(0);
+
+// ---- tasks state ----
+const tasks = ref<Task[]>([]);
+const taskDirectories = ref<TaskDirectories>({ git_roots: [], cwds: [] });
+const newTaskModalOpen = ref(false);
+const editingTask = ref<Task | null>(null);
+// Text injected into the message input when starting a thread from a task.
+const taskThreadText = ref<{ text: string } | null>(null);
+// Task ID to mark handled once the thread-from-task conversation is created.
+const pendingTaskId = ref<string | null>(null);
 
 // ---- non-reactive refs ----
 let initialSlugResolved = false;
@@ -736,6 +771,7 @@ async function handleFirstMessage(
   cwd?: string,
   toolOverrides?: Record<string, "on" | "off">,
   thinkingLevel?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max",
+  taskId?: string,
 ) {
   try {
     const hasOverrides = toolOverrides && Object.keys(toolOverrides).length > 0;
@@ -752,15 +788,107 @@ async function handleFirstMessage(
       model,
       cwd,
       conversation_options: convOpts,
+      task_id: taskId,
     });
     const newConversationId = response.conversation_id;
     messageStore.setAgentWorking(newConversationId, true);
     currentConversationId.value = newConversationId;
+    // Clear the pending task id and injected text once the conversation is
+    // created so a later visit doesn't re-inject the task title.
+    pendingTaskId.value = null;
+    taskThreadText.value = null;
   } catch (err) {
     console.error("Failed to send first message:", err);
     error.value = err instanceof Error ? err.message : "Failed to send message";
     throw err;
   }
+}
+
+// ---- tasks ----
+function loadTasks() {
+  tasksApi
+    .list()
+    .then((list) => {
+      tasks.value = list;
+    })
+    .catch((err) => console.error("Failed to load tasks:", err));
+}
+
+function loadTaskDirectories() {
+  tasksApi
+    .directories()
+    .then((dirs) => {
+      taskDirectories.value = dirs;
+    })
+    .catch((err) => console.error("Failed to load task directories:", err));
+}
+
+function openNewTaskModal() {
+  editingTask.value = null;
+  newTaskModalOpen.value = true;
+}
+
+function openEditTask(task: Task) {
+  editingTask.value = task;
+  newTaskModalOpen.value = true;
+}
+
+async function saveTaskFromModal(input: { title: string; cwd: string | null }) {
+  try {
+    if (editingTask.value) {
+      await tasksApi.update(editingTask.value.task_id, {
+        title: input.title,
+        cwd: input.cwd,
+      });
+    } else {
+      await tasksApi.create({ title: input.title, cwd: input.cwd });
+    }
+    newTaskModalOpen.value = false;
+    editingTask.value = null;
+    loadTasks();
+  } catch (err) {
+    console.error("Failed to save task:", err);
+  }
+}
+
+async function deleteTask(task: Task) {
+  try {
+    await tasksApi.delete(task.task_id);
+    loadTasks();
+  } catch (err) {
+    console.error("Failed to delete task:", err);
+  }
+}
+
+// Start a new conversation from a task: navigate to /new, pre-set cwd if the
+// task has one, and inject the task title as the first message. The task is
+// marked handled once the prompt is actually sent (server-side via task_id).
+function startThreadFromTask(task: Task) {
+  if (task.cwd) {
+    startNewConversationWithCwd(task.cwd);
+  } else {
+    startNewConversation();
+  }
+  // Inject the task title as the first message. The task_id rides along so
+  // the server marks it handled on send.
+  taskThreadText.value = { text: task.title };
+  pendingTaskId.value = task.task_id;
+}
+
+function openLinkedThread(task: Task) {
+  if (!task.thread_slug) return;
+  // Try to select the linked conversation from the loaded list; fall back to
+  // a URL navigation + reload if it isn't in the current list.
+  const found = conversations.value.find(
+    (c) => c.slug === task.thread_slug || c.conversation_id === task.thread_slug,
+  );
+  if (found) {
+    selectConversation(found);
+    return;
+  }
+  window.history.replaceState({}, "", `/c/${task.thread_slug}`);
+  showHomePage.value = false;
+  window.location.reload();
 }
 
 async function handleDistillNewGeneration(
@@ -812,6 +940,22 @@ function handleKeyDown(e: KeyboardEvent) {
     e.preventDefault();
     chordPending = true;
     chordTimer = window.setTimeout(clearChord, 1500);
+    return;
+  }
+
+  // Ctrl+Shift+K opens the new-task modal. Must be checked before the Mac
+  // guard below (which early-returns plain Ctrl on Mac) and before the plain
+  // Ctrl+K palette branch. `e.key` is uppercase "K" when Shift is held.
+  if (e.ctrlKey && e.shiftKey && !e.altKey && !e.metaKey && (e.key === "k" || e.key === "K")) {
+    e.preventDefault();
+    openNewTaskModal();
+    return;
+  }
+
+  // Ctrl+Alt+H opens the homepage. Also checked before the Mac guard.
+  if (e.ctrlKey && e.altKey && !e.shiftKey && !e.metaKey && (e.key === "h" || e.key === "H")) {
+    e.preventDefault();
+    navigateToHome();
     return;
   }
 
@@ -928,6 +1072,8 @@ onMounted(() => {
   };
 
   loadConversations();
+  loadTasks();
+  loadTaskDirectories();
 
   globalStreamHandle = connectGlobalStream({
     getHash: () => conversationListHash,

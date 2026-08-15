@@ -47,21 +47,33 @@
       </div>
 
       <div class="header-actions">
-        <button
-          class="btn-new"
-          :aria-label="t('newConversation')"
-          v-tooltip.top="t('newConversation')"
-          @click="emit('new-conversation')"
-        >
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="chat-icon-1rem">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              :stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-        </button>
+        <!-- Split button: [+] New Conversation | [receipt] New Task -->
+        <div class="split-btn">
+          <button
+            class="split-half"
+            :aria-label="t('newConversation')"
+            v-tooltip.top="t('newConversation')"
+            @click="emit('new-conversation')"
+          >
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="chat-icon-1rem">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                :stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+          </button>
+          <span class="split-divider"></span>
+          <button
+            class="split-half"
+            :aria-label="t('newTask')"
+            v-tooltip.top="t('newTask')"
+            @click="emit('open-create')"
+          >
+            <i class="pi pi-receipt" aria-hidden="true" />
+          </button>
+        </div>
       </div>
     </div>
 
@@ -79,8 +91,16 @@
 
     <!-- Tab content -->
     <div class="home-content">
-      <div v-if="activeTab === 'tasks'" class="home-tab-content">
-        <p class="home-placeholder">Tasks coming soon.</p>
+      <div v-if="activeTab === 'tasks'" class="home-tab-content home-tasks-content">
+        <TaskList
+          :tasks="tasks"
+          :directories="directories"
+          @open-create="emit('open-create')"
+          @edit="(task) => emit('edit', task)"
+          @start-thread="(task) => emit('start-thread', task)"
+          @delete="(task) => emit('delete', task)"
+          @open-thread="(task) => emit('open-thread', task)"
+        />
       </div>
       <div v-else-if="activeTab === 'timeline'" class="home-tab-content">
         <p class="home-placeholder">Timeline coming soon.</p>
@@ -96,17 +116,26 @@
 import { ref } from "vue";
 import Button from "primevue/button";
 import { useI18n } from "../composables/i18n";
+import TaskList from "./TaskList.vue";
+import type { Task, TaskDirectories } from "../../services/api_tasks";
 
 const { t } = useI18n();
 
 defineProps<{
   isDrawerCollapsed: boolean;
+  tasks: Task[];
+  directories: TaskDirectories;
 }>();
 
 const emit = defineEmits<{
   (e: "open-drawer"): void;
   (e: "toggle-drawer-collapse"): void;
   (e: "new-conversation"): void;
+  (e: "open-create"): void;
+  (e: "edit", task: Task): void;
+  (e: "start-thread", task: Task): void;
+  (e: "delete", task: Task): void;
+  (e: "open-thread", task: Task): void;
 }>();
 
 type TabKey = "tasks" | "timeline" | "stats";

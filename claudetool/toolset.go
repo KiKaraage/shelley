@@ -61,6 +61,9 @@ type ToolSetConfig struct {
 	SubagentRunner SubagentRunner
 	// SubagentDB is the database for subagent conversations.
 	SubagentDB SubagentDB
+	// TaskDB is the database for task operations. If set, the task tool is
+	// available.
+	TaskDB TaskDB
 	// ParentConversationID is the ID of the parent conversation (for subagent tool).
 	ParentConversationID string
 	// ConversationID is the ID of the conversation these tools belong to.
@@ -266,6 +269,12 @@ func NewToolSet(ctx context.Context, cfg ToolSetConfig) *ToolSet {
 			ParentReasoning:      cfg.ReasoningLevel,
 		}
 		tools = append(tools, subagentTool.Tool())
+	}
+
+	// Add task tool if a TaskDB is configured.
+	if cfg.TaskDB != nil {
+		taskTool := &TaskTool{DB: cfg.TaskDB}
+		tools = append(tools, taskTool.Tool())
 	}
 
 	// Add LLM one-shot tool if LLM provider is configured

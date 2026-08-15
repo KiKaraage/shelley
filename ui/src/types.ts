@@ -91,6 +91,8 @@ export interface ChatRequest {
     disable_notifications?: boolean;
   };
   queue?: boolean;
+  /** When set, marks the referenced task handled once the conversation is created. */
+  task_id?: string;
 }
 // Notification event types
 export type NotificationEventType = "agent_done" | "agent_error";

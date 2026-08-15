@@ -670,3 +670,40 @@ func TestNewToolSet_WebSearchForAnthropicModels(t *testing.T) {
 		t.Error("web_search tool not found")
 	})
 }
+
+func TestNewToolSet_TaskTool(t *testing.T) {
+	provider := &mockLLMProvider{}
+	hasTaskTool := func(ts *ToolSet) bool {
+		for _, tool := range ts.Tools() {
+			if tool.Name == "task" {
+				return true
+			}
+		}
+		return false
+	}
+
+	t.Run("task tool present when TaskDB set", func(t *testing.T) {
+		cfg := ToolSetConfig{
+			LLMProvider: provider,
+			ModelID:     "test-model",
+			WorkingDir:  "/test",
+			TaskDB:      newMockTaskDB(),
+		}
+		ts := NewToolSet(context.Background(), cfg)
+		if !hasTaskTool(ts) {
+			t.Error("expected task tool when TaskDB is set")
+		}
+	})
+
+	t.Run("task tool absent when TaskDB nil", func(t *testing.T) {
+		cfg := ToolSetConfig{
+			LLMProvider: provider,
+			ModelID:     "test-model",
+			WorkingDir:  "/test",
+		}
+		ts := NewToolSet(context.Background(), cfg)
+		if hasTaskTool(ts) {
+			t.Error("did not expect task tool when TaskDB is nil")
+		}
+	})
+}
