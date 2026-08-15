@@ -14335,6 +14335,8 @@ kbd {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  direction: rtl;
+  text-align: left;
   min-height: 2.25rem;
   line-height: 1.2;
   display: flex;
