@@ -749,6 +749,8 @@ async function handleFileSelect(event: Event) {
 }
 
 // Auto-insert injected text (diff comments, image comments) into the textarea.
+// Immediate so text set before MessageInput mounts (e.g. a task title injected
+// when starting a thread) is still inserted.
 watch(
   () => props.injectedText,
   (injected) => {
@@ -767,6 +769,7 @@ watch(
       }, 0);
     }
   },
+  { immediate: true },
 );
 
 const hasContent = computed(

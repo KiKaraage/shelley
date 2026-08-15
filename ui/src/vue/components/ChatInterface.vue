@@ -2824,11 +2824,14 @@ function setDiffCommentText(text: string) {
 }
 
 // Comments submitted from the App-level file editor modal flow in via prop.
+// Immediate so a value already set before ChatInterface mounts (e.g. a task
+// title injected when starting a thread from the homepage) is still picked up.
 watch(
   () => props.externalCommentText,
   (v) => {
     if (v?.text) diffCommentText.value = v.text;
   },
+  { immediate: true },
 );
 
 function onTerminalCloseHandler(id: string) {

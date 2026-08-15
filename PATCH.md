@@ -487,6 +487,7 @@ Tasks homepage refinements (revise batch)
 - Files: ui/src/vue/App.vue, ui/src/vue/components/ChatInterface.vue, ui/src/vue/components/HeaderTagPicker.vue, ui/src/vue/components/NewTaskModal.vue, ui/src/vue/components/TaskList.vue, ui/src/styles.css, ui/src/i18n/types.ts, ui/src/i18n/en.ts (and other locale files), gitstate/gitstate.go, gitstate/gitstate_test.go, server/tasks.go
 - Changes:
   - Fix "Create Thread" from a task doing nothing: `startNewConversationWithCwd` now clears the homepage (`showHomePage=false`) like `startNewConversation` does.
+  - Fix task title not injected into the new conversation's prompt: the `externalCommentText` and `injectedText` watchers are now immediate so text set before `ChatInterface`/`MessageInput` mount (a task title injected when starting a thread) is still inserted.
   - Fix mobile TagPicker overflow: the header tag picker now teleports its menu (like the drawer one) so it right-aligns to the trigger and never runs off the viewport.
   - New Task header button: replace the clipboard-check SVG with PrimeIcons `pi-pen-to-square`.
   - New Task modal: multiline textarea for the title (no char limit; label renamed "Title"→"Task"); Enter inserts a newline, Enter on an empty line submits.
