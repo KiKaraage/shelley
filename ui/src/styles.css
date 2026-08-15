@@ -13851,30 +13851,30 @@ kbd {
 .split-btn {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--text-primary);
+  border: 1px solid var(--border);
   border-radius: 9999px;
-  background: var(--text-primary);
+  background: var(--bg-secondary);
   overflow: hidden;
 }
 .split-half {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border: none;
   background: none;
-  color: var(--bg-base);
+  color: var(--text-primary);
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 .split-half:hover {
-  background: var(--text-secondary);
+  background: var(--bg-hover);
 }
 .split-divider {
   width: 1px;
-  height: 1.25rem;
-  background: var(--bg-base);
-  opacity: 0.4;
+  height: 1rem;
+  background: var(--border);
 }
 
 /* Filter pills: one line, overflow-x scrollable */
@@ -13900,9 +13900,9 @@ kbd {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
-  background: var(--surface-card, var(--bg-secondary));
-  color: var(--text-color-secondary);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
   padding: 0.25rem 0.7rem;
   border-radius: 9999px;
   cursor: pointer;
