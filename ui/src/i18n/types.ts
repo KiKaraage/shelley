@@ -339,4 +339,6 @@ export interface TranslationKeys {
   deleteTask: string;
   openLinkedConversation: string;
   typeTagInTitle: string;
+  goHomepage: string;
+  goHomepageSubtitle: string;
 }

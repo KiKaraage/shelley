@@ -155,6 +155,7 @@ const emit = defineEmits<{
   (e: "open-notifications-modal"): void;
   (e: "open-feature-flags-modal"): void;
   (e: "open-new-task-modal"): void;
+  (e: "go-home"): void;
   (e: "next-conversation"): void;
   (e: "previous-conversation"): void;
   (e: "next-user-message"): void;
@@ -195,6 +196,7 @@ const ICON_LANG = `${SVG_OPEN}<path stroke-linecap="round" stroke-linejoin="roun
 const ICON_TRASH = `${SVG_OPEN}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a2 2 0 012-2h2a2 2 0 012 2v3" /></svg>`;
 const ICON_CHAT = `${SVG_OPEN}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>`;
 const ICON_TASK = `${SVG_OPEN}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>`;
+const ICON_HOME = `${SVG_OPEN}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1V10" /></svg>`;
 const ICON_FILE = `${SVG_OPEN}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`;
 
 // Simple fuzzy match for actions - returns score (higher is better), -1 if no match
@@ -300,12 +302,27 @@ const actionItems = computed<CommandItem[]>(() => {
     type: "action",
     title: t("newTask"),
     subtitle: t("createTask"),
+    shortcut: "Ctrl+Shift+K",
     icon: ICON_TASK,
     action: () => {
       emit("open-new-task-modal");
       emit("close");
     },
     keywords: ["new", "create", "task", "todo"],
+  });
+
+  items.push({
+    id: "go-home",
+    type: "action",
+    title: t("goHomepage"),
+    subtitle: t("goHomepageSubtitle"),
+    shortcut: "Ctrl+Alt+H",
+    icon: ICON_HOME,
+    action: () => {
+      emit("go-home");
+      emit("close");
+    },
+    keywords: ["home", "homepage", "tasks"],
   });
 
   items.push({

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"shelley.exe.dev/db"
+	"shelley.exe.dev/gitstate"
 )
 
 // TaskResponse is the JSON shape returned to the UI for a task.
@@ -271,21 +272,21 @@ type TaskDirectoriesResponse struct {
 	Cwds     []string `json:"cwds"`
 }
 
-// gitRepoRoots crawls the user's home for git repositories and returns their
-// root paths, for the task modal's directory dropdown.
+// gitRepoRoots returns the distinct past cwds (from conversations and tasks)
+// that are git repositories, for the task modal's directory dropdown. This
+// deliberately avoids crawling the whole filesystem: we only surface
+// directories the user has actually worked in that are git repos.
 func (s *Server) gitRepoRoots(ctx context.Context) []string {
-	roots := []string{}
-	if home, err := os.UserHomeDir(); err == nil {
-		roots = []string{home}
-	} else {
-		roots = []string{"/"}
+	cwds, err := s.db.ListDistinctCwds(ctx)
+	if err != nil {
+		s.logger.Error("Failed to list distinct cwds for git roots", "error", err)
+		return nil
 	}
-	crawlCtx, cancel := context.WithTimeout(ctx, gitRepoCrawlBudget)
-	defer cancel()
-	repos, _ := crawlGitRepos(crawlCtx, roots)
-	out := make([]string, 0, len(repos))
-	for _, r := range repos {
-		out = append(out, r.Path)
+	out := make([]string, 0, len(cwds))
+	for _, c := range cwds {
+		if gs := gitstate.GetGitState(c); gs != nil && gs.IsRepo {
+			out = append(out, c)
+		}
 	}
 	return out
 }

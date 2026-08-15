@@ -59,16 +59,34 @@
       </div>
 
       <div class="header-actions">
-        <button class="btn-new" :aria-label="t('newConversation')" @click="onNewConversationClick">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="chat-icon-1rem">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              :stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-        </button>
+        <!-- Split button: [+] New Conversation | [clipboard] New Task -->
+        <div class="split-btn">
+          <button
+            class="split-half"
+            :aria-label="t('newConversation')"
+            v-tooltip.top="t('newConversation')"
+            @click="onNewConversationClick"
+          >
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="chat-icon-1rem">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                :stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+          </button>
+          <span class="split-divider"></span>
+          <button
+            class="split-half"
+            :aria-label="t('newTask')"
+            v-tooltip.top="t('newTask')"
+            @click="props.onOpenNewTaskModal?.()"
+          >
+            <i class="pi pi-clipboard" aria-hidden="true" />
+          </button>
+        </div>
+
 
         <!-- Overflow menu (PrimeVue Popover + Select) -->
         <ChatOverflowMenu
@@ -532,6 +550,7 @@ const props = withDefaults(
     onOpenModelsModal?: () => void;
     onOpenFileFinder?: () => void;
     onOpenCommandPalette?: () => void;
+    onOpenNewTaskModal?: () => void;
     ephemeralTerminals: EphemeralTerminal[];
     setEphemeralTerminals: (
       next: EphemeralTerminal[] | ((prev: EphemeralTerminal[]) => EphemeralTerminal[]),

@@ -203,7 +203,11 @@ const filterPills = computed(() => {
   const pills: { key: string; label: string; count: number; favicon?: string }[] = [
     { key: "all", label: t("all"), count: props.tasks.length },
   ];
-  for (const d of allDirs.value) {
+  // Only surface directories that actually have tasks.
+  const dirsWithTasks = allDirs.value.filter((d) =>
+    props.tasks.some((task) => task.cwd === d.path),
+  );
+  for (const d of dirsWithTasks) {
     pills.push({
       key: d.path,
       label: dirLabel(d.path),
@@ -211,11 +215,14 @@ const filterPills = computed(() => {
       favicon: d.kind === "git" ? `/api/repo-favicon?root=${encodeURIComponent(d.path)}` : undefined,
     });
   }
-  pills.push({
-    key: "none",
-    label: t("noDir"),
-    count: props.tasks.filter((task) => !task.cwd).length,
-  });
+  const noDirCount = props.tasks.filter((task) => !task.cwd).length;
+  if (noDirCount > 0) {
+    pills.push({
+      key: "none",
+      label: t("noDir"),
+      count: noDirCount,
+    });
+  }
   return pills;
 });
 

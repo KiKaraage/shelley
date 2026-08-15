@@ -71,7 +71,7 @@
             v-tooltip.top="t('newTask')"
             @click="emit('open-create')"
           >
-            <i class="pi pi-receipt" aria-hidden="true" />
+            <i class="pi pi-clipboard" aria-hidden="true" />
           </button>
         </div>
       </div>

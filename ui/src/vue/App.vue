@@ -83,6 +83,7 @@
           :models-refresh-trigger="modelsRefreshTrigger"
           :cwd-sync-trigger="cwdSyncTrigger"
           :on-open-models-modal="() => (modelsModalOpen = true)"
+          :on-open-new-task-modal="openNewTaskModal"
           :on-open-file-finder="openFileFinder"
           :on-open-command-palette="() => (commandPaletteOpen = true)"
           :ephemeral-terminals="ephemeralTerminals"
@@ -168,6 +169,12 @@
         @open-new-task-modal="
           () => {
             openNewTaskModal();
+            commandPaletteOpen = false;
+          }
+        "
+        @go-home="
+          () => {
+            navigateToHome();
             commandPaletteOpen = false;
           }
         "

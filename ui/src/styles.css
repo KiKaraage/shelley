@@ -13851,29 +13851,30 @@ kbd {
 .split-btn {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--text-primary);
   border-radius: 9999px;
-  background: var(--surface-card, var(--bg-secondary));
+  background: var(--text-primary);
   overflow: hidden;
 }
 .split-half {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2rem;
+  height: 2rem;
   border: none;
   background: none;
-  color: var(--text-color);
+  color: var(--bg-base);
   cursor: pointer;
 }
 .split-half:hover {
-  background: var(--surface-hover, rgba(255, 255, 255, 0.06));
+  background: var(--text-secondary);
 }
 .split-divider {
   width: 1px;
   height: 1.25rem;
-  background: var(--surface-border, rgba(255, 255, 255, 0.08));
+  background: var(--bg-base);
+  opacity: 0.4;
 }
 
 /* Filter pills: one line, overflow-x scrollable */
@@ -14045,6 +14046,13 @@ kbd {
 .icon-btn:hover {
   background: var(--surface-hover, rgba(255, 255, 255, 0.08));
   color: var(--text-color);
+}
+
+/* Task row action icons (edit / thread / delete) are smaller than the
+   generic .icon-btn so they sit lightly beside the title. */
+.row .row-actions .icon-btn {
+  font-size: 0.6875rem;
+  padding: 0.2rem;
 }
 
 /* done: only the title dims + strikes; the rest of the row stays normal */

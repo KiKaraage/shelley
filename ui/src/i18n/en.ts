@@ -348,4 +348,6 @@ export const en: TranslationKeys = {
   deleteTask: "Delete",
   openLinkedConversation: "Open linked conversation",
   typeTagInTitle: "type #tag in the title",
+  goHomepage: "Go to Homepage",
+  goHomepageSubtitle: "Open the tasks homepage",
 };
