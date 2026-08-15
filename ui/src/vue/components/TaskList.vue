@@ -23,7 +23,7 @@
       </div>
     </div>
 
-    <div class="task-grid">
+    <div class="task-grid" :class="{ 'no-handled': !hasHandled }">
       <!-- Empty: no tasks at all -->
       <div v-if="tasks.length === 0" class="empty-all">
         <div class="big">{{ t("noTasksYet") }}</div>
@@ -249,6 +249,10 @@ const filteredTasks = computed(() => {
   if (filter.value === "none") return props.tasks.filter((task) => !task.cwd);
   return props.tasks.filter((task) => task.cwd === filter.value);
 });
+
+// True when there are no handled tasks in the current filter. Used to reorder
+// the empty handled box below idle on mobile (see .no-handled CSS).
+const hasHandled = computed(() => filteredTasks.value.some((task) => task.handled && !isDone(task)));
 
 // ---- grouping ----
 const groups = computed(() => {

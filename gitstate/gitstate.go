@@ -285,6 +285,25 @@ func resolveCommonDir(gitDir string) string {
 	return filepath.Clean(cd)
 }
 
+// MainRepoRoot returns the root of the main repository that dir belongs to.
+// For a regular repo this is the worktree root (the directory holding .git).
+// For a linked worktree, the commonDir is the main repo's .git directory, so
+// the main repo root is its parent. Returns "" when dir isn't inside a repo.
+func MainRepoRoot(dir string) string {
+	worktree, gitDir, ok := findWorktree(dir)
+	if !ok {
+		return ""
+	}
+	commonDir := resolveCommonDir(gitDir)
+	if commonDir == gitDir {
+		// Regular repo: the worktree root is the main repo root.
+		return worktree
+	}
+	// Linked worktree: commonDir is the main repo's .git; its parent is the
+	// main repo root.
+	return filepath.Dir(commonDir)
+}
+
 // resolveHead reads HEAD and returns the branch (empty if detached) and the
 // full commit hash it points at. ok is false if HEAD can't be resolved to a
 // commit via files (e.g. an unborn branch), so the caller falls back to git.

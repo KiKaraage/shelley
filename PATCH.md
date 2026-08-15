@@ -479,3 +479,19 @@ Shelley Tasks homepage
   - Agent tool: single Go tool `task` (claudetool/task.go) with actions list/create/update/delete; update folds "handle" via conversation_id; wired via TaskDBAdapter like SubagentDBAdapter.
   - REST: task CRUD endpoints + a directories endpoint (git roots + distinct past cwds) for the modal dropdown.
   - UI: HomePage Tasks tab renders the list (two-line rows, idle | handled+done columns, repo/dir filter pills with favicons, split header button); NewTaskModal floating dropdown; global shortcuts Ctrl+Shift+K (new task) and Ctrl+Alt+H (homepage); command palette entry.
+
+## P040
+Tasks homepage refinements (revise batch)
+- Status: active
+- Base: 4a98848
+- Files: ui/src/vue/App.vue, ui/src/vue/components/ChatInterface.vue, ui/src/vue/components/HeaderTagPicker.vue, ui/src/vue/components/NewTaskModal.vue, ui/src/vue/components/TaskList.vue, ui/src/styles.css, ui/src/i18n/types.ts, ui/src/i18n/en.ts (and other locale files), gitstate/gitstate.go, gitstate/gitstate_test.go, server/tasks.go
+- Changes:
+  - Fix "Create Thread" from a task doing nothing: `startNewConversationWithCwd` now clears the homepage (`showHomePage=false`) like `startNewConversation` does.
+  - Fix mobile TagPicker overflow: the header tag picker now teleports its menu (like the drawer one) so it right-aligns to the trigger and never runs off the viewport.
+  - New Task header button: replace the clipboard-check SVG with PrimeIcons `pi-pen-to-square`.
+  - New Task modal: multiline textarea for the title (no char limit; label renamed "Title"→"Task"); Enter inserts a newline, Enter on an empty line submits.
+  - New Task modal: directory chooser now uses filter pills (deduped git roots first, then recent cwds) instead of a `<select>`, with a circular icon-only Browse button.
+  - New Task modal: auto-populates the target directory from the latest thread's cwd in create mode.
+  - New Task modal: click-outside closes without clearing the draft; Cancel clears it.
+  - TaskList: when there are no handled tasks, the empty handled box moves below idle on mobile.
+  - Server: task directories are deduplicated by git main-repo root (worktrees collapse to the main repo), via new `gitstate.MainRepoRoot`.

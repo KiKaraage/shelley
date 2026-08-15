@@ -1,7 +1,7 @@
 <!-- Header button wrapper around the reusable TagPicker. Keeps the header's
      pi-tag icon button; the picker popover and tag logic live in TagPicker. -->
 <template>
-  <TagPicker :conversation="conversation" @update="onUpdated">
+  <TagPicker :conversation="conversation" teleport @update="onUpdated">
     <template #trigger="{ toggle }">
       <Button
         class="btn-icon"

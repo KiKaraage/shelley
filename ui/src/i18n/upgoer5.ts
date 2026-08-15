@@ -346,6 +346,7 @@ delete_: "Throw Away",
   deleteTask: "Delete",
   openLinkedConversation: "Open linked conversation",
   typeTagInTitle: "type #tag in the title",
+  noDirOptions: "No recent directories",
   goHomepage: "Go to Homepage",
   goHomepageSubtitle: "Open the tasks homepage",
 };

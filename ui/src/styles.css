@@ -13943,6 +13943,11 @@ kbd {
 .group-handled { order: 1; }
 .group-idle { order: 2; }
 .group-done { order: 3; }
+/* When there are no handled tasks, put the empty handled box below idle on
+   mobile (single column). Desktop grid placement is explicit and unaffected. */
+.no-handled .group-idle { order: 1; }
+.no-handled .group-handled { order: 2; }
+.no-handled .group-done { order: 3; }
 .group-label {
   font-size: 0.75rem;
   font-weight: 600;
@@ -14227,6 +14232,12 @@ kbd {
   border-color: var(--primary-color, var(--p-primary-color));
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
+/* Multiline task title: keep the same look but allow vertical growth. */
+.task-title-input {
+  resize: vertical;
+  min-height: 3.5rem;
+  line-height: 1.4;
+}
 .field-error {
   color: var(--error-text, #f87171);
   font-size: 0.75rem;
@@ -14256,40 +14267,26 @@ kbd {
 .dir-row {
   display: flex;
   gap: 0.375rem;
-  align-items: center;
+  align-items: flex-start;
 }
-.select-wrap {
-  position: relative;
+.dir-pills {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  max-height: 6.5rem;
+  overflow-y: auto;
+  padding: 0.125rem;
 }
-.select-wrap select {
-  width: 100%;
-  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.15));
-  border-radius: 0.375rem;
-  background: var(--surface-card, var(--bg-base));
-  color: var(--text-color);
-  padding: 0.5rem 2rem 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  outline: none;
-  appearance: none;
-  cursor: pointer;
-  font-family: var(--font-sans);
-  text-overflow: ellipsis;
+.dir-pill {
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.7rem;
 }
-.select-wrap::after {
-  content: "▾";
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
+.dir-pills-empty {
+  font-size: 0.8125rem;
   color: var(--text-color-secondary);
-  pointer-events: none;
-  font-size: 0.75rem;
-}
-.select-wrap select:focus {
-  border-color: var(--primary-color, var(--p-primary-color));
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  padding: 0.25rem 0.125rem;
 }
 .browse-btn {
   flex-shrink: 0;
@@ -14307,6 +14304,12 @@ kbd {
 .browse-btn:hover {
   background: var(--surface-hover, rgba(255, 255, 255, 0.06));
   color: var(--text-color);
+}
+/* Circular icon-only Browse button for the pill chooser. */
+.browse-circle {
+  border-radius: 9999px;
+  width: 2rem;
+  height: 2rem;
 }
 .dir-note {
   font-size: 0.6875rem;

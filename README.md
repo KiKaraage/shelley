@@ -43,6 +43,8 @@ Here's some patches I've made on top of Shelley:
 | [P036](PATCH.md#p036) (S · Aug 14) | skills | active | Rewrite previous-conversations skill to use `shelley client` |
 | [P037](PATCH.md#p037) (M · Aug 14) | ui | active | Use shared TagPicker for drawer tag editing |
 | [P038](PATCH.md#p038) (S · Aug 14) | ui | active | Show leading `#` comments in bash tool summary |
+| [P039](PATCH.md#p039) (L · Aug 15) | full | active | Shelley Tasks homepage: task list, create/edit modal, agent tool, shortcuts |
+| [P040](PATCH.md#p040) (L · Aug 15) | full | active | Tasks homepage refinements: fix Create Thread + TagPicker overflow, pill dir chooser, multiline task title, latest-thread cwd autofill |
 
 Scope: `ui` (frontend only) · `go` (backend only) · `full` (UI + Go/DB) · `build` · `skills`
 

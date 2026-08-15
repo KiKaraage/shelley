@@ -276,18 +276,41 @@ type TaskDirectoriesResponse struct {
 	Cwds     []string `json:"cwds"`
 }
 
-// gitRepoRoots returns the distinct past cwds (from conversations and tasks)
-// that are git repositories, for the task modal's directory dropdown. This
-// deliberately avoids crawling the whole filesystem: we only surface
-// directories the user has actually worked in that are git repos.
-func (s *Server) gitRepoRoots(ctx context.Context) []string {
+// directoryOptions returns the distinct past cwds (from conversations and
+// tasks), most recently used first, deduplicated by git repo. A git worktree
+// (or any cwd inside a repo) collapses to its main repo root so each repo
+// appears once; non-repo cwds stay as-is. This deliberately avoids crawling
+// the whole filesystem: we only surface directories the user has actually
+// worked in.
+func (s *Server) directoryOptions(ctx context.Context) []string {
 	cwds, err := s.db.ListDistinctCwds(ctx)
 	if err != nil {
-		s.logger.Error("Failed to list distinct cwds for git roots", "error", err)
+		s.logger.Error("Failed to list distinct cwds", "error", err)
 		return nil
 	}
+	seen := make(map[string]bool, len(cwds))
 	out := make([]string, 0, len(cwds))
 	for _, c := range cwds {
+		path := c
+		if gs := gitstate.GetGitState(c); gs != nil && gs.IsRepo {
+			if root := gitstate.MainRepoRoot(c); root != "" {
+				path = root
+			}
+		}
+		if seen[path] {
+			continue
+		}
+		seen[path] = true
+		out = append(out, path)
+	}
+	return out
+}
+
+// gitRepoRoots returns the distinct past cwds that are git repositories, for
+// the task modal's directory dropdown, deduplicated by main repo root.
+func (s *Server) gitRepoRoots(ctx context.Context) []string {
+	out := make([]string, 0)
+	for _, c := range s.directoryOptions(ctx) {
 		if gs := gitstate.GetGitState(c); gs != nil && gs.IsRepo {
 			out = append(out, c)
 		}
@@ -305,16 +328,11 @@ func (s *Server) handleTaskDirectories(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 
-	// Git roots: reuse the git repos crawl.
+	// Git roots: deduplicated by main repo root.
 	gitRoots := s.gitRepoRoots(ctx)
 
-	// Distinct past cwds from conversations + tasks.
-	cwds, err := s.db.ListDistinctCwds(ctx)
-	if err != nil {
-		s.logger.Error("Failed to list distinct cwds", "error", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+	// Distinct past cwds, deduplicated by main repo root.
+	cwds := s.directoryOptions(ctx)
 
 	resp := TaskDirectoriesResponse{GitRoots: gitRoots, Cwds: cwds}
 	w.Header().Set("Content-Type", "application/json")

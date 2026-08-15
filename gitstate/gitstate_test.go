@@ -114,6 +114,48 @@ func TestGetGitState_Worktree(t *testing.T) {
 	}
 }
 
+// TestMainRepoRoot verifies that MainRepoRoot resolves a linked worktree back
+// to the main repo root, and returns the worktree root itself for a regular
+// repo.
+func TestMainRepoRoot(t *testing.T) {
+	tmpDir := t.TempDir()
+	mainRepo := filepath.Join(tmpDir, "main")
+	worktreeDir := filepath.Join(tmpDir, "worktree")
+
+	if err := os.MkdirAll(mainRepo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, mainRepo, "init")
+	runGit(t, mainRepo, "config", "user.email", "test@test.com")
+	runGit(t, mainRepo, "config", "user.name", "Test")
+	testFile := filepath.Join(mainRepo, "test.txt")
+	if err := os.WriteFile(testFile, []byte("hello"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, mainRepo, "add", ".")
+	runGit(t, mainRepo, "commit", "-m", "initial")
+	runGit(t, mainRepo, "worktree", "add", "-b", "feature", worktreeDir)
+
+	// Regular repo: main repo root == the repo dir.
+	if got := MainRepoRoot(mainRepo); got != mainRepo {
+		t.Errorf("expected MainRepoRoot(main)=%q, got %q", mainRepo, got)
+	}
+
+	// Linked worktree: MainRepoRoot resolves to the main repo root.
+	if got := MainRepoRoot(worktreeDir); got != mainRepo {
+		t.Errorf("expected MainRepoRoot(worktree)=%q, got %q", mainRepo, got)
+	}
+
+	// Non-repo dir: empty.
+	nonRepo := filepath.Join(tmpDir, "nope")
+	if err := os.MkdirAll(nonRepo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if got := MainRepoRoot(nonRepo); got != "" {
+		t.Errorf("expected empty MainRepoRoot for non-repo, got %q", got)
+	}
+}
+
 func TestGetGitState_DetachedHead(t *testing.T) {
 	tmpDir := t.TempDir()
 

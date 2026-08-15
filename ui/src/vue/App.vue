@@ -220,6 +220,7 @@
         :task="editingTask"
         :git-roots="taskDirectories.git_roots"
         :cwds="taskDirectories.cwds"
+        :latest-cwd="mostRecentCwd"
         @close="newTaskModalOpen = false"
         @save="saveTaskFromModal"
       />
@@ -637,6 +638,7 @@ function startNewConversationWithCwd(cwd: string) {
   localStorage.setItem("shelley_selected_cwd", cwd);
   currentConversationId.value = null;
   viewedConversation.value = null;
+  showHomePage.value = false;
   window.history.replaceState({}, "", "/new");
   drawerOpen.value = false;
   cwdSyncTrigger.value++;
