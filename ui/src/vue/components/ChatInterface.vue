@@ -83,7 +83,7 @@
             v-tooltip.top="t('newTask')"
             @click="props.onOpenNewTaskModal?.()"
           >
-            <i class="pi pi-pen-to-square chat-icon-1rem" aria-hidden="true" />
+            <i class="pi pi-pen-to-square chat-icon-sm" aria-hidden="true" />
           </button>
         </div>
 

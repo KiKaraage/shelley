@@ -75,7 +75,7 @@
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              class="chat-icon-1rem"
+              class="chat-icon-sm"
             >
               <path
                 stroke-linecap="round"

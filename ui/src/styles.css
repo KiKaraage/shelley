@@ -10158,6 +10158,11 @@ kbd {
   height: 1rem;
 }
 
+.chat-icon-sm {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
 .chat-overflow-menu-wrapper {
   position: relative;
 }
