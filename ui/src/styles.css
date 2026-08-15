@@ -14048,10 +14048,10 @@ kbd {
   color: var(--text-color);
 }
 
-/* Task row action icons (edit / thread / delete) use the same btn-icon-sm
-   treatment as the ConversationDrawerRow buttons, with 1rem icons. */
+/* Task row action icons (edit / thread / delete): PrimeIcons glyphs render
+   visually larger than the drawer's 1rem SVGs, so size them down. */
 .row .row-actions .btn-icon-sm .task-row-icon {
-  font-size: 1rem;
+  font-size: 0.75rem;
 }
 
 /* done: only the title dims + strikes; the rest of the row stays normal */
