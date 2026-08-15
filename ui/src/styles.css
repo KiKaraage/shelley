@@ -14048,11 +14048,10 @@ kbd {
   color: var(--text-color);
 }
 
-/* Task row action icons (edit / thread / delete) are smaller than the
-   generic .icon-btn so they sit lightly beside the title. */
-.row .row-actions .icon-btn {
-  font-size: 0.6875rem;
-  padding: 0.2rem;
+/* Task row action icons (edit / thread / delete) use the same btn-icon-sm
+   treatment as the ConversationDrawerRow buttons, with 1rem icons. */
+.row .row-actions .btn-icon-sm .task-row-icon {
+  font-size: 1rem;
 }
 
 /* done: only the title dims + strikes; the rest of the row stays normal */
@@ -14316,8 +14315,9 @@ kbd {
 }
 
 /* Task delete confirmation: armed state turns the trash red */
-.icon-btn.delete-armed {
+.btn-icon-sm.delete-armed {
   color: var(--error-text, #f87171);
   background: var(--error-bg, rgba(239, 68, 68, 0.1));
+  opacity: 1;
 }
 

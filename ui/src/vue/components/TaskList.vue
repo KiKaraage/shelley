@@ -61,36 +61,36 @@
                     }}</span>
                     <span class="row-actions">
                       <button
-                        class="icon-btn"
+                        class="btn-icon-sm"
                         :title="t('editTask')"
                         v-tooltip.top="t('editTask')"
                         @click="emit('edit', task)"
                       >
-                        <i class="pi pi-pencil" aria-hidden="true" />
+                        <i class="pi pi-pencil task-row-icon" aria-hidden="true" />
                       </button>
                       <button
-                        class="icon-btn"
+                        class="btn-icon-sm"
                         :title="t('startThread')"
                         v-tooltip.top="t('startThread')"
                         @click="emit('start-thread', task)"
                       >
-                        <i class="pi pi-arrow-up-right" aria-hidden="true" />
+                        <i class="pi pi-arrow-up-right task-row-icon" aria-hidden="true" />
                       </button>
                       <button
                         :class="[
-                          'icon-btn',
+                          'btn-icon-sm',
                           { 'delete-armed': confirmingDeleteId === task.task_id },
                         ]"
                         :title="confirmingDeleteId === task.task_id ? t('confirmDelete') : t('deleteTask')"
                         v-tooltip.top="confirmingDeleteId === task.task_id ? t('confirmDelete') : t('deleteTask')"
                         @click="onDeleteClick(task)"
                       >
-                        <i class="pi pi-trash" aria-hidden="true" />
+                        <i class="pi pi-trash task-row-icon" aria-hidden="true" />
                       </button>
                     </span>
                   </div>
                   <div class="meta">
-                    <span v-if="task.cwd" class="dir-name">{{ dirLabel(task.cwd) }}</span>
+                    <span v-if="task.cwd" class="dir-name">{{ taskDirLabel(task) }}</span>
                     <span v-if="task.cwd && task.missing" class="missing-badge">{{
                       t("missingOnDisk")
                     }}</span>
@@ -180,6 +180,12 @@ function dirLabel(cwd: string): string {
   return parts.length ? parts[parts.length - 1] : cwd;
 }
 
+// Label for a task's directory: the owner/repo slug when the cwd is a git
+// repo (git_remote), otherwise the folder name.
+function taskDirLabel(task: Task): string {
+  return task.git_remote || dirLabel(task.cwd || "");
+}
+
 // ---- filter pills ----
 const allDirs = computed(() => {
   const seen = new Set<string>();
@@ -208,10 +214,12 @@ const filterPills = computed(() => {
     props.tasks.some((task) => task.cwd === d.path),
   );
   for (const d of dirsWithTasks) {
+    const tasksInDir = props.tasks.filter((task) => task.cwd === d.path);
+    const remote = tasksInDir.find((task) => task.git_remote)?.git_remote;
     pills.push({
       key: d.path,
-      label: dirLabel(d.path),
-      count: props.tasks.filter((task) => task.cwd === d.path).length,
+      label: remote || dirLabel(d.path),
+      count: tasksInDir.length,
       favicon: d.kind === "git" ? `/api/repo-favicon?root=${encodeURIComponent(d.path)}` : undefined,
     });
   }

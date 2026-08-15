@@ -25,6 +25,8 @@ type TaskResponse struct {
 	ThreadSlug *string  `json:"thread_slug"`
 	// Missing is true when the task's cwd no longer exists on disk.
 	Missing bool `json:"missing"`
+	// GitRemote is the owner/repo slug of the task's cwd, when it's a git repo.
+	GitRemote string `json:"git_remote,omitempty"`
 }
 
 // taskToResponse converts a db.Task to the JSON response shape.
@@ -46,6 +48,8 @@ func taskToResponse(t *db.Task, threadSlug *string) TaskResponse {
 	if t.Cwd != nil && *t.Cwd != "" {
 		if info, err := os.Stat(*t.Cwd); err != nil || !info.IsDir() {
 			resp.Missing = true
+		} else if gs := gitstate.GetGitState(*t.Cwd); gs != nil && gs.IsRepo {
+			resp.GitRemote = gs.RemoteSlug
 		}
 	}
 	return resp

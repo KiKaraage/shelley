@@ -12,6 +12,7 @@ export interface Task {
   handled_at?: string | null;
   thread_slug?: string | null;
   missing?: boolean;
+  git_remote?: string;
 }
 
 export interface TaskDirectories {
