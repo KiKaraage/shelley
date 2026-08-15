@@ -220,6 +220,7 @@
         :task="editingTask"
         :git-roots="taskDirectories.git_roots"
         :cwds="taskDirectories.cwds"
+        :repo-names="taskDirectories.repo_names"
         :latest-cwd="mostRecentCwd"
         @close="newTaskModalOpen = false"
         @save="saveTaskFromModal"

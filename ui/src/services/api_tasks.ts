@@ -18,6 +18,8 @@ export interface Task {
 export interface TaskDirectories {
   git_roots: string[];
   cwds: string[];
+  // Maps a git root path to its owner/repo slug (e.g. "kikaraage/shelley").
+  repo_names?: Record<string, string>;
 }
 
 async function parseResponse<T>(response: Response, prefix: string): Promise<T> {

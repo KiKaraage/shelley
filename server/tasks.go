@@ -274,6 +274,9 @@ func (s *Server) handleDeleteTask(w http.ResponseWriter, r *http.Request, taskID
 type TaskDirectoriesResponse struct {
 	GitRoots []string `json:"git_roots"`
 	Cwds     []string `json:"cwds"`
+	// RepoNames maps a git root path to its owner/repo slug (e.g.
+	// "kikaraage/shelley"), when the repo has a hosted remote.
+	RepoNames map[string]string `json:"repo_names,omitempty"`
 }
 
 // directoryOptions returns the distinct past cwds (from conversations and
@@ -334,7 +337,15 @@ func (s *Server) handleTaskDirectories(w http.ResponseWriter, r *http.Request) {
 	// Distinct past cwds, deduplicated by main repo root.
 	cwds := s.directoryOptions(ctx)
 
-	resp := TaskDirectoriesResponse{GitRoots: gitRoots, Cwds: cwds}
+	// Map each git root to its owner/repo slug for pill labels.
+	repoNames := make(map[string]string, len(gitRoots))
+	for _, g := range gitRoots {
+		if gs := gitstate.GetGitState(g); gs != nil && gs.RemoteSlug != "" {
+			repoNames[g] = gs.RemoteSlug
+		}
+	}
+
+	resp := TaskDirectoriesResponse{GitRoots: gitRoots, Cwds: cwds, RepoNames: repoNames}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }

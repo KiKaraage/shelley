@@ -14269,10 +14269,8 @@ kbd {
   gap: 0.3rem;
   flex-wrap: wrap;
 }
-.dir-row {
-  display: flex;
-  gap: 0.375rem;
-  align-items: flex-start;
+.dir-pills-row {
+  margin-bottom: 0.5rem;
 }
 .dir-pills {
   flex: 1;
@@ -14316,10 +14314,34 @@ kbd {
   width: 2rem;
   height: 2rem;
 }
-.dir-note {
-  font-size: 0.6875rem;
+/* Target directory row: label + full path in the first column, Browse button
+   on the right in the second column. */
+.dir-target-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dir-target-col {
+  flex: 1;
+  min-width: 0;
+}
+.dir-folder {
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.15));
+  border-radius: 0.375rem;
+  background: var(--surface-card, var(--bg-secondary));
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.25rem;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+}
+.dir-folder.empty {
   color: var(--text-color-secondary);
-  margin-top: 0.3rem;
 }
 
 /* Task delete confirmation: armed state turns the trash red */

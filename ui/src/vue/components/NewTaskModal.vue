@@ -22,42 +22,50 @@
               @input="onTitleInput"
               @keydown="onTitleKeydown"
             />
-            <div class="tag-hint">
-              <span class="lbl">{{ t("tagsLabel") }}</span>
-              <span v-if="derivedTags.length" class="tag-hint-chips">
-                <span
-                  v-for="tag in derivedTags"
-                  :key="tag"
-                  :class="['tag', { 'done-tag': tag === 'done' }]"
-                >
-                  <span class="hash">#</span>{{ tag }}
-                </span>
-              </span>
-              <span v-else class="tag-hint-empty">{{ t("typeTagInTitle") }}</span>
-            </div>
-            <div v-if="titleError" class="field-error">{{ titleError }}</div>
           </div>
 
+          <!-- Directory pills: above the Tags row, separate from Target directory. -->
+          <div class="dir-pills-row">
+            <div class="dir-pills">
+              <button
+                v-for="opt in dirOptions"
+                :key="opt.path"
+                :class="['filter', 'dir-pill', { active: selectedDir === opt.path }]"
+                @click="selectedDir = selectedDir === opt.path ? '' : opt.path"
+              >
+                <img
+                  v-if="opt.favicon && !faviconFailed.has(opt.path)"
+                  class="pill-favicon"
+                  :src="opt.favicon"
+                  alt=""
+                  @error="onFaviconError(opt.path)"
+                />
+                <span>{{ opt.label }}</span>
+              </button>
+              <span v-if="!dirOptions.length" class="dir-pills-empty">{{ t("noDirOptions") }}</span>
+            </div>
+          </div>
+
+          <div class="tag-hint">
+            <span class="lbl">{{ t("tagsLabel") }}</span>
+            <span v-if="derivedTags.length" class="tag-hint-chips">
+              <span
+                v-for="tag in derivedTags"
+                :key="tag"
+                :class="['tag', { 'done-tag': tag === 'done' }]"
+              >
+                <span class="hash">#</span>{{ tag }}
+              </span>
+            </span>
+            <span v-else class="tag-hint-empty">{{ t("typeTagInTitle") }}</span>
+          </div>
+          <div v-if="titleError" class="field-error">{{ titleError }}</div>
+
           <div class="field">
-            <label for="task-modal-dir">{{ t("targetDirectory") }}</label>
-            <div class="dir-row">
-              <div class="dir-pills">
-                <button
-                  v-for="opt in dirOptions"
-                  :key="opt.path"
-                  :class="['filter', 'dir-pill', { active: selectedDir === opt.path }]"
-                  @click="selectedDir = selectedDir === opt.path ? '' : opt.path"
-                >
-                  <img
-                    v-if="opt.favicon && !faviconFailed.has(opt.path)"
-                    class="pill-favicon"
-                    :src="opt.favicon"
-                    alt=""
-                    @error="onFaviconError(opt.path)"
-                  />
-                  <span>{{ opt.label }}</span>
-                </button>
-                <span v-if="!dirOptions.length" class="dir-pills-empty">{{ t("noDirOptions") }}</span>
+            <div class="dir-target-row">
+              <div class="dir-target-col">
+                <label for="task-modal-dir">{{ t("targetDirectory") }}</label>
+                <div class="dir-folder" :class="{ empty: !selectedDir }">{{ selectedDir || t("noDirectory") }}</div>
               </div>
               <button
                 class="browse-btn browse-circle"
@@ -68,7 +76,6 @@
                 <i class="pi pi-folder-open" aria-hidden="true" />
               </button>
             </div>
-            <div v-if="selectedDir" class="dir-note">{{ dirLabel(selectedDir) }}</div>
           </div>
         </div>
 
@@ -104,6 +111,8 @@ const props = defineProps<{
   task: Task | null; // null = create mode
   gitRoots: string[];
   cwds: string[];
+  // Maps a git root path to its owner/repo slug (e.g. "kikaraage/shelley").
+  repoNames?: Record<string, string>;
   // Most recent cwd (from the latest thread); auto-populated in create mode.
   latestCwd?: string | null;
 }>();
@@ -144,13 +153,19 @@ function dirLabel(cwd: string): string {
 }
 
 // ---- directory pills (deduped git roots first, then recent cwds) ----
+// Pill labels use the owner/repo slug when the repo has one, else the folder
+// name. The Target directory field below always shows the full local path.
 const dirOptions = computed(() => {
   const seen = new Set<string>();
   const out: { path: string; label: string; favicon?: string }[] = [];
   const push = (path: string, favicon?: string) => {
     if (seen.has(path)) return;
     seen.add(path);
-    out.push({ path, label: dirLabel(path), favicon });
+    out.push({
+      path,
+      label: props.repoNames?.[path] || dirLabel(path),
+      favicon,
+    });
   };
   for (const g of props.gitRoots) push(g, `/api/repo-favicon?root=${encodeURIComponent(g)}`);
   for (const c of props.cwds) push(c);
