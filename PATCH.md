@@ -509,4 +509,13 @@ Right sidebar TaskList overlay from the chat header
 - Base: 4a98848
 - Files: ui/src/vue/App.vue, ui/src/vue/components/ChatInterface.vue, ui/src/vue/components/TaskListOverlay.vue (new), ui/src/styles.css, ui/src/i18n/types.ts, ui/src/i18n/*.ts
 - Changes:
-  - (in progress) Add a right-side overlay that shows the TaskList without navigating to the homepage, opened by a checklist button in the ChatInterface header.
+  - New `TaskListOverlay.vue`: a right-side slide-over panel (teleported to body) showing the full `TaskList` without navigating to the homepage. Opened by a new checklist (`pi-list-check`) header button in `ChatInterface`, placed before the overflow (⋮) menu.
+  - Overlay state lives in `App.vue` (`taskListOverlayOpen`); opening always refetches tasks + directories so the list is fresh. Reuses the existing task handlers (create/edit/delete/start-thread/open-thread) via emits.
+  - Closed only by clicking the backdrop (no header, no Esc per request).
+  - Slide/fade transition via Vue `<Transition>` (`:duration="400"`), symmetric easing `cubic-bezier(0.4,0,0.2,1)`.
+  - TaskList now collapses to a single column via a container query (`@container (min-width: 769px)`) instead of a viewport media query, so it auto-stacks inside the narrow overlay panel.
+  - New i18n key `openTaskList` ("Tasks") added to `types.ts` and all locale files.
+- Watchouts:
+  - The overlay is only wired into `ChatInterface` (not the homepage header), per scope.
+  - Container query requires the `.tasks-home` container-type; the homepage grid still behaves identically since the container is full-width there.
+
