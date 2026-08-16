@@ -45,6 +45,8 @@ Here's some patches I've made on top of Shelley:
 | [P038](PATCH.md#p038) (S · Aug 14) | ui | active | Show leading `#` comments in bash tool summary |
 | [P039](PATCH.md#p039) (L · Aug 15) | full | active | Shelley Tasks homepage: task list, create/edit modal, agent tool, shortcuts |
 | [P040](PATCH.md#p040) (L · Aug 15) | full | active | Tasks homepage refinements: fix Create Thread + TagPicker overflow, pill dir chooser, multiline task title, latest-thread cwd autofill, in-input bold+blue tag highlighting via contenteditable, start-truncated target dir, border/caret fixes |
+| [P041](PATCH.md#p041) (S · Aug 15) | ui | active | Right sidebar TaskList overlay from the chat header |
+| [P042](PATCH.md#p042) (M · Aug 16) | full | active | Fix task thread creation: fresh-conversation routing, overlay close, composer injection |
 
 Scope: `ui` (frontend only) · `go` (backend only) · `full` (UI + Go/DB) · `build` · `skills`
 
@@ -61,17 +63,10 @@ bring your own.
 - *Multi-model* to benefit from all the innovation going on.
 - *Single-user* because it makes sense to bring the agent to the compute.
 
-# Architecture 
+# Architecture & Build
 
-Go for backend, SQLite for storage, and Typescript with Vue 3 + PrimeVue for the UI. 
-
-The data model is that Conversations have Messages, which might be from the
-user, the model, the tools, or the harness. All of that is stored in the
-database, and we use a SSE endpoint to keep the UI updated. 
-
-## Build from Source
-
+- **Go** for backend, **SQLite** for storage, and **Typescript with Vue 3 + PrimeVue** for the UI.
+- Data model: **Conversations** in Shelley contains **messages**, which can come from a) the user, b) the model, c) the tools, or d) the harness. All of that is stored in a single user **database**. Shelley use a **SSE endpoint** to keep the UI updated.
 - Run `make serve` to start Shelley locally.
-- If you want to see how mobile looks, and you're on your home network where you've got mDNS working fine, run `socat TCP-LISTEN:9001,fork TCP:localhost:9000`
-| [P041](PATCH.md#p041) (S · Aug 15) | ui | active | Right sidebar TaskList overlay from the chat header |
-| [P042](PATCH.md#p042) (M · Aug 16) | full | active | Fix task thread creation: fresh-conversation routing, overlay close, composer injection |
+- Run `make build-custom` to build and replace the running binary, restart Shelley when done.
+- To see how mobile version looks, in a home network where mDNS working fine, run `socat TCP-LISTEN:9001,fork TCP:localhost:9000`
