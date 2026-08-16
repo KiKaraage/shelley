@@ -520,3 +520,13 @@ Right sidebar TaskList overlay from the chat header
   - The overlay is only wired into `ChatInterface` (not the homepage header), per scope.
   - Container query requires the `.tasks-home` container-type; the homepage grid still behaves identically since the container is full-width there.
 
+
+## P042
+Fix task thread creation: fresh conversation routing, overlay close, composer injection
+- Status: active
+- Base: 4a98848
+- Files: ui/src/vue/App.vue, ui/src/vue/components/ChatInterface.vue, server/handlers.go, server/tasks_test.go
+- Changes:
+  - Fix "Create Thread" attaching to an existing conversation instead of a new one: when a task thread starts (`task_id` set) and there's no real conversation id yet, `sendMessage` now routes through `sendFirstMessage` (fresh conversation) instead of reusing a stale `draftConvId` from a previous /new session. The `draftConvId` mirror watcher is now immediate so it can't hold a stale id.
+  - Fix a task that already has a conversation not gaining a 2nd link: the promoting send now carries `task_id`, and `handleChatConversation` marks the task handled (linked to the promoted draft conversation) — the same as the new-conversation path. New server test `TestDraftPromoteMarksTaskHandled`.
+  - Fix task text not populated when starting a thread from the TaskListOverlay: the overlay now closes on start-thread, a stale editor comment no longer masks the task text (`editorCommentText`/`taskThreadText` clear each other), and a task thread seeds the composer directly (replace) instead of appending via the injected-text mechanism, so it can't be lost to the draft reconcile watcher racing on conversation switch.

@@ -1212,6 +1212,16 @@ func (s *Server) handleChatConversation(w http.ResponseWriter, r *http.Request, 
 		}
 	}
 
+	// If this message promotes a draft that was started from a task, mark the
+	// task handled (linked to the now-promoted conversation). The new-
+	// conversation path handles this for non-draft starts; drafts carry the
+	// task id on the promoting send and land here.
+	if req.TaskID != "" {
+		if err := s.db.MarkTaskHandled(ctx, req.TaskID, conversationID); err != nil {
+			s.logger.Error("Failed to mark task handled", "taskID", req.TaskID, "conversationID", conversationID, "error", err)
+		}
+	}
+
 	// Get or create conversation manager
 	manager, err := s.getOrCreateConversationManager(ctx, conversationID, userEmail)
 	if errors.Is(err, errConversationModelMismatch) {

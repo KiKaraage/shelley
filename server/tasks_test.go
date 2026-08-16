@@ -216,3 +216,54 @@ func TestTaskRoutesRegistered(t *testing.T) {
 		t.Fatalf("DELETE /api/tasks/{id} via mux code = %d", w.Code)
 	}
 }
+
+func TestDraftPromoteMarksTaskHandled(t *testing.T) {
+	t.Parallel()
+	h := NewTestHarness(t)
+	ctx := context.Background()
+
+	task, err := h.db.CreateTask(ctx, "", "Draft task", nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a draft conversation (as the UI does when autosaving composer text).
+	model := "predictable"
+	conv, err := h.db.CreateDraftConversation(ctx, nil, &model, db.ConversationOptions{}, "draft text")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Promote the draft by sending a chat message with task_id.
+	body := `{"message":"hello","model":"predictable","task_id":"` + task.TaskID + `"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/conversation/"+conv.ConversationID+"/chat", bytes.NewBufferString(body))
+	w := httptest.NewRecorder()
+	h.server.handleChatConversation(w, req, conv.ConversationID)
+	if w.Code != http.StatusAccepted && w.Code != http.StatusOK {
+		t.Fatalf("draft chat code = %d, body = %s", w.Code, w.Body.String())
+	}
+
+	got, err := h.db.GetTask(ctx, task.TaskID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.Handled {
+		t.Fatal("task should be handled after draft promoted from it")
+	}
+
+	// The task must be linked to the promoted draft conversation.
+	links, err := h.db.ListTaskConversations(ctx, task.TaskID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, l := range links {
+		if l.ConversationID == conv.ConversationID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("task should be linked to draft conversation %s, links = %v", conv.ConversationID, links)
+	}
+}

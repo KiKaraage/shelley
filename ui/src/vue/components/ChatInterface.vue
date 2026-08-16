@@ -2423,7 +2423,14 @@ async function sendMessage(message: string) {
       }
     }
     const isDraftConv = !!props.currentConversation?.is_draft;
-    const effectiveId = props.conversationId || draftConvId;
+    // A thread started from a task must always create a fresh conversation.
+    // When there's no real conversation id yet (only possibly a stale draft id
+    // left over from a previous /new session), route through sendFirstMessage
+    // so the task_id is carried and a brand-new conversation is created instead
+    // of reusing the stale draft (which would attach the task to the wrong
+    // conversation).
+    const taskThreadFreshStart = !!props.taskId && !props.conversationId;
+    const effectiveId = taskThreadFreshStart ? null : props.conversationId || draftConvId;
     if (!effectiveId && props.onFirstMessage) {
       await sendFirstMessage(message.trim());
     } else if (effectiveId) {
@@ -2844,10 +2851,24 @@ function setDiffCommentText(text: string) {
 // Comments submitted from the App-level file editor modal flow in via prop.
 // Immediate so a value already set before ChatInterface mounts (e.g. a task
 // title injected when starting a thread from the homepage) is still picked up.
+//
+// A task thread (props.taskId set) seeds the composer directly (replace) so
+// the task text is the composer's sole content and isn't lost to the draft
+// reconcile watcher racing on conversation switch. Editor comments append via
+// diffCommentText (multiple regions can be commented on).
+//
+// Deliberately does NOT touch lastSeededValue/lastSeededSession: the reconcile
+// guard sees composerValue != lastSeededValue and leaves the seeded task text
+// untouched instead of re-seeding it away.
 watch(
   () => props.externalCommentText,
   (v) => {
-    if (v?.text) diffCommentText.value = v.text;
+    if (!v?.text) return;
+    if (props.taskId) {
+      seedComposer(v.text);
+    } else {
+      diffCommentText.value = v.text;
+    }
   },
   { immediate: true },
 );
@@ -3258,12 +3279,15 @@ watch(
   },
 );
 
-// draftConvId mirror.
+// draftConvId mirror. Immediate so it's always in sync with the current
+// conversation id, even when the id was already null before this watcher was
+// created (avoids a stale draft id from a previous /new session).
 watch(
   () => props.conversationId,
   (id) => {
     draftConvId = id;
   },
+  { immediate: true },
 );
 
 // Genuine navigation ends a lazy-draft session.

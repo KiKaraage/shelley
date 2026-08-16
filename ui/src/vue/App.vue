@@ -789,6 +789,8 @@ provideOpenFileEditor((path: string) => {
 // ChatInterface for injection into the message input.
 function onEditorComment(text: string) {
   editorCommentText.value = { text };
+  // A task thread's pending text must not mask the editor comment.
+  taskThreadText.value = null;
 }
 
 async function handleFirstMessage(
@@ -905,6 +907,11 @@ async function deleteTask(task: Task) {
 // task has one, and inject the task title as the first message. The task is
 // marked handled once the prompt is actually sent (server-side via task_id).
 function startThreadFromTask(task: Task) {
+  // Close the right-side TaskList overlay so the user lands on the new
+  // conversation view (the overlay would otherwise stay covering the chat).
+  taskListOverlayOpen.value = false;
+  // A stale editor comment must not mask the task text in the composer.
+  editorCommentText.value = null;
   if (task.cwd) {
     startNewConversationWithCwd(task.cwd);
   } else {
