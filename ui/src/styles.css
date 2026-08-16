@@ -51,6 +51,10 @@ body {
   --bg-tertiary: #f3f4f6;
   --bg-hover: #f3f4f6;
   --border: #e5e7eb;
+  /* PrimeVue's surface tokens aren't emitted by our preset; alias the ones we
+     use to the app's own themed border so light mode gets a visible border
+     instead of the white fallback that only shows up in dark mode. */
+  --surface-border: var(--border);
   --code-bg: #eceef2;
   --user-message-text: #2563eb;
   --text-primary: #111827;
@@ -104,6 +108,7 @@ body {
   --bg-tertiary: #374151;
   --bg-hover: #374151;
   --border: #374151;
+  --surface-border: var(--border);
   --code-bg: #414a59;
   --user-message-text: #60a5fa;
   --text-primary: #f9fafb;
