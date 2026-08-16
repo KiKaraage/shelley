@@ -787,16 +787,18 @@ body {
 }
 
 /* Slide/fade transition for the overlay */
-.tasklist-enter-active,
-.tasklist-leave-active {
-  transition: opacity 0.4s ease;
+/* Panel only slides; the backdrop fades on its own (delayed so it doesn't
+   compete with the slide). */
+.tasklist-enter-active .tasklist-overlay-backdrop,
+.tasklist-leave-active .tasklist-overlay-backdrop {
+  transition: opacity 0.2s ease 0.1s;
 }
 .tasklist-enter-active .tasklist-overlay,
 .tasklist-leave-active .tasklist-overlay {
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.tasklist-enter-from,
-.tasklist-leave-to {
+.tasklist-enter-from .tasklist-overlay-backdrop,
+.tasklist-leave-to .tasklist-overlay-backdrop {
   opacity: 0;
 }
 .tasklist-enter-from .tasklist-overlay,

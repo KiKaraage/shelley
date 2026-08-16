@@ -511,10 +511,11 @@ Right sidebar TaskList overlay from the chat header
 - Changes:
   - New `TaskListOverlay.vue`: a right-side slide-over panel (teleported to body) showing the full `TaskList` without navigating to the homepage. Opened by a new checklist (`pi-list-check`) header button in `ChatInterface`, placed before the overflow (⋮) menu.
   - Overlay state lives in `App.vue` (`taskListOverlayOpen`); opening always refetches tasks + directories so the list is fresh. Reuses the existing task handlers (create/edit/delete/start-thread/open-thread) via emits.
-  - Closed only by clicking the backdrop (no header, no Esc per request).
-  - Slide/fade transition via Vue `<Transition>` (`:duration="400"`), symmetric easing `cubic-bezier(0.4,0,0.2,1)`.
+  - Closed by clicking the backdrop, an ✕ close button, or a header "New Task" button (no Esc per request).
+  - Slide/fade transition via Vue `<Transition>` (`:duration="300"`): the panel slides with `transform 0.3s cubic-bezier(0.4,0,0.2,1)`; the backdrop fades independently with `opacity 0.2s ease 0.1s` so it doesn't compete with the slide. Matches the regular drawer's feel.
   - TaskList now collapses to a single column via a container query (`@container (min-width: 769px)`) instead of a viewport media query, so it auto-stacks inside the narrow overlay panel.
-  - New i18n key `openTaskList` ("Tasks") added to `types.ts` and all locale files.
+  - New i18n keys `openTaskList` ("Tasks") and `closeTaskList` ("Close tasks") added to `types.ts` and all locale files.
+  - New Task modal z-index bumped 60 → 70 so it stacks above the overlay.
 - Watchouts:
   - The overlay is only wired into `ChatInterface` (not the homepage header), per scope.
   - Container query requires the `.tasks-home` container-type; the homepage grid still behaves identically since the container is full-width there.
