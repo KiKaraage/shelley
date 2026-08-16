@@ -309,6 +309,7 @@ export interface TranslationKeys {
   // Tasks
   newTask: string;
   newTaskShortcut: string;
+  openTaskList: string;
   createTask: string;
   saveChanges: string;
   taskTitlePlaceholder: string;

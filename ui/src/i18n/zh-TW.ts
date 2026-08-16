@@ -313,6 +313,7 @@ delete_: "刪除",
   // Tasks
   newTask: "New Task",
   newTaskShortcut: "New Task",
+  openTaskList: "Tasks",
   createTask: "Create task",
   saveChanges: "Save changes",
   taskTitlePlaceholder: "What needs doing?  e.g. Fix flaky test #working",
