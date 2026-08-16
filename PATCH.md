@@ -497,3 +497,8 @@ Tasks homepage refinements (revise batch)
   - New Task modal: click-outside closes without clearing the draft; Cancel clears it.
   - TaskList: when there are no handled tasks, the empty handled box moves below idle on mobile.
   - Server: task directories are deduplicated by git main-repo root (worktrees collapse to the main repo), via new `gitstate.MainRepoRoot`.
+  - New Task modal layout revision: directory pills moved above the Tags row, separate from the Target directory field. Target directory now shows the full local path (start-truncated so the leaf folder stays visible) in the first column with the Browse button on the right. Pill labels use the owner/repo slug (from the git remote) when present, else the folder name; `repo_names` added to `GET /api/tasks/directories`.
+  - New Task modal: removed the Tags row; `#hashtags` are now rendered bold + blue directly inside the title input. The title is a `contenteditable` div whose tags are real styled `<span>`s, so caret/selection/visible text share one layout engine (no overlay drift). Editing re-renders the spans and restores the caret; paste is sanitized to plain text.
+  - Fix invisible input border in light mode: `--surface-border` was never defined (every usage fell back to a white `rgba(255,255,255,0.15)` border, invisible on light backgrounds). Aliased it to the themed `--border` in both `:root` and `.dark`.
+  - Fix invisible caret in the task title: `--text-color` was never defined (phantom token used 24× in the task-modal CSS), so `caret-color: var(--text-color)` fell back to the transparent text color. Aliased `--text-color`/`--text-color-secondary` to `--text-primary`/`--text-secondary` in both themes.
+  - TaskList: task titles now wrap on multiple rows instead of truncating.

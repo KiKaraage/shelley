@@ -14272,6 +14272,7 @@ kbd {
   pointer-events: none;
 }
 .title-editable .tag-inline {
+  font-weight: 700;
   color: var(--blue-text, #1e40af);
 }
 .title-editable:focus {
