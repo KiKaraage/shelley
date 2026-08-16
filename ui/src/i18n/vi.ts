@@ -128,6 +128,7 @@ export const vi: TranslationKeys = {
   expandSubagents: "Mở rộng subagent",
   collapseSidebar: "Thu gọn sidebar",
   closeConversations: "Đóng hội thoại",
+  closeTaskList: "Close tasks",
   yesterday: "Hôm qua",
   daysAgo: "ngày trước",
 

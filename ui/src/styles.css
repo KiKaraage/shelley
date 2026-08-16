@@ -778,6 +778,22 @@ body {
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
 }
+.tasklist-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.tasklist-overlay-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .tasklist-overlay-body {
   flex: 1;
   min-height: 0;
@@ -14255,7 +14271,7 @@ kbd {
   position: fixed;
   top: 3.4rem;
   right: 0.75rem;
-  z-index: 60;
+  z-index: 70;
 }
 .task-modal {
   width: 24rem;

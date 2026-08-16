@@ -128,6 +128,7 @@ export const upgoer5: TranslationKeys = {
   expandSubagents: "Open up little helpers",
   collapseSidebar: "Make side part small",
   closeConversations: "Close talks",
+  closeTaskList: "Close tasks",
   yesterday: "Before Today",
   daysAgo: "days ago",
 

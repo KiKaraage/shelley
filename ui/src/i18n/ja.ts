@@ -128,6 +128,7 @@ export const ja: TranslationKeys = {
   expandSubagents: "サブエージェントを展開",
   collapseSidebar: "サイドバーを折りたたむ",
   closeConversations: "会話を閉じる",
+  closeTaskList: "Close tasks",
   yesterday: "昨日",
   daysAgo: "日前",
 

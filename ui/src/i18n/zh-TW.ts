@@ -128,6 +128,7 @@ export const zhTW: TranslationKeys = {
   expandSubagents: "展開子代理",
   collapseSidebar: "收合側邊欄",
   closeConversations: "關閉對話",
+  closeTaskList: "Close tasks",
   yesterday: "昨天",
   daysAgo: "天前",
 

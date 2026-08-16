@@ -128,6 +128,7 @@ export const ru: TranslationKeys = {
   expandSubagents: "Развернуть субагентов",
   collapseSidebar: "Свернуть боковую панель",
   closeConversations: "Закрыть диалоги",
+  closeTaskList: "Close tasks",
   yesterday: "Вчера",
   daysAgo: "дн. назад",
 

@@ -128,6 +128,7 @@ export interface TranslationKeys {
   expandSubagents: string;
   collapseSidebar: string;
   closeConversations: string;
+  closeTaskList: string;
   yesterday: string;
   daysAgo: string;
 

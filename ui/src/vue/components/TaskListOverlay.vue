@@ -2,10 +2,40 @@
      in from the right over a backdrop; closed by clicking the backdrop. -->
 <template>
   <Teleport to="body">
-    <Transition name="tasklist" :duration="400">
+    <Transition name="tasklist" :duration="300">
       <div v-if="isOpen" class="tasklist-overlay-root">
         <div class="tasklist-overlay-backdrop" @click="emit('close')" />
         <aside class="tasklist-overlay" role="dialog" aria-label="Tasks">
+          <div class="tasklist-overlay-header">
+            <h2 class="app-bar-title tasklist-overlay-title">Tasks</h2>
+            <Button
+              class="btn-icon"
+              text
+              severity="secondary"
+              :aria-label="t('closeTaskList')"
+              v-tooltip.top="t('closeTaskList')"
+              @click="emit('close')"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  :stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </Button>
+            <Button
+              class="btn-icon"
+              text
+              severity="secondary"
+              :aria-label="t('newTask')"
+              v-tooltip.top="t('newTask')"
+              @click="emit('open-create')"
+            >
+              <i class="pi pi-pen-to-square chat-icon-1rem" aria-hidden="true" />
+            </Button>
+          </div>
           <div class="tasklist-overlay-body">
             <TaskList
               :tasks="tasks"
@@ -24,8 +54,12 @@
 </template>
 
 <script setup lang="ts">
+import Button from "primevue/button";
+import { useI18n } from "../composables/i18n";
 import TaskList from "./TaskList.vue";
 import type { Task, TaskDirectories } from "../../services/api_tasks";
+
+const { t } = useI18n();
 
 defineProps<{
   isOpen: boolean;

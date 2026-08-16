@@ -129,6 +129,7 @@ export const es: TranslationKeys = {
   expandSubagents: "Expandir subagentes",
   collapseSidebar: "Contraer barra lateral",
   closeConversations: "Cerrar conversaciones",
+  closeTaskList: "Close tasks",
   yesterday: "Ayer",
   daysAgo: "días atrás",
 
