@@ -87,8 +87,21 @@
           </button>
         </div>
 
+        <!-- TaskList overlay toggle -->
+        <Button
+          v-if="props.onOpenTaskList"
+          class="btn-icon"
+          text
+          severity="secondary"
+          :aria-label="t('openTaskList')"
+          v-tooltip.top="t('openTaskList')"
+          @click="props.onOpenTaskList()"
+        >
+          <i class="pi pi-list-check chat-icon-1rem" aria-hidden="true" />
+        </Button>
 
-        <!-- Overflow menu (PrimeVue Popover + Select) -->
+        <!-- Overflow menu (PrimeVue Popover + SelectButton/Select) -->
+
         <ChatOverflowMenu
           :has-cwd="hasCwd"
           :links="links"
@@ -551,6 +564,7 @@ const props = withDefaults(
     onOpenFileFinder?: () => void;
     onOpenCommandPalette?: () => void;
     onOpenNewTaskModal?: () => void;
+    onOpenTaskList?: () => void;
     ephemeralTerminals: EphemeralTerminal[];
     setEphemeralTerminals: (
       next: EphemeralTerminal[] | ((prev: EphemeralTerminal[]) => EphemeralTerminal[]),
@@ -2437,6 +2451,10 @@ async function sendMessage(message: string) {
             ? selectedCwd.value
             : undefined,
         conversation_options: promoting ? buildConversationOptions() : undefined,
+        // A thread started from a task rides on a draft conversation: carry the
+        // task id so the promoting send marks the task handled (linked to the
+        // newly promoted conversation).
+        task_id: props.taskId || undefined,
       });
     }
   } catch (err) {

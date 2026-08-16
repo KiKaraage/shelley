@@ -84,6 +84,7 @@
           :cwd-sync-trigger="cwdSyncTrigger"
           :on-open-models-modal="() => (modelsModalOpen = true)"
           :on-open-new-task-modal="openNewTaskModal"
+          :on-open-task-list="openTaskListOverlay"
           :on-open-file-finder="openFileFinder"
           :on-open-command-palette="() => (commandPaletteOpen = true)"
           :ephemeral-terminals="ephemeralTerminals"
@@ -226,6 +227,18 @@
         @save="saveTaskFromModal"
       />
 
+      <TaskListOverlay
+        :is-open="taskListOverlayOpen"
+        :tasks="tasks"
+        :directories="taskDirectories"
+        @close="closeTaskListOverlay"
+        @open-create="openNewTaskModal"
+        @edit="openEditTask"
+        @start-thread="startThreadFromTask"
+        @delete="deleteTask"
+        @open-thread="openLinkedThread"
+      />
+
       <FileFinderModal
         :is-open="fileFinderOpen"
         :initial-dir="finderDir"
@@ -264,6 +277,7 @@ import FeatureFlagsModal from "./components/FeatureFlagsModal.vue";
 import FileFinderModal from "./components/FileFinderModal.vue";
 import EditableFileModal from "./components/EditableFileModal.vue";
 import NewTaskModal from "./components/NewTaskModal.vue";
+import TaskListOverlay from "./components/TaskListOverlay.vue";
 import Button from "primevue/button";
 import type { EphemeralTerminal } from "./components/terminalTypes";
 import { focusMessageInputIfUnfocused } from "../utils/focusMessageInput";
@@ -400,6 +414,8 @@ const tasks = ref<Task[]>([]);
 const taskDirectories = ref<TaskDirectories>({ git_roots: [], cwds: [] });
 const newTaskModalOpen = ref(false);
 const editingTask = ref<Task | null>(null);
+// Right-side TaskList overlay (opened from the chat header).
+const taskListOverlayOpen = ref(false);
 // Text injected into the message input when starting a thread from a task.
 const taskThreadText = ref<{ text: string } | null>(null);
 // Task ID to mark handled once the thread-from-task conversation is created.
@@ -840,6 +856,17 @@ function loadTaskDirectories() {
 function openNewTaskModal() {
   editingTask.value = null;
   newTaskModalOpen.value = true;
+}
+
+// Open the right-side TaskList overlay, always refetching the latest tasks.
+function openTaskListOverlay() {
+  loadTasks();
+  loadTaskDirectories();
+  taskListOverlayOpen.value = true;
+}
+
+function closeTaskListOverlay() {
+  taskListOverlayOpen.value = false;
 }
 
 function openEditTask(task: Task) {
