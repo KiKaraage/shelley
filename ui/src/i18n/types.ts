@@ -313,7 +313,6 @@ export interface TranslationKeys {
   saveChanges: string;
   taskTitlePlaceholder: string;
   taskTitleLabel: string;
-  tagsLabel: string;
   taskTitleRequired: string;
   targetDirectory: string;
   noDirectory: string;
@@ -338,7 +337,6 @@ export interface TranslationKeys {
   startThread: string;
   deleteTask: string;
   openLinkedConversation: string;
-  typeTagInTitle: string;
   noDirOptions: string;
   goHomepage: string;
   goHomepageSubtitle: string;

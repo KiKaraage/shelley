@@ -12,16 +12,25 @@
               {{ t("taskTitleLabel") }}
               <span class="req">*</span>
             </label>
-            <textarea
-              id="task-modal-title"
-              ref="titleInput"
-              v-model="title"
-              class="input task-title-input"
-              rows="3"
-              :placeholder="t('taskTitlePlaceholder')"
-              @input="onTitleInput"
-              @keydown="onTitleKeydown"
-            />
+            <div class="title-editor">
+              <div class="title-highlight" ref="highlightRef" aria-hidden="true">
+                <template v-for="(seg, i) in titleSegments" :key="i">
+                  <span v-if="seg.tag" class="tag-inline">{{ seg.text }}</span>
+                  <template v-else>{{ seg.text }}</template>
+                </template>
+              </div>
+              <textarea
+                id="task-modal-title"
+                ref="titleInput"
+                v-model="title"
+                class="input task-title-input"
+                rows="3"
+                :placeholder="t('taskTitlePlaceholder')"
+                @input="onTitleInput"
+                @keydown="onTitleKeydown"
+                @scroll="onTitleScroll"
+              />
+            </div>
           </div>
 
           <!-- Directory pills: above the Tags row, separate from Target directory. -->
@@ -46,26 +55,18 @@
             </div>
           </div>
 
-          <div class="tag-hint">
-            <span class="lbl">{{ t("tagsLabel") }}</span>
-            <span v-if="derivedTags.length" class="tag-hint-chips">
-              <span
-                v-for="tag in derivedTags"
-                :key="tag"
-                :class="['tag', { 'done-tag': tag === 'done' }]"
-              >
-                <span class="hash">#</span>{{ tag }}
-              </span>
-            </span>
-            <span v-else class="tag-hint-empty">{{ t("typeTagInTitle") }}</span>
-          </div>
           <div v-if="titleError" class="field-error">{{ titleError }}</div>
 
           <div class="field">
             <div class="dir-target-row">
               <div class="dir-target-col">
                 <label for="task-modal-dir">{{ t("targetDirectory") }}</label>
-                <div class="dir-folder" :class="{ empty: !selectedDir }">{{ selectedDir || t("noDirectory") }}</div>
+                <div
+                  class="dir-folder"
+                  :class="{ empty: !selectedDir }"
+                  ref="dirFolderRef"
+                  :title="dirPath"
+                >{{ dirDisplay }}</div>
               </div>
               <button
                 class="browse-btn browse-circle"
@@ -127,10 +128,12 @@ const selectedDir = ref("");
 const titleError = ref("");
 const browseOpen = ref(false);
 const titleInput = ref<HTMLTextAreaElement | null>(null);
+const highlightRef = ref<HTMLElement | null>(null);
+const dirFolderRef = ref<HTMLElement | null>(null);
 const modalRef = ref<HTMLElement | null>(null);
+const dirDisplay = ref("");
 
 const editing = ref(false);
-const derivedTags = ref<string[]>([]);
 const faviconFailed = ref<Set<string>>(new Set());
 // When true, reopening the modal keeps the current draft (title + dir) instead
 // of resetting. Set by outside-click close; cleared by Cancel.
@@ -138,18 +141,60 @@ const preserveDraft = ref(false);
 
 const HASHTAG_RE = /#([a-zA-Z0-9_-]+)/g;
 
-function deriveTags(title: string): string[] {
-  const out: string[] = [];
-  const m = title.matchAll(HASHTAG_RE);
-  for (const match of m) {
-    if (!out.includes(match[1])) out.push(match[1]);
+// Split the title into plain-text and tag (#hashtag) segments so the
+// highlight layer can render tags bold and blue inside the input.
+const titleSegments = computed<{ text: string; tag: boolean }[]>(() => {
+  const out: { text: string; tag: boolean }[] = [];
+  let last = 0;
+  for (const match of title.value.matchAll(HASHTAG_RE)) {
+    const idx = match.index ?? 0;
+    if (idx > last) out.push({ text: title.value.slice(last, idx), tag: false });
+    out.push({ text: match[0], tag: true });
+    last = idx + match[0].length;
   }
+  if (last < title.value.length) out.push({ text: title.value.slice(last), tag: false });
   return out;
-}
+});
 
 function dirLabel(cwd: string): string {
   const parts = cwd.split("/").filter(Boolean);
   return parts.length ? parts[parts.length - 1] : cwd;
+}
+
+const dirPath = computed(() => selectedDir.value || t("noDirectory"));
+
+// Truncate the full path at the start (…tail) so the leaf directory stays
+// visible, measured against the folder's actual width. Uses a hidden
+// measuring span so we don't rely on direction: rtl.
+function truncateStart(path: string, maxWidth: number): string {
+  if (!path || maxWidth <= 0) return path;
+  const probe = document.createElement("span");
+  probe.style.cssText =
+    "position:absolute;visibility:hidden;white-space:nowrap;font-size:0.8125rem;font-family:var(--font-sans);";
+  document.body.appendChild(probe);
+  const fits = (s: string) => {
+    probe.textContent = s;
+    return probe.getBoundingClientRect().width <= maxWidth;
+  };
+  try {
+    if (fits(path)) return path;
+    const parts = path.split("/");
+    let tail = "";
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const candidate = (tail ? parts[i] + "/" + tail : parts[i]);
+      if (!fits("…" + candidate)) break;
+      tail = candidate;
+    }
+    return tail ? "…" + tail : "…";
+  } finally {
+    probe.remove();
+  }
+}
+
+function updateDirDisplay() {
+  const el = dirFolderRef.value;
+  if (!el) return;
+  dirDisplay.value = truncateStart(dirPath.value, el.clientWidth);
 }
 
 // ---- directory pills (deduped git roots first, then recent cwds) ----
@@ -191,14 +236,37 @@ watch(
       }
       preserveDraft.value = false;
       titleError.value = "";
-      derivedTags.value = deriveTags(title.value);
       document.addEventListener("mousedown", onDocumentMouseDown);
-      nextTick(() => titleInput.value?.focus());
+      nextTick(() => {
+        titleInput.value?.focus();
+        updateDirDisplay();
+      });
     } else {
       document.removeEventListener("mousedown", onDocumentMouseDown);
     }
   },
 );
+
+// Recompute the truncated path when the folder's width changes (e.g. the
+// modal is resized or the window changes width).
+let resizeObserver: ResizeObserver | null = null;
+watch(dirFolderRef, (el) => {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+  if (el) {
+    resizeObserver = new ResizeObserver(() => updateDirDisplay());
+    resizeObserver.observe(el);
+  }
+});
+
+// Recompute when the selected directory changes (pill click / browse pick).
+watch(dirPath, () => updateDirDisplay());
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+  document.removeEventListener("mousedown", onDocumentMouseDown);
+});
 
 // Outside-click closes without clearing the draft; Cancel clears it.
 function onDocumentMouseDown(e: MouseEvent) {
@@ -208,13 +276,16 @@ function onDocumentMouseDown(e: MouseEvent) {
   }
 }
 
-onBeforeUnmount(() => {
-  document.removeEventListener("mousedown", onDocumentMouseDown);
-});
-
 function onTitleInput() {
-  derivedTags.value = deriveTags(title.value);
   if (titleError.value) titleError.value = "";
+}
+
+// Keep the highlight layer's scroll in lockstep with the textarea so the
+// colored tags stay aligned as the title scrolls vertically.
+function onTitleScroll() {
+  if (highlightRef.value && titleInput.value) {
+    highlightRef.value.scrollTop = titleInput.value.scrollTop;
+  }
 }
 
 // Enter inserts a newline; pressing Enter on an empty line (or a double Enter)
