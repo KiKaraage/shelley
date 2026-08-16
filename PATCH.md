@@ -502,3 +502,11 @@ Tasks homepage refinements (revise batch)
   - Fix invisible input border in light mode: `--surface-border` was never defined (every usage fell back to a white `rgba(255,255,255,0.15)` border, invisible on light backgrounds). Aliased it to the themed `--border` in both `:root` and `.dark`.
   - Fix invisible caret in the task title: `--text-color` was never defined (phantom token used 24× in the task-modal CSS), so `caret-color: var(--text-color)` fell back to the transparent text color. Aliased `--text-color`/`--text-color-secondary` to `--text-primary`/`--text-secondary` in both themes.
   - TaskList: task titles now wrap on multiple rows instead of truncating.
+
+## P041
+Right sidebar TaskList overlay from the chat header
+- Status: active
+- Base: 4a98848
+- Files: ui/src/vue/App.vue, ui/src/vue/components/ChatInterface.vue, ui/src/vue/components/TaskListOverlay.vue (new), ui/src/styles.css, ui/src/i18n/types.ts, ui/src/i18n/*.ts
+- Changes:
+  - (in progress) Add a right-side overlay that shows the TaskList without navigating to the homepage, opened by a checklist button in the ChatInterface header.

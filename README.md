@@ -73,3 +73,4 @@ database, and we use a SSE endpoint to keep the UI updated.
 
 - Run `make serve` to start Shelley locally.
 - If you want to see how mobile looks, and you're on your home network where you've got mDNS working fine, run `socat TCP-LISTEN:9001,fork TCP:localhost:9000`
+| [P041](PATCH.md#p041) (S · Aug 15) | ui | active | Right sidebar TaskList overlay from the chat header |
