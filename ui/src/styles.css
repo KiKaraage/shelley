@@ -14278,7 +14278,6 @@ kbd {
   pointer-events: none;
 }
 .title-highlight .tag-inline {
-  font-weight: 700;
   color: var(--blue-text, #1e40af);
 }
 .title-editor .task-title-input {
