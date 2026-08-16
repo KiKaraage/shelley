@@ -14023,18 +14023,17 @@ kbd {
   flex: 1;
   min-width: 0;
 }
-.title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
 .title-row .task-title {
   flex: 1;
   min-width: 0;
   font-size: 0.875rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 .row .meta {
   display: flex;
