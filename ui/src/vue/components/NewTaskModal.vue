@@ -13,23 +13,18 @@
               <span class="req">*</span>
             </label>
             <div class="title-editor">
-              <div class="title-highlight" ref="highlightRef" aria-hidden="true">
-                <template v-for="(seg, i) in titleSegments" :key="i">
-                  <span v-if="seg.tag" class="tag-inline">{{ seg.text }}</span>
-                  <template v-else>{{ seg.text }}</template>
-                </template>
-              </div>
-              <textarea
-                id="task-modal-title"
+              <div
                 ref="titleInput"
-                v-model="title"
-                class="input task-title-input"
-                rows="3"
-                :placeholder="t('taskTitlePlaceholder')"
+                class="input task-title-input title-editable"
+                contenteditable="true"
+                role="textbox"
+                aria-multiline="true"
+                :aria-label="t('taskTitleLabel')"
+                :data-placeholder="t('taskTitlePlaceholder')"
                 @input="onTitleInput"
                 @keydown="onTitleKeydown"
-                @scroll="onTitleScroll"
-              />
+                @paste="onTitlePaste"
+              ></div>
             </div>
           </div>
 
@@ -127,8 +122,7 @@ const title = ref("");
 const selectedDir = ref("");
 const titleError = ref("");
 const browseOpen = ref(false);
-const titleInput = ref<HTMLTextAreaElement | null>(null);
-const highlightRef = ref<HTMLElement | null>(null);
+const titleInput = ref<HTMLElement | null>(null);
 const dirFolderRef = ref<HTMLElement | null>(null);
 const modalRef = ref<HTMLElement | null>(null);
 const dirDisplay = ref("");
@@ -141,20 +135,85 @@ const preserveDraft = ref(false);
 
 const HASHTAG_RE = /#([a-zA-Z0-9_-]+)/g;
 
-// Split the title into plain-text and tag (#hashtag) segments so the
-// highlight layer can render tags bold and blue inside the input.
-const titleSegments = computed<{ text: string; tag: boolean }[]>(() => {
-  const out: { text: string; tag: boolean }[] = [];
+// ---- contenteditable title editor ----
+// The title is a contenteditable div whose #hashtags are real styled <span>
+// elements. Editing re-renders the spans and restores the caret, so the
+// visible text, selection, and caret all live in one layout engine (no
+// overlay to drift).
+
+// Current caret position as a character offset into the plain text.
+function caretCharOffset(el: HTMLElement): number {
+  const sel = el.ownerDocument.getSelection();
+  if (!sel || sel.rangeCount === 0) return (el.textContent ?? "").length;
+  const range = sel.getRangeAt(0);
+  const node = range.startContainer;
+  const offset = range.startOffset;
+  if (node === el) return offset;
+  let count = 0;
+  const walker = el.ownerDocument.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let n: Node | null;
+  while ((n = walker.nextNode())) {
+    if (n === node) return count + offset;
+    count += (n.textContent ?? "").length;
+  }
+  return count;
+}
+
+// Place the caret at a character offset into the plain text.
+function setCaret(el: HTMLElement, charOffset: number) {
+  const walker = el.ownerDocument.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let remaining = charOffset;
+  let node: Node | null;
+  let lastNode: Node | null = null;
+  while ((node = walker.nextNode())) {
+    const len = (node.textContent ?? "").length;
+    if (remaining <= len) {
+      const range = el.ownerDocument.createRange();
+      range.setStart(node, remaining);
+      range.collapse(true);
+      const sel = el.ownerDocument.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+      return;
+    }
+    remaining -= len;
+    lastNode = node;
+  }
+  // Past the end: place at the end of the last text node (or the element).
+  const target = lastNode ?? el;
+  const range = el.ownerDocument.createRange();
+  range.setStart(target, (target.textContent ?? "").length);
+  range.collapse(true);
+  const sel = el.ownerDocument.getSelection();
+  sel?.removeAllRanges();
+  sel?.addRange(range);
+}
+
+// Re-render the title as plain text + tag spans, restoring the caret.
+function renderTitle(el: HTMLElement) {
+  const caret = caretCharOffset(el);
+  const segments: { text: string; tag: boolean }[] = [];
   let last = 0;
   for (const match of title.value.matchAll(HASHTAG_RE)) {
     const idx = match.index ?? 0;
-    if (idx > last) out.push({ text: title.value.slice(last, idx), tag: false });
-    out.push({ text: match[0], tag: true });
+    if (idx > last) segments.push({ text: title.value.slice(last, idx), tag: false });
+    segments.push({ text: match[0], tag: true });
     last = idx + match[0].length;
   }
-  if (last < title.value.length) out.push({ text: title.value.slice(last), tag: false });
-  return out;
-});
+  if (last < title.value.length) segments.push({ text: title.value.slice(last), tag: false });
+  el.textContent = "";
+  for (const seg of segments) {
+    if (seg.tag) {
+      const span = el.ownerDocument.createElement("span");
+      span.className = "tag-inline";
+      span.textContent = seg.text;
+      el.appendChild(span);
+    } else {
+      el.appendChild(el.ownerDocument.createTextNode(seg.text));
+    }
+  }
+  setCaret(el, caret);
+}
 
 function dirLabel(cwd: string): string {
   const parts = cwd.split("/").filter(Boolean);
@@ -238,7 +297,10 @@ watch(
       titleError.value = "";
       document.addEventListener("mousedown", onDocumentMouseDown);
       nextTick(() => {
-        titleInput.value?.focus();
+        if (titleInput.value) {
+          renderTitle(titleInput.value);
+          titleInput.value.focus();
+        }
         updateDirDisplay();
       });
     } else {
@@ -277,29 +339,41 @@ function onDocumentMouseDown(e: MouseEvent) {
 }
 
 function onTitleInput() {
+  const el = titleInput.value;
+  if (!el) return;
+  // Sync the plain-text title from the editable content, then re-render the
+  // tag spans and restore the caret.
+  title.value = el.textContent ?? "";
+  renderTitle(el);
   if (titleError.value) titleError.value = "";
-}
-
-// Keep the highlight layer's scroll in lockstep with the textarea so the
-// colored tags stay aligned as the title scrolls vertically.
-function onTitleScroll() {
-  if (highlightRef.value && titleInput.value) {
-    highlightRef.value.scrollTop = titleInput.value.scrollTop;
-  }
 }
 
 // Enter inserts a newline; pressing Enter on an empty line (or a double Enter)
 // submits. Shift+Enter always inserts a newline.
 function onTitleKeydown(e: KeyboardEvent) {
   if (e.key !== "Enter" || e.shiftKey) return;
-  const el = e.target as HTMLTextAreaElement;
-  const before = el.value.slice(0, el.selectionStart);
+  const el = e.target as HTMLElement;
+  const before = (el.textContent ?? "").slice(0, caretCharOffset(el));
   const lineStart = before.lastIndexOf("\n") + 1;
   const currentLine = before.slice(lineStart);
   if (currentLine.trim() === "") {
     e.preventDefault();
     save();
   }
+}
+
+// Paste as plain text so no foreign markup (spans, divs) enters the editor.
+function onTitlePaste(e: ClipboardEvent) {
+  e.preventDefault();
+  const text = e.clipboardData?.getData("text/plain") ?? "";
+  const el = titleInput.value;
+  if (!el) return;
+  const sel = el.ownerDocument.getSelection();
+  if (sel && sel.rangeCount) {
+    sel.deleteFromDocument();
+  }
+  el.appendChild(el.ownerDocument.createTextNode(text));
+  onTitleInput();
 }
 
 function openBrowse() {

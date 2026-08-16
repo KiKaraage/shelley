@@ -14255,39 +14255,27 @@ kbd {
   min-height: 3.5rem;
   line-height: 1.4;
 }
-/* In-input tag highlighting: a transparent text layer sits under the
-   textarea, rendering #hashtags bold and blue while the textarea's own text
-   (which is transparent) sits on top so the caret and selection still work. */
+/* The task title is a contenteditable div whose #hashtags are real styled
+   spans, so caret, selection, and visible text all share one layout engine
+   (no overlay to drift). */
 .title-editor {
   position: relative;
 }
-.title-highlight {
-  position: absolute;
-  inset: 0;
-  /* Match the textarea's border + padding so the text lands in the same
-     content box. */
-  border: 1px solid transparent;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  font-family: var(--font-sans);
-  line-height: 1.4;
-  color: var(--text-color);
+.title-editable {
+  overflow-y: auto;
   white-space: pre-wrap;
   word-wrap: break-word;
-  overflow: hidden;
+}
+.title-editable:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-color-secondary);
   pointer-events: none;
 }
-.title-highlight .tag-inline {
+.title-editable .tag-inline {
   color: var(--blue-text, #1e40af);
 }
-.title-editor .task-title-input {
-  position: relative;
-  background: transparent;
-  color: transparent;
-  caret-color: var(--text-color);
-}
-.title-editor .task-title-input::placeholder {
-  color: var(--text-color-secondary);
+.title-editable:focus {
+  outline: none;
 }
 .field-error {
   color: var(--error-text, #f87171);
