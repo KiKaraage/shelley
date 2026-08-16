@@ -807,6 +807,10 @@ async function handleFirstMessage(
     // created so a later visit doesn't re-inject the task title.
     pendingTaskId.value = null;
     taskThreadText.value = null;
+    // The server linked the task to this conversation (marked it handled), so
+    // refresh the task list: the task moves to handled and gains its thread
+    // badge. Otherwise it stays idle until the next full page load.
+    if (taskId) loadTasks();
   } catch (err) {
     console.error("Failed to send first message:", err);
     error.value = err instanceof Error ? err.message : "Failed to send message";
