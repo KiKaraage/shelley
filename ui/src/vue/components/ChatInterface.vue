@@ -49,13 +49,17 @@
           class="header-favicon"
           @error="headerFaviconFailed = true"
         />
-        <h1 class="app-bar-title header-title" :title="currentConversation?.slug || 'Shelley'">
-          {{ displayTitle }}
-        </h1>
-        <HeaderTagPicker
-          :conversation="currentConversation"
-          :on-updated="props.onConversationUpdate"
-        />
+        <TagPicker :conversation="currentConversation" teleport @update="props.onConversationUpdate">
+          <template #trigger="{ toggle }">
+            <h1
+              class="app-bar-title header-title clickable-title"
+              :title="currentConversation?.slug || 'Shelley'"
+              @click="toggle"
+            >
+              {{ displayTitle }}
+            </h1>
+          </template>
+        </TagPicker>
       </div>
 
       <div class="header-actions">
@@ -514,7 +518,7 @@ import AgentsMdEditorModal from "./AgentsMdEditorModal.vue";
 import TerminalPanel from "./TerminalPanel.vue";
 import VersionChecker from "./VersionChecker.vue";
 import ChatOverflowMenu from "./ChatOverflowMenu.vue";
-import HeaderTagPicker from "./HeaderTagPicker.vue";
+import TagPicker from "./TagPicker.vue";
 import { matchChatInterfaceAction } from "../../utils/menuShortcuts";
 import MessageRenderNode from "./MessageRenderNode.vue";
 import QueuedGhostMessage from "./QueuedGhostMessage.vue";
