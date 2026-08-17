@@ -14272,6 +14272,7 @@ kbd {
   top: 3.4rem;
   right: 0.75rem;
   z-index: 70;
+  transform-origin: top right;
 }
 .task-modal {
   width: 24rem;
@@ -14421,6 +14422,32 @@ kbd {
 }
 .dir-folder.empty {
   color: var(--text-color-secondary);
+}
+
+/* New Task modal drop-in transition (slides down from top, fades in). */
+.modal-drop-enter-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s cubic-bezier(.4, 0, .2, 1);
+}
+.modal-drop-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease-in;
+}
+.modal-drop-enter-from {
+  opacity: 0;
+  transform: translateY(-8px) scaleY(0.96);
+}
+.modal-drop-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scaleY(0.97);
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-drop-enter-active,
+  .modal-drop-leave-active {
+    transition: none;
+  }
 }
 
 /* Task delete confirmation: armed state turns the trash red */

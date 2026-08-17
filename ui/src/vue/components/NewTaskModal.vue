@@ -4,7 +4,7 @@
      the title (no tag picker). -->
 <template>
   <Teleport to="body">
-    <Transition name="p-anchored-overlay">
+    <Transition name="modal-drop">
       <div v-if="isOpen" class="task-modal-wrap">
         <div class="task-modal" ref="modalRef" role="dialog" aria-modal="true">
         <div class="task-modal-body">

@@ -502,6 +502,7 @@ Tasks homepage refinements (revise batch)
   - Fix invisible input border in light mode: `--surface-border` was never defined (every usage fell back to a white `rgba(255,255,255,0.15)` border, invisible on light backgrounds). Aliased it to the themed `--border` in both `:root` and `.dark`.
   - Fix invisible caret in the task title: `--text-color` was never defined (phantom token used 24× in the task-modal CSS), so `caret-color: var(--text-color)` fell back to the transparent text color. Aliased `--text-color`/`--text-color-secondary` to `--text-primary`/`--text-secondary` in both themes.
   - TaskList: task titles now wrap on multiple rows instead of truncating.
+  - New Task modal: added drop-in transition (`modal-drop`) — slides down from the top-right origin with a subtle scale + fade, matching the overflow menu's Popover feel. Respects `prefers-reduced-motion`.
 
 ## P041
 Right sidebar TaskList overlay from the chat header
