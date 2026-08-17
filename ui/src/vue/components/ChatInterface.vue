@@ -51,13 +51,13 @@
         />
         <TagPicker :conversation="currentConversation" teleport @update="props.onConversationUpdate">
           <template #trigger="{ toggle }">
-            <h1
-              class="app-bar-title header-title clickable-title"
+            <button
+              class="app-bar-title header-title header-title-btn"
               :title="currentConversation?.slug || 'Shelley'"
               @click="toggle"
             >
               {{ displayTitle }}
-            </h1>
+            </button>
           </template>
         </TagPicker>
       </div>
