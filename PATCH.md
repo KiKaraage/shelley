@@ -447,10 +447,10 @@ Rewrite previous-conversations skill to use `shelley client`
 Use shared TagPicker for drawer tag editing
 - Status: active
 - Base: 4a98848
-- Files: ConversationDrawerRow.vue, ConversationDrawer.vue, conversationDrawerShared.ts, DrawerTagPicker.vue (new), TagPicker.vue, styles.css
+- Files: ConversationDrawerRow.vue, ConversationDrawer.vue, conversationDrawerShared.ts, DrawerTagPicker.vue (deleted), TagPicker.vue, styles.css
 - Changes:
   - Drawer rows now edit tags through the shared `TagPicker.vue` popover instead of the inline chip editor.
-  - New `DrawerTagPicker.vue` wraps `TagPicker` in the row's existing `editTags` icon button and forwards its `update` event.
+  - `DrawerTagPicker.vue` was inlined into `ConversationDrawerRow.vue`: `TagPicker` is used directly with its `#trigger` slot (tag icon button, `teleport`, `class-name="drawer-tag-picker"`); `DrawerTagPicker.vue` deleted.
   - `ConversationDrawer.vue` adds `handleTagPickerUpdate` to the row ctx; it emits `renamed` so tag changes refresh the sidebar.
   - Removed the inline editor: `tagsEditing`, the `#…` input form, per-chip remove buttons, `handleOpenTagEditor`/`handleAddTag`/`handleRemoveTag`, `saveTags`, and the tag-editor refs/outside-click watcher.
   - `TagPicker.vue` accepts an optional `className` and `teleport`; the drawer variant teleports the menu to body with fixed trigger-rect coordinates so it escapes the row's overflow-clipped action container.
