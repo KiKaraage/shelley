@@ -4,8 +4,9 @@
      the title (no tag picker). -->
 <template>
   <Teleport to="body">
-    <div v-if="isOpen" class="task-modal-wrap">
-      <div class="task-modal" ref="modalRef" role="dialog" aria-modal="true">
+    <Transition name="p-anchored-overlay">
+      <div v-if="isOpen" class="task-modal-wrap">
+        <div class="task-modal" ref="modalRef" role="dialog" aria-modal="true">
         <div class="task-modal-body">
           <div class="field">
             <label for="task-modal-title">
@@ -83,6 +84,7 @@
         </div>
       </div>
     </div>
+    </Transition>
   </Teleport>
 
   <DirectoryPickerModal
