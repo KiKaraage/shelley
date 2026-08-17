@@ -327,10 +327,6 @@ function getSlugFromPath(): string | null {
 function isNewPath(): boolean {
   return window.location.pathname === "/new";
 }
-function isHomePath(): boolean {
-  return window.location.pathname === "/home";
-}
-
 // A brand-new-conversation draft composed offline never reaches the server
 // (createDraft fails), so it survives only in localStorage under the "new"
 // slot. On reopen we land on "/" and would otherwise auto-select the most
@@ -343,7 +339,7 @@ function hasPendingNewDraft(): boolean {
 // Captured BEFORE render so URL-updating effects don't clobber it.
 const initialSlugFromUrl = getSlugFromPath();
 const initialIsNew = isNewPath() || (!getSlugFromPath() && hasPendingNewDraft());
-const showHomePage = ref(isHomePath());
+const showHomePage = ref(!initialSlugFromUrl && !initialIsNew); // show homepage on / by default
 
 function updateUrlWithSlug(conversation: Conversation | undefined) {
   const currentSlug = getSlugFromPath();
