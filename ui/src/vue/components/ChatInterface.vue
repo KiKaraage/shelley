@@ -57,6 +57,7 @@
               @click="toggle"
             >
               {{ displayTitle }}
+              <span v-if="firstTag" class="header-title-tag">#{{ firstTag }}<span v-if="hasMoreTags" class="header-title-tag-more">…</span></span>
             </button>
           </template>
         </TagPicker>
@@ -1282,6 +1283,28 @@ const displayTitle = computed(() => {
   const title = props.currentConversation?.slug || "Shelley";
   if (props.currentConversation?.archived) return `${title} (archived)`;
   return title;
+});
+
+const firstTag = computed(() => {
+  const tags = props.currentConversation?.tags;
+  if (!tags) return "";
+  try {
+    const parsed = JSON.parse(tags);
+    return Array.isArray(parsed) && typeof parsed[0] === "string" ? parsed[0] : "";
+  } catch {
+    return "";
+  }
+});
+
+const hasMoreTags = computed(() => {
+  const tags = props.currentConversation?.tags;
+  if (!tags) return false;
+  try {
+    const parsed = JSON.parse(tags);
+    return Array.isArray(parsed) && parsed.length > 1;
+  } catch {
+    return false;
+  }
 });
 
 const hasCwd = computed(() => !!(props.currentConversation?.cwd || selectedCwd.value));
