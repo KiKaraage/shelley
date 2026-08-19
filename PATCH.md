@@ -551,3 +551,4 @@ Markdown Preview mode in the file editor
   - Preview is mutually exclusive with comment mode: entering preview dismisses any open comment dialog.
   - Local-path images are dropped in preview (same as chat rendering without a messageId); no server changes.
   - Added `.diff-viewer-preview` (scrollable, padded, prose max-width 72ch, centered via `margin: 0 auto`) styles.
+  - Vim-style navigation in the preview panel when Vim mode is enabled: `j`/`k` scroll by line, `gg`/`G` top/bottom, `Ctrl+d`/`u`/`f`/`b` page jumps, `i`/`a`/`o` return to edit mode and focus the editor. Keys are inert while focus is in an input/textarea/editable (so commenting etc. keeps working). VimToggle is now shown in preview mode too (`mode !== 'comment'`); no status bar for the preview.
