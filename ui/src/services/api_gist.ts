@@ -27,7 +27,15 @@ class GistError extends Error {
 
 function throwGistError(data: Record<string, unknown>, fallback: string): never {
   const code = typeof data.error === "string" ? data.error : "";
-  const msg = typeof data.message === "string" ? data.message : fallback;
+  // data.message is the human text; when the server returned a plain-text
+  // body (the original 500 bug), parseResponse stores it in data.error — use
+  // it as the message so the user sees the real error, not a generic fallback.
+  const msg =
+    typeof data.message === "string"
+      ? data.message
+      : typeof data.error === "string" && data.error
+        ? data.error
+        : fallback;
   throw new GistError(code, msg);
 }
 

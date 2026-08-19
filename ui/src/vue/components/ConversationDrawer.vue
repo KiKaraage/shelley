@@ -485,7 +485,7 @@ import { isImeComposing } from "../../utils/imeComposing";
 import { handleModifiedNavClick } from "../utils/openInNewTab";
 import ConversationRow from "./ConversationDrawerRow.vue";
 import Button from "primevue/button";
-import { DrawerCtxKey, type GroupBy } from "./conversationDrawerShared";
+import { DrawerCtxKey, type GroupBy, parseTags } from "./conversationDrawerShared";
 import type { EphemeralTerminal } from "./terminalTypes";
 import {
   UNTAGGED_TERM,
@@ -1074,7 +1074,6 @@ const displayedConversations = computed<(Conversation | ConversationWithState)[]
   if (isSearching.value)
     return filterConversationsByQuery(searchResults.value ?? [], parsedQuery.value);
   return topLevelConversations.value;
-});
 });
 
 // The list the tag dropdown describes: whichever list is on screen,

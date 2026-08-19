@@ -4,7 +4,6 @@
 import type { ComputedRef, InjectionKey, Ref } from "vue";
 import type { Conversation, ConversationWithState } from "../../types";
 import type { TranslationKeys } from "../../i18n/types";
-import type { OfferedTag } from "../../utils/tagFilter";
 
 export type GroupBy = "none" | "cwd" | "git_repo" | "tag";
 
