@@ -87,7 +87,7 @@
               class="diff-viewer-editor"
               :style="{
                 display:
-                  monacoLoaded && content !== null && loadStatus === 'loaded' && mode === 'edit'
+                  monacoLoaded && content !== null && loadStatus === 'loaded' && mode !== 'preview'
                     ? 'block'
                     : 'none',
               }"
