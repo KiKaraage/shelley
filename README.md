@@ -48,6 +48,7 @@ Here's some patches I've made on top of Shelley:
 | [P041](PATCH.md#p041) (S · Aug 15) | ui | active | Right sidebar TaskList overlay from the chat header |
 | [P042](PATCH.md#p042) (M · Aug 16) | full | active | Fix task thread creation: fresh-conversation routing, overlay close, composer injection |
 | [P043](PATCH.md#p043) (S · Aug 17) | ui | active | Show HomePage by default on root path instead of auto-selecting most recent conversation |
+| [P044](PATCH.md#p044) (S · Aug 19) | ui | active | Markdown Preview mode (👁️) in the file editor |
 
 Scope: `ui` (frontend only) · `go` (backend only) · `full` (UI + Go/DB) · `build` · `skills`
 

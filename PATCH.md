@@ -538,3 +538,16 @@ Show HomePage by default on root path instead of auto-selecting most recent conv
 - Files: ui/src/vue/App.vue
 - Changes:
   - Flipped `showHomePage` default from `isHomePath()` (only `/home`) to `!initialSlugFromUrl && !initialIsNew` so root `/` shows the HomePage instead of auto-selecting the most recent conversation. Removed the now-unused `isHomePath()` function.
+
+## P044
+Markdown Preview mode in the file editor
+- Status: active
+- Base: 33e1f64
+- Files: ui/src/vue/components/EditableFileModal.vue, ui/src/vue/composables/monacoComments.ts, ui/src/styles.css
+- Changes:
+  - Added a Preview mode (👁️ button, tooltip "Preview (Ctrl+Shift+K)") to the file editor's mode-toggle group, alongside Comment (💬) and Edit (✏️). The mode state is now a single `"comment" | "edit" | "preview"` union; `monacoComments`' mode type widened accordingly (handlers stay inert unless "comment").
+  - Preview renders the current editor buffer with the exact chat component (`MarkdownContent`), so styling matches chat. The preview is a read-only panel over the still-mounted editor (undo/cursor preserved); the editor is read-only in preview, and vim is disabled.
+  - Renders once per entry from a buffer snapshot (no per-keystroke re-rendering for large files). Toggle via button or Ctrl+Shift+K (checked only while the modal is open; App.vue's Ctrl+Shift+K new-task shortcut is registered on document without capture, so the modal's capture-phase handler wins while the modal is focused).
+  - Preview is mutually exclusive with comment mode: entering preview dismisses any open comment dialog.
+  - Local-path images are dropped in preview (same as chat rendering without a messageId); no server changes.
+  - Added `.diff-viewer-preview` (scrollable, padded, prose max-width 72ch, centered via `margin: 0 auto`) styles.
