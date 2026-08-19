@@ -923,6 +923,8 @@ body {
 
 .tag-picker-wrapper {
   position: relative;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 /* Drawer variant: the trigger sits inside a conversation row whose action
