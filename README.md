@@ -1,6 +1,6 @@
-# KiKaraage/shelley: fork of a coding agent from exe.dev
+# KiKaraage patches for Shelley
 
-Here's some patches I've made on top of Shelley:
+Here's some patches I've made on top of [Shelley](https://exe.dev/shelley):
 
 | Patch | Scope | Status | Description |
 |-------|-------|--------|-------------|
@@ -11,7 +11,6 @@ Here's some patches I've made on top of Shelley:
 | [P005](PATCH.md#p005) (S · Aug 7) | go | active | Add `~/.agents/skills/` to skill discovery paths |
 | [P006](PATCH.md#p006) (L · Aug 7) | full | active | Make git commit attribution a user-configurable dropdown (co-author, assisted-by, off) |
 | [P007](PATCH.md#p007) (L · Aug 9) | full | active | Add custom model enable/disable, import from /v1/models, and context window fix |
-
 | [P008](PATCH.md#p008) (M · Aug 9) | go | active | Import pricing from /v1/models into DB |
 | [P009](PATCH.md#p009) (M · Aug 9) | ui | active | Add optimistic toggle/delete + checkpoint selection bar to ModelsModal |
 | [P010](PATCH.md#p010) (M · Aug 9) | ui | active | Use 24h for all time displays |
@@ -54,10 +53,9 @@ Scope: `ui` (frontend only) · `go` (backend only) · `full` (UI + Go/DB) · `bu
 
 ---
 
-Shelley is a mobile-friendly, web-based, multi-conversation, multi-modal,
-multi-model, single-user coding agent built for but not exclusive to
-[exe.dev](https://exe.dev/). It does not come with authorization or sandboxing:
-bring your own.
+## What is this?
+
+> Shelley is a mobile-friendly, web-based, multi-conversation, multi-modal, multi-model, single-user coding agent built for but not exclusive to [exe.dev](https://exe.dev/). It does not come with authorization or sandboxing: bring your own.
 
 - *Mobile-friendly* because ideas can come any time.
 - *Web-based*, because terminal-based scroll back is punishment for shoplifting in some countries.
@@ -65,7 +63,7 @@ bring your own.
 - *Multi-model* to benefit from all the innovation going on.
 - *Single-user* because it makes sense to bring the agent to the compute.
 
-# Architecture & Build
+# What's the architecture & build system?
 
 - **Go** for backend, **SQLite** for storage, and **Typescript with Vue 3 + PrimeVue** for the UI.
 - Data model: **Conversations** in Shelley contains **messages**, which can come from a) the user, b) the model, c) the tools, or d) the harness. All of that is stored in a single user **database**. Shelley use a **SSE endpoint** to keep the UI updated.
