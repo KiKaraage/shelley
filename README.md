@@ -30,7 +30,7 @@ Here's some patches I've made on top of [Shelley](https://exe.dev/shelley):
 | [P024](PATCH.md#p024) (S · Aug 11) | ui | active | Add favicon to settled rows + tooltips; reduce preview limit |
 | [P025](PATCH.md#p025) (M · Aug 12) | full | active | Fix gist export: DB writes, privacy leak, error toasts, stale status |
 | [P026](PATCH.md#p026) (S · Aug 12) | go | active | Add slug generation retry for tagged/conversation models |
-| [P027](PATCH.md#p027) (M · Aug 12) | go | active | Block chained `cd <path> && ...` when path equals cwd |
+| [P027](PATCH.md#p027) (M · Aug 12) | go | superseded | Block chained `cd <path> && ...` when path equals cwd |
 | [P028](PATCH.md#p028) (M · Aug 12) | go | active | Include thinking, user, and tool-use content in conversation previews |
 | [P029](PATCH.md#p029) (L · Aug 12) | ui | active | Add "Auto Expand" brevity mode with turn-level collapse bands |
 | [P030](PATCH.md#p030) (S · Aug 12) | ui | active | Split chained `&&` bash commands across lines in tool summary |

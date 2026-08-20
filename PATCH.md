@@ -325,7 +325,7 @@ Add slug generation retry for tagged/conversation models
 
 ## P027
 Block chained `cd <path> && ...` when path equals cwd
-- Status: active
+- Status: superseded (upstream b71ed19 "Avoid redundant cd commands in the current working directory" implements the same detection — `ChainedCdPaths` + `cdPathIsCurrentDir` — but as a soft hint appended to tool output and a system-prompt rule, instead of a hard permission error. The custom commits for this patch were dropped from history during the v0.972 rebase.)
 - Base: 4a98848
 - Files: claudetool/bash.go, claudetool/bashkit/bashkit.go, claudetool/bashkit/bashkit_test.go
 - Changes:
